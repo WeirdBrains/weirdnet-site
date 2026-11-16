@@ -49,23 +49,23 @@ $relayDiagram
 
 <h2 id="public">The WeirdBrains public relay</h2>
 <p>WeirdBrains runs public relays. The first is <code>relay.net.weirdbrains.com</code>
-<span class="tag new">coming online</span>: its DNS name is live and the relay is being deployed. Once it answers, use it
-as a bootstrap node and relay:</p>
-<pre><code>/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/&lt;RELAY_PEER_ID&gt;
-/dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/&lt;RELAY_PEER_ID&gt;</code></pre>
-<p><code>&lt;RELAY_PEER_ID&gt;</code> is a placeholder until the relay has made its key; its info page at
-<code>https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json</code> will list the real addresses. How it is
+<span class="tag shipped">live</span>. Its info page is <a href="https://relay.net.weirdbrains.com/">relay.net.weirdbrains.com</a>
+(JSON at <a href="https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json"><code>/.well-known/weirdnet-relay.json</code></a>).
+Use it as a bootstrap node and relay:</p>
+<pre><code>/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
+/dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB</code></pre>
+<p>Abuse reports go to <a href="mailto:michael+relay@weirdbrains.com">michael+relay@weirdbrains.com</a>. How it is
 installed is in <a href="https://github.com/WeirdBrains/weirdnet-relay/blob/main/DEPLOY.md">DEPLOY.md</a>.</p>
 
-<h2 id="build">Build and install</h2>
-<pre><code>git clone https://github.com/WeirdBrains/weirdnet-relay
-cd weirdnet-relay
-cargo build --release
-sudo install -m 0755 target/release/weirdnet-relay /usr/bin/
-sudo install -d /etc/weirdnet-relay
-sudo install -m 0644 examples/relay.toml /etc/weirdnet-relay/relay.toml
-sudo install -m 0644 packaging/systemd/weirdnet-relay.service /etc/systemd/system/</code></pre>
-<p>Rust 1.99 or newer. SQLCipher is bundled; no system libraries are needed.</p>
+<h2 id="build">Install</h2>
+<p>Each <a href="https://github.com/WeirdBrains/weirdnet-relay/releases">release</a> has a <code>.deb</code> for amd64 and
+arm64 (Debian 12+, Ubuntu 24.04+) and <code>tar.gz</code> builds, with a <code>SHA256SUMS</code> file:</p>
+<pre><code>V=0.1.0; ARCH=\$(dpkg --print-architecture)
+curl -fLO https://github.com/WeirdBrains/weirdnet-relay/releases/download/v\$V/weirdnet-relay_\$V-1_\$ARCH.deb
+sudo apt-get install ./weirdnet-relay_\$V-1_\$ARCH.deb</code></pre>
+<p>It installs the binary, the hardened systemd unit and <code>/etc/weirdnet-relay/relay.toml</code>, and starts nothing
+until the database key below exists. SQLCipher is built in; no other libraries are needed. To build from source
+instead: <code>cargo deb --locked</code> (Rust 1.99 or newer, cargo-deb).</p>
 
 <h2 id="key">The database key</h2>
 <p>The relay keeps its node key and its state in one SQLCipher database, <code>relay.db</code>, encrypted with a 32-byte key
@@ -84,7 +84,7 @@ contact = "abuse@example.com"
 [network]
 port = 4747
 external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
-bootstrap = []   # e.g. "/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/&lt;RELAY_PEER_ID&gt;" once it is online
+bootstrap = ["/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB"]
 
 [limits]
 preset = "unlimited"  # the default: no caps, no rate limiters; "libp2p" for libp2p's

@@ -145,7 +145,8 @@ $relayDiagram
 <p>Anyone can run a relay with <a href="/relay">weirdnet-relay</a>. WeirdBrains runs public relays and bootstrap nodes;
 running your own is optional and needs a domain tied to the machine through Grindvakt dynamic DNS.</p>
 <div class="callout">The WeirdBrains public relay is <code>relay.net.weirdbrains.com</code>
-<span class="tag new">coming online</span>. See <a href="/relay#public">Run a relay</a> for its address.</div>
+<span class="tag shipped">live</span>: <a href="https://relay.net.weirdbrains.com/">its info page</a>. See
+<a href="/relay#public">Run a relay</a> for its addresses.</div>
 
 <h2 id="next">Being built now <span class="tag wip">in progress</span></h2>
 <p>These pieces are being built into Weirdnet now, following the design in Morph’s architecture:</p>
