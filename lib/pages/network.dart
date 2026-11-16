@@ -190,8 +190,21 @@ routers: relay reservations, hole punching from a relayed stream to a direct one
 QUIC, mDNS and AutoNAT.</li>
 <li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.1.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
 without a restart, and renewal by the CA's renewal window with backoff.</li>
-<li><b>Push wake-up</b>, <b>update announcements</b>, <b>access policy</b> (<code>weirdnet-access</code>), <b>device linking</b>
-and <b>URL schemes</b> as their own crates.</li>
+<li><b>Sealed streams</b> <span class="tag wip">in progress</span> (in <code>weirdnet-net</code>, not released yet): byte
+streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
+<li><b>Access policy</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-access">weirdnet-access</a>, not released yet): private or
+public and open or members-only as separate settings, a shared permission core apps extend, ranked roles, and the order
+every request is checked in.</li>
+<li><b>Push wake-up</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-push">weirdnet-push</a>, not released yet): sealed wake
+payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
+<li><b>URL schemes</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-schemes">weirdnet-schemes</a> and <a href="https://github.com/WeirdBrains/weirdnetctl">weirdnetctl</a>, not
+released yet): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
+never hands a link to an unknown app without asking.</li>
+<li><b>Device linking</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-device-link">weirdnet-device-link</a>, not released yet).</li>
+<li><b>Sandboxed extensions</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-ext">weirdnet-ext</a>, not released yet): extensions
+run out of process with no network or files beyond what the user grants (Landlock and seccomp on Linux, the sandbox on
+macOS).</li>
+<li><b>Update announcements</b> and the relay’s push wake-up path, still to come.</li>
 </ul>
 
 <h2 id="security">Security boundaries</h2>
