@@ -205,6 +205,7 @@ run out of process with no network or files beyond what the user grants (Landloc
 macOS).</li>
 <li><b>Relay wake-up path</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-relay">weirdnet-relay 0.3.0</a>): phones without APNs or FCM keep a stream open to their home relay, and trusted peers or a push service wake them with sealed, fixed-size payloads the relay can't read.</li>
 <li><b>Update announcements</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-update">weirdnet-update 0.2.0</a>, carried by weirdnet-relay 0.4.0): signed news of an update, carried by relays for the orgs they trust and checked by every device against its own root before it fetches anything.</li>
+<li><b>Dynamic DNS for your own relay</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-relay">weirdnet-relay 0.5.0</a>): through Grindvakt, a self-hosted relay keeps its name and <code>_dnsaddr</code> records pointed at its public address on DigitalOcean or DNSimple, never deleting a record and changing nothing when the zone is ambiguous.</li>
 </ul>
 
 <h2 id="security">Security boundaries</h2>

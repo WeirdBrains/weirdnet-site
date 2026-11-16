@@ -3,7 +3,7 @@ name: Pages
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

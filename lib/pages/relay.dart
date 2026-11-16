@@ -110,7 +110,7 @@ no capabilities.</p>
 <ul>
 <li>Open TCP and UDP 4747 (TCP and QUIC).</li>
 <li>Set <code>external</code> to the addresses people reach you at; a relay only announces routable ones.</li>
-<li>Self-hosted relays need a domain that follows the machine: tie one to it with Grindvakt dynamic DNS.</li>
+<li>Self-hosted relays need a domain that follows the machine. From 0.5.0 the relay keeps it current itself through Grindvakt: set <code>[ddns]</code> (DigitalOcean or DNSimple, the token in the <code>dns-token</code> credential) and check with <code>weirdnet-relay ddns</code>.</li>
 <li>The info page listens on localhost; put it behind your web server with TLS to publish it.</li>
 </ul>
 
