@@ -1,0 +1,53 @@
+# Build the Jaspr site and deploy it to GitHub Pages (net.weirdbrains.com) from main.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.14.0"
+      - name: Activate jaspr CLI
+        run: dart pub global activate jaspr_cli 0.24.0-beta.1
+      - run: dart pub get
+      - run: dart analyze
+      - name: Build the static site
+        run: jaspr build --sitemap-domain https://net.weirdbrains.com
+      - name: Check the output
+        run: |
+          test -f build/jaspr/index.html
+          test -f build/jaspr/network/index.html
+          grep -qx 'net.weirdbrains.com' build/jaspr/CNAME
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          path: build/jaspr
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
