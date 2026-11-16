@@ -178,6 +178,16 @@ passthrough: TLS ends at the host, the ingress never holds a key, each name need
 The relay forwards after that release.</li>
 <li><b>Names in DNS</b> <span class="tag shipped">shipped</span> (weirdnet-net main, in the next release):
 <code>dnsaddr_record</code> builds the <code>_dnsaddr</code> TXT record a node is dialed by.</li>
+<li><b>Content transfer</b> <span class="tag shipped">shipped</span> (weirdnet-net main, in the next release): files in
+content-defined chunks addressed by BLAKE3, signed manifests, fetching from one or several peers with every chunk checked,
+only the changed chunks for a new version, byte ranges, resuming after an interruption, and DHT provider records for
+public content.</li>
+<li><b>Membership and requests to join</b> <span class="tag shipped">shipped</span> (weirdnet-net main, in the next release):
+memberships with a role, signed by the owner, and their revocations; presenting one on a stream, checked against the
+sending node; signed requests to join with approvals, denials, rate limits and a host queue.</li>
+<li><b>Tested on real networks</b> <span class="tag shipped">shipped</span>: CI runs nodes in network namespaces behind NAT
+routers: relay reservations, hole punching from a relayed stream to a direct one, a symmetric NAT staying on the relay,
+QUIC, mDNS and AutoNAT.</li>
 <li><b>Push wake-up</b>, <b>update announcements</b>, <b>access policy</b> (<code>weirdnet-access</code>), <b>device linking</b>,
 <b>TLS certificates</b> and <b>URL schemes</b> as their own crates.</li>
 </ul>
