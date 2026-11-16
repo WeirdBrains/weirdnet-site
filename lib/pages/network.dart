@@ -188,8 +188,7 @@ sending node; signed requests to join with approvals, denials, rate limits and a
 <li><b>Tested on real networks</b> <span class="tag shipped">shipped</span>: CI runs nodes in network namespaces behind NAT
 routers: relay reservations, hole punching from a relayed stream to a direct one, a symmetric NAT staying on the relay,
 QUIC, mDNS and AutoNAT.</li>
-<li><b>TLS certificates</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-tls">weirdnet-tls</a>,
-not released yet): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
+<li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.1.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
 without a restart, and renewal by the CA's renewal window with backoff.</li>
 <li><b>Push wake-up</b>, <b>update announcements</b>, <b>access policy</b> (<code>weirdnet-access</code>), <b>device linking</b>
 and <b>URL schemes</b> as their own crates.</li>
