@@ -16,3 +16,6 @@ const relayRepoUrl = 'https://github.com/WeirdBrains/weirdnet-relay';
 String repoUrl(String crate) => 'https://github.com/WeirdBrains/$crate';
 String cratesIoUrl(String crate) => 'https://crates.io/crates/$crate';
 String docsRsUrl(String crate) => 'https://docs.rs/$crate';
+
+/// The WeirdBrains public relay's info page.
+const publicRelayUrl = 'https://relay.net.weirdbrains.com/';

@@ -28,6 +28,16 @@ class Layout extends StatelessComponent {
             for (final (href, label) in _nav)
               a(href: href, classes: active == href ? 'active' : null, [Component.text(label)]),
             a(
+              href: publicRelayUrl,
+              classes: 'nav-relay',
+              target: Target.blank,
+              attributes: {'rel': 'noopener noreferrer', 'title': 'The WeirdBrains public relay (live)'},
+              [
+                span(classes: 'live-dot', attributes: {'aria-hidden': 'true'}, []),
+                Component.text('Public relay'),
+              ],
+            ),
+            a(
               href: orgUrl,
               target: Target.blank,
               attributes: {'rel': 'noopener noreferrer'},
