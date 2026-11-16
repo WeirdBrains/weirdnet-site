@@ -158,7 +158,7 @@ weirdnet-relay runs with no circuit time or data caps and no rate limiters by de
 plus the home relay, chained to the user key by the node certificate) registered with the home relay’s names server
 (<code>/weirdnet/names/1</code>) and put in the DHT only while a site is hosted, with signed withdrawal tombstones; every
 storing node checks signatures, certificates, expiry and <code>seq</code>. Apps push records to trusted peers themselves.
-Encrypted, daily-blinded locator records for private sites are still to come.</li>
+Encrypted, daily-blinded locator records for private sites ship in weirdnet-net 0.4.0.</li>
 <li><b>Key-only dialing</b> <span class="tag shipped">shipped</span>: <code>request_key</code> reaches a peer by its peer id
 (the DHT, then circuits through shared relays), and <code>request_user</code> by user id through its record.</li>
 <li><b>Streams and path switching</b> <span class="tag shipped">shipped</span> (weirdnet-net 0.3.0): byte
@@ -190,21 +190,20 @@ routers: relay reservations, hole punching from a relayed stream to a direct one
 QUIC, mDNS and AutoNAT.</li>
 <li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.1.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
 without a restart, and renewal by the CA's renewal window with backoff.</li>
-<li><b>Sealed streams</b> <span class="tag wip">in progress</span> (in <code>weirdnet-net</code>, not released yet): byte
+<li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.4.0</a>): byte
 streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
-<li><b>Access policy</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-access">weirdnet-access</a>, not released yet): private or
+<li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-access">weirdnet-access 0.1.0</a>): private or
 public and open or members-only as separate settings, a shared permission core apps extend, ranked roles, and the order
-every request is checked in.</li>
-<li><b>Push wake-up</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-push">weirdnet-push</a>, not released yet): sealed wake
+every request is checked in. A private resource is seen only by its owner and trusted users; members must be trusted too.</li>
+<li><b>Push wake-up</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-push">weirdnet-push 0.1.0</a>): sealed wake
 payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
-<li><b>URL schemes</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-schemes">weirdnet-schemes</a> and <a href="https://github.com/WeirdBrains/weirdnetctl">weirdnetctl</a>, not
-released yet): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
+<li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-schemes">weirdnet-schemes 0.1.0</a> and <a href="https://crates.io/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
 never hands a link to an unknown app without asking.</li>
-<li><b>Device linking</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-device-link">weirdnet-device-link</a>, not released yet).</li>
-<li><b>Sandboxed extensions</b> <span class="tag wip">in progress</span> (<a href="https://github.com/WeirdBrains/weirdnet-ext">weirdnet-ext</a>, not released yet): extensions
+<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-device-link">weirdnet-device-link 0.1.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
+<li><b>Sandboxed extensions</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-ext">weirdnet-ext 0.1.0</a>, with weirdnet-ext-proto and weirdnet-ext-sdk): extensions
 run out of process with no network or files beyond what the user grants (Landlock and seccomp on Linux, the sandbox on
 macOS).</li>
-<li><b>Update announcements</b> and the relay’s push wake-up path, still to come.</li>
+<li><b>Update announcements</b> and the relay’s push wake-up path <span class="tag wip">in progress</span>.</li>
 </ul>
 
 <h2 id="security">Security boundaries</h2>
