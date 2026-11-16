@@ -1,6 +1,7 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../components/layout.dart';
 import '../content/crates.dart';
 import '../site.dart';
 
@@ -63,7 +64,7 @@ class CratePage extends StatelessComponent {
           p(attributes: {'style': 'margin-top:1.4rem'}, [Component.text('Other crates')]),
           for (final o in crates.where((c) => c.slug != k.slug)) a(href: '/crates/${o.slug}', [Component.text(o.name)]),
         ]),
-        article(classes: 'prose', [RawText(body.toString())]),
+        article(classes: 'prose', [RawText(keepPre(body.toString()))]),
       ]),
     ]);
   }

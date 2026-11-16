@@ -74,6 +74,13 @@ Component docBody(List<(String, String)> toc, String html) {
       p([Component.text('On this page')]),
       for (final (id, label) in toc) a(href: '#$id', [Component.text(label)]),
     ]),
-    article(classes: 'prose', [RawText(html)]),
+    article(classes: 'prose', [RawText(keepPre(html))]),
   ]);
 }
+
+/// The static renderer indents every line of raw HTML, which shows inside `<pre>`; line
+/// breaks there become `&#10;` so code blocks keep their own indentation.
+String keepPre(String html) => html.replaceAllMapped(
+  RegExp(r'<pre>[\s\S]*?</pre>'),
+  (m) => m[0]!.replaceAll('\n', '&#10;'),
+);
