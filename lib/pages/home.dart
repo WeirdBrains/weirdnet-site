@@ -109,14 +109,25 @@ class Home extends StatelessComponent {
             h2([
               span(classes: 'gradient-text', [Component.text('Built on Weirdnet')]),
             ]),
+            p([
+              Component.text(
+                'Each app joins as weirdnet-<app> (Morph as weirdnet-morph, Muninn as weirdnet-muninn) and keeps its own '
+                'protocol ids (/morph/..., /muninn/...), while sharing Weirdnet identities, keys and relays.',
+              ),
+            ]),
+            a(href: '/network#apps', classes: 'more', [Component.text('Apps on Weirdnet →')]),
           ]),
           div(classes: 'grid', [
             _app(
               'Morph',
-              'A distributed web browser with local AI. Identity, device linking and peer sites on Weirdnet.',
+              'weirdnet-morph. A distributed web browser with local AI. Identity, device linking and peer sites on Weirdnet, its own /morph/... protocols.',
               '/morph',
             ),
-            _app('Muninn', 'The data ingestor most of Weirdnet’s crates were extracted from.', repoUrl('muninn')),
+            _app(
+              'Muninn',
+              'weirdnet-muninn. The data ingestor most of Weirdnet’s crates were extracted from. Keeps its /muninn/... protocols and uses Weirdnet relays.',
+              '/morph#muninn',
+            ),
             _app(
               'TAUR',
               'An alternative Arch user repository server, on weirdnet-accounts and weirdnet-mcp.',

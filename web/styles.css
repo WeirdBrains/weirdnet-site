@@ -102,6 +102,8 @@ a.card:hover { border-color: rgba(168, 85, 247, 0.7); box-shadow: 0 0 28px rgba(
 .card p { margin: 0; color: var(--text-muted); font-size: 0.97rem; }
 .card .crate-name { font-family: var(--mono); font-size: 1rem; color: var(--yellow); }
 .card .more { display: inline-block; margin-top: 0.9rem; font-size: 0.9rem; color: var(--purple-soft); }
+.section-head .more { display: inline-block; margin-top: 0.6rem; color: var(--purple-soft); text-decoration: none; }
+.section-head .more:hover { color: var(--yellow); }
 
 .tag { display: inline-block; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 0.1rem 0.6rem; margin-left: 0.4rem; vertical-align: middle; border: 1px solid; }
 .tag.shipped { color: #86efac; border-color: rgba(134, 239, 172, 0.45); }

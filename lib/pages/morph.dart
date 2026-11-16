@@ -14,7 +14,12 @@ class MorphPage extends StatelessComponent {
         title: 'Morph, the Weirdnet browser',
         lede: 'Morph is a distributed web browser with local AI, built on a Rust 2024 core and Weirdnet.',
       ),
-      docBody(const [('what', 'What Morph is'), ('uses', 'How it uses Weirdnet'), ('status', 'Status')], _html),
+      docBody(const [
+        ('what', 'What Morph is'),
+        ('uses', 'How it uses Weirdnet'),
+        ('muninn', 'Alongside Muninn'),
+        ('status', 'Status'),
+      ], _html),
     ]);
   }
 }
@@ -31,11 +36,17 @@ crates.</p>
 (<code>weirdnet-keys</code>), with a node key per device certified by it (<code>weirdnet-net</code>).</li>
 <li><b>Storage</b>: its store is a SQLCipher database through <code>weirdnet-storage</code>.</li>
 <li><b>Device linking</b>: moving an identity to another device over a QR offer, a short-code check and a sealed transfer.</li>
-<li><b>One network</b>: Morph uses the default Weirdnet profile and its own <code>/morph/...</code> protocols, and links on
+<li><b>One network</b>: Morph joins Weirdnet as <code>weirdnet-morph</code>. It uses the default Weirdnet profile and its own <code>/morph/...</code> protocols, and links on
 <code>weirdnet-morph://</code>, such as <code>weirdnet-morph://join/</code> for invitations.</li>
 <li><b>Relays</b>: Morph nodes start with WeirdBrains relays and bootstrap nodes; desktops with a domain can run their own.
 Phones dial out and keep a slot on a home relay.</li>
 </ul>
+<h2 id="muninn">Alongside Muninn</h2>
+<p><a href="https://github.com/WeirdBrains/muninn">Muninn</a>, the data ingestor most Weirdnet crates came from, joins
+Weirdnet the same way, as <code>weirdnet-muninn</code> <span class="tag wip">in progress</span>. Like Morph it keeps its own
+protocol ids (<code>/muninn/...</code>, where Morph has <code>/morph/...</code>) and shares Weirdnet identities, keys and
+relays: Muninn nodes can use <a href="/relay">weirdnet-relay</a>, given the relay’s address. See
+<a href="/network#apps">Apps on Weirdnet</a>.</p>
 <h2 id="status">Status</h2>
 <p>Morph is in alpha. See <a href="$morphSiteUrl">morph.weirdbrains.com</a> and the
 <a href="https://github.com/WeirdBrains/morph">source on GitHub</a>.</p>

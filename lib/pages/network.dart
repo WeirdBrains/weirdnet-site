@@ -19,6 +19,7 @@ class NetworkPage extends StatelessComponent {
       docBody(const [
         ('nodes', 'Nodes'),
         ('profiles', 'Profiles'),
+        ('apps', 'Apps on Weirdnet'),
         ('identities', 'Identities and certificates'),
         ('exchange', 'Offers and invitations'),
         ('automation', 'Invitation automation'),
@@ -64,10 +65,20 @@ prefixes, link schemes, signature domains and derivation labels. <code>WEIRDNET<
 or open under another, and nodes on different protocol ids don’t talk at all. Apps share one network on the default
 profile and keep their own traffic on their own protocol names (Morph uses <code>/morph/...</code>), so a node ignores
 traffic it doesn’t understand. Invitation links use each app’s own scheme, such as <code>weirdnet-morph://join/</code>.</p>
-<div class="callout">Muninn is on Weirdnet as <code>weirdnet-muninn</code> (its app identity and namespace) and keeps its own
-protocol ids (<code>/muninn/...</code>). Circuit relaying, hole punching and AutoNAT use libp2p’s standard protocols, so
-Muninn nodes can reserve slots on any Weirdnet relay, given the relay’s full address; the Kademlia DHT and relay discovery
-stay per protocol id. <span class="tag wip">in progress</span></div>
+<h2 id="apps">Apps on Weirdnet</h2>
+<p>Each app joins Weirdnet under its own name, <code>weirdnet-&lt;app&gt;</code>, and keeps its own protocol ids for its own
+traffic. What the apps share is Weirdnet itself: identities and keys (a user key backed up as 24 words, node keys
+certified by it), the crates, and the relays.</p>
+<table>
+<tr><th>App</th><th>On Weirdnet as</th><th>Its protocol ids</th><th>Relays</th></tr>
+<tr><td><a href="/morph">Morph</a></td><td><code>weirdnet-morph</code> (links on <code>weirdnet-morph://</code>)</td><td><code>/morph/...</code> on the default Weirdnet profile</td><td>Weirdnet relays, found by address or through the DHT</td></tr>
+<tr><td><a href="https://github.com/WeirdBrains/muninn">Muninn</a></td><td><code>weirdnet-muninn</code> <span class="tag wip">in progress</span></td><td><code>/muninn/...</code>, unchanged</td><td>Weirdnet relays, by address</td></tr>
+</table>
+<p>Relaying doesn’t depend on an app’s protocol ids: circuit relay v2, DCUtR hole punching and AutoNAT are libp2p’s
+standard protocols, so a node on any ids can reserve a slot on a <a href="/relay">weirdnet-relay</a> given the relay’s full
+address (<code>…/p2p/&lt;relay peer id&gt;</code>), and be reached through it. weirdnet-relay’s tests run nodes on Muninn’s
+<code>/muninn/...</code> ids through a relay. The Kademlia DHT and relay discovery are per protocol id, so an app on its own
+ids lists its relays by address instead of finding them in the DHT.</p>
 
 <h2 id="identities">Identities and certificates</h2>
 <p>There are two kinds of key. A <b>node key</b> is an Ed25519 keypair per device, made on first use; its public key is
