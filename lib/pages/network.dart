@@ -188,13 +188,13 @@ sending node; signed requests to join with approvals, denials, rate limits and a
 <li><b>Tested on real networks</b> <span class="tag shipped">shipped</span>: CI runs nodes in network namespaces behind NAT
 routers: relay reservations, hole punching from a relayed stream to a direct one, a symmetric NAT staying on the relay,
 QUIC, mDNS and AutoNAT.</li>
-<li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.1.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
-without a restart, and renewal by the CA's renewal window with backoff.</li>
+<li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.2.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
+without a restart, and renewal by the CA's renewal window with backoff. Muninn orders its certificates through it.</li>
 <li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.4.0</a>): byte
 streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
-<li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-access">weirdnet-access 0.1.0</a>): private or
+<li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-access">weirdnet-access 0.1.1</a>): private or
 public and open or members-only as separate settings, a shared permission core apps extend, ranked roles, and the order
-every request is checked in. A private resource is seen only by its owner and trusted users; members must be trusted too.</li>
+every request is checked in. A private resource is seen only by its owner and trusted users; members must be trusted too. Muninn's org roles use its catalog and rank rules.</li>
 <li><b>Push wake-up</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-push">weirdnet-push 0.1.0</a>): sealed wake
 payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
 <li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-schemes">weirdnet-schemes 0.1.0</a> and <a href="https://crates.io/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
