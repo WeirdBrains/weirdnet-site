@@ -171,11 +171,11 @@ an event stream and status watch (connections and their path, listeners, relay r
 lost reservations made again, async calls, and CI builds for Android and iOS.</li>
 <li><b>WebSocket over TLS on 443</b> <span class="tag shipped">shipped</span> (weirdnet-net 0.3.0) for
 networks that block UDP and odd ports: every node dials <code>/tls/ws</code> and <code>/wss</code> addresses, and a node with a
-certificate listens on them. The relay listens on 443 from its next release.</li>
+certificate listens on them. The relay listens on 443 from 0.2.0.</li>
 <li><b>Public HTTPS forwarding</b> <span class="tag shipped">shipped</span> (weirdnet-net 0.3.0) by SNI
 passthrough: TLS ends at the host, the ingress never holds a key, each name needs the owner’s signed grant and a
 <code>_weirdnet</code> DNS binding, port 80 only passes ACME HTTP-01, and forwarding can be revoked per site or turned off.
-The relay forwards from its next release.</li>
+The relay forwards from 0.2.0.</li>
 <li><b>Names in DNS</b> <span class="tag shipped">shipped</span> (weirdnet-net 0.3.0):
 <code>dnsaddr_record</code> builds the <code>_dnsaddr</code> TXT record a node is dialed by.</li>
 <li><b>Content transfer</b> <span class="tag shipped">shipped</span> (weirdnet-net 0.3.0): files in
