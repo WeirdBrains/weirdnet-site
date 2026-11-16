@@ -74,7 +74,6 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
   Crate(
     slug: 'relay',
     group: 'Network',
-    status: Status.fresh,
     tagline: 'A relay and bootstrap node you can run: circuit relay v2, Kademlia server, an info page.',
     about: [
       'A small daemon on <code>weirdnet-net</code> with <code>relay_server</code> on. Phones and other nodes behind NAT reserve a slot and become reachable at <code>…/p2p/RELAY/p2p-circuit/p2p/PEER</code>; DCUtR tries a direct path first and the circuit is the fallback.',

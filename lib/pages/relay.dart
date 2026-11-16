@@ -32,7 +32,7 @@ class RelayPage extends StatelessComponent {
 
 final _html =
     '''
-<div class="callout warn">weirdnet-relay is new and being finished. Commands and settings below are those of version 0.1.</div>
+<div class="callout">weirdnet-relay 0.1 is out: <a href="https://github.com/WeirdBrains/weirdnet-relay">github.com/WeirdBrains/weirdnet-relay</a>. Commands and settings below are those of version 0.1.</div>
 <h2 id="what">What a relay does</h2>
 <ul>
 <li><b>Circuit relay v2</b>: nodes behind NAT reserve a slot and are reachable through <code>…/p2p/RELAY/p2p-circuit/p2p/NODE</code>.
@@ -73,15 +73,17 @@ port = 4747
 external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
 bootstrap = []
 
-[limits]            # no caps unless you set them
+[limits]
+preset = "unlimited"  # the default: no caps, no rate limiters; "libp2p" for libp2p's
 # max_circuit_duration_secs = 3600
-# max_circuit_bytes = 0
+# max_circuit_bytes = 0  # 0: no limit
 
 [http]
 listen = "127.0.0.1:4780"</code></pre>
 <p>Every setting also has a flag and a <code>WEIRDNET_RELAY_*</code> environment variable; flags win over the environment,
-which wins over the file. <code>weirdnet-relay check-config</code> validates a file and <code>weirdnet-relay id</code>
-prints the peer id.</p>
+which wins over the file. <code>weirdnet-relay check-config</code> validates a file and opens the database,
+<code>weirdnet-relay id</code> prints the peer id, and <code>weirdnet-relay info</code> prints the info document.
+The full example is <a href="https://github.com/WeirdBrains/weirdnet-relay/blob/main/examples/relay.toml">examples/relay.toml</a>.</p>
 
 <h2 id="systemd">Run it with systemd</h2>
 <pre><code>sudo systemctl daemon-reload
@@ -100,7 +102,8 @@ no capabilities.</p>
 </ul>
 
 <h2 id="info">The info page</h2>
-<p><code>GET /</code> is a page for people. <code>GET /.well-known/weirdnet-relay.json</code> is for apps:</p>
+<p><code>GET /</code> is a page for people. <code>GET /.well-known/weirdnet-relay.json</code> is for apps (CORS open),
+<code>GET /healthz</code> is for monitoring, and peers can ask for the same document over <code>/weirdnet/relay/info/1</code>:</p>
 <pre><code>{
   "v": 1,
   "name": "My relay",

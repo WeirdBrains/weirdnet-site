@@ -64,9 +64,10 @@ prefixes, link schemes, signature domains and derivation labels. <code>WEIRDNET<
 or open under another, and nodes on different protocol ids don’t talk at all. Apps share one network on the default
 profile and keep their own traffic on their own protocol names (Morph uses <code>/morph/...</code>), so a node ignores
 traffic it doesn’t understand. Invitation links use each app’s own scheme, such as <code>weirdnet-morph://join/</code>.</p>
-<div class="callout">Muninn shipped on its own profile (<code>/muninn/...</code>, port 4741) and is moving onto Weirdnet as
-<code>weirdnet-muninn</code>: its links use <code>weirdnet-muninn://</code>, and it shares the <code>/weirdnet/...</code> base
-protocols, port 4747, the DHT and the same relays as Morph. <span class="tag wip">in progress</span></div>
+<div class="callout">Muninn is on Weirdnet as <code>weirdnet-muninn</code> (its app identity and namespace) and keeps its own
+protocol ids (<code>/muninn/...</code>). Circuit relaying, hole punching and AutoNAT use libp2p’s standard protocols, so
+Muninn nodes can reserve slots on any Weirdnet relay, given the relay’s full address; the Kademlia DHT and relay discovery
+stay per protocol id. <span class="tag wip">in progress</span></div>
 
 <h2 id="identities">Identities and certificates</h2>
 <p>There are two kinds of key. A <b>node key</b> is an Ed25519 keypair per device, made on first use; its public key is
@@ -136,8 +137,9 @@ running your own is optional and needs a domain tied to the machine through Grin
 <h2 id="next">Being built now <span class="tag wip">in progress</span></h2>
 <p>These pieces are being built into Weirdnet now, following the design in Morph’s architecture:</p>
 <ul>
-<li><b>Data-carrying relays</b>: relay limits become configurable in <code>weirdnet-net</code> (<code>RelayLimits</code>), and
-weirdnet-relay runs with no circuit time or data caps by default.</li>
+<li><b>Data-carrying relays</b> <span class="tag shipped">shipped</span>: relay limits are configurable in <code>weirdnet-net</code>
+(<code>NodeConfig::relay_limits</code>, <code>RelayLimits::unlimited()</code>; the library default stays libp2p’s), and
+weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>
 <li><b>Names and rendezvous</b>: signed, versioned peer records (current addresses plus the home relay) pushed to trusted
 peers, registered at the home relay’s rendezvous point, and put in the DHT only while a site is hosted, with signed
 withdrawal tombstones.</li>
