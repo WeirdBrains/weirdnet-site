@@ -144,6 +144,8 @@ that always works, as long as the device can make one outbound connection.</p>
 $relayDiagram
 <p>Anyone can run a relay with <a href="/relay">weirdnet-relay</a>. WeirdBrains runs public relays and bootstrap nodes;
 running your own is optional and needs a domain tied to the machine through Grindvakt dynamic DNS.</p>
+<div class="callout">The WeirdBrains public relay is <code>relay.net.weirdbrains.com</code>
+<span class="tag new">coming online</span>. See <a href="/relay#public">Run a relay</a> for its address.</div>
 
 <h2 id="next">Being built now <span class="tag wip">in progress</span></h2>
 <p>These pieces are being built into Weirdnet now, following the design in Morph’s architecture:</p>
@@ -151,10 +153,13 @@ running your own is optional and needs a domain tied to the machine through Grin
 <li><b>Data-carrying relays</b> <span class="tag shipped">shipped</span>: relay limits are configurable in <code>weirdnet-net</code>
 (<code>NodeConfig::relay_limits</code>, <code>RelayLimits::unlimited()</code>; the library default stays libp2p’s), and
 weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>
-<li><b>Names and rendezvous</b>: signed, versioned peer records (current addresses plus the home relay) pushed to trusted
-peers, registered at the home relay’s rendezvous point, and put in the DHT only while a site is hosted, with signed
-withdrawal tombstones.</li>
-<li><b>Key-only dialing</b>: dial a peer id and let the node resolve where it is.</li>
+<li><b>Names and rendezvous</b> <span class="tag shipped">shipped</span>: signed, versioned peer records (current addresses
+plus the home relay, chained to the user key by the node certificate) registered with the home relay’s names server
+(<code>/weirdnet/names/1</code>) and put in the DHT only while a site is hosted, with signed withdrawal tombstones; every
+storing node checks signatures, certificates, expiry and <code>seq</code>. Apps push records to trusted peers themselves.
+Encrypted, daily-blinded locator records for private sites are still to come.</li>
+<li><b>Key-only dialing</b> <span class="tag shipped">shipped</span>: <code>request_key</code> reaches a peer by its peer id
+(the DHT, then circuits through shared relays), and <code>request_user</code> by user id through its record.</li>
 <li><b>Path switching</b>: app streams that survive moving between the relay and a direct path.</li>
 <li><b>WebSocket over TLS on 443</b> for networks that block UDP and odd ports.</li>
 <li><b>Public HTTPS forwarding</b> by SNI passthrough: TLS ends at the host, the relay never holds a key, each name needs the

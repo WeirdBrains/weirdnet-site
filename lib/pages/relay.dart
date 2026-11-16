@@ -18,6 +18,7 @@ class RelayPage extends StatelessComponent {
       ),
       docBody(const [
         ('what', 'What a relay does'),
+        ('public', 'The WeirdBrains public relay'),
         ('build', 'Build and install'),
         ('key', 'The database key'),
         ('config', 'Configure'),
@@ -40,9 +41,21 @@ Circuits have no time or data cap unless you set one.</li>
 <li><b>Hole punching</b>: peers that meet through the relay try DCUtR for a direct connection; the circuit is the fallback.</li>
 <li><b>Bootstrap and DHT</b>: Kademlia in server mode, and the <code>/weirdnet/relay/1</code> provider record so nodes find it.</li>
 <li><b>AutoNAT</b>: answers the probes nodes use to learn whether they are reachable.</li>
+<li><b>Names server</b>: devices register signed peer records with their home relay (<code>/weirdnet/names/1</code>) and others
+look them up by user id. Records are checked and kept in the relay’s encrypted database until they expire.</li>
 <li><b>Info page</b>: HTML and JSON with its name, peer id and addresses.</li>
 </ul>
 $relayDiagram
+
+<h2 id="public">The WeirdBrains public relay</h2>
+<p>WeirdBrains runs public relays. The first is <code>relay.net.weirdbrains.com</code>
+<span class="tag new">coming online</span>: its DNS name is live and the relay is being deployed. Once it answers, use it
+as a bootstrap node and relay:</p>
+<pre><code>/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/&lt;RELAY_PEER_ID&gt;
+/dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/&lt;RELAY_PEER_ID&gt;</code></pre>
+<p><code>&lt;RELAY_PEER_ID&gt;</code> is a placeholder until the relay has made its key; its info page at
+<code>https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json</code> will list the real addresses. How it is
+installed is in <a href="https://github.com/WeirdBrains/weirdnet-relay/blob/main/DEPLOY.md">DEPLOY.md</a>.</p>
 
 <h2 id="build">Build and install</h2>
 <pre><code>git clone https://github.com/WeirdBrains/weirdnet-relay
@@ -71,7 +84,7 @@ contact = "abuse@example.com"
 [network]
 port = 4747
 external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
-bootstrap = []
+bootstrap = []   # e.g. "/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/&lt;RELAY_PEER_ID&gt;" once it is online
 
 [limits]
 preset = "unlimited"  # the default: no caps, no rate limiters; "libp2p" for libp2p's
@@ -120,6 +133,6 @@ no capabilities.</p>
 
 <h2 id="apps">Adding a relay to an app</h2>
 <p>Give the full address, with <code>/p2p/&lt;peer id&gt;</code>, to the node’s <code>relays</code> and <code>bootstrap</code>
-settings. Morph and other Weirdnet apps can read the JSON above to fill them in; nodes behind NAT also find relays by
+settings (the WeirdBrains relay’s, above, once it is online). Morph and other Weirdnet apps can read the JSON above to fill them in; nodes behind NAT also find relays by
 themselves through the DHT.</p>
 ''';
