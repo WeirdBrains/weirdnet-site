@@ -161,7 +161,10 @@ storing node checks signatures, certificates, expiry and <code>seq</code>. Apps 
 Encrypted, daily-blinded locator records for private sites are still to come.</li>
 <li><b>Key-only dialing</b> <span class="tag shipped">shipped</span>: <code>request_key</code> reaches a peer by its peer id
 (the DHT, then circuits through shared relays), and <code>request_user</code> by user id through its record.</li>
-<li><b>Path switching</b>: app streams that survive moving between the relay and a direct path.</li>
+<li><b>Streams and path switching</b> <span class="tag shipped">shipped</span> (weirdnet-net main, in the next release): byte
+streams with no size cap and backpressure on each app’s own protocol ids (<code>Node::accept_streams</code>,
+<code>Node::open_stream</code>), several apps on one node. A stream moves from the relay to a direct connection when one comes
+up and back to the relay if it drops, without losing or repeating a byte.</li>
 <li><b>WebSocket over TLS on 443</b> for networks that block UDP and odd ports.</li>
 <li><b>Public HTTPS forwarding</b> by SNI passthrough: TLS ends at the host, the relay never holds a key, each name needs the
 owner’s signed grant, and forwarding can be revoked per site.</li>
