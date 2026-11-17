@@ -43,7 +43,7 @@ const crates = <Crate>[
   Crate(
     slug: 'net',
     group: 'Network',
-    tagline: 'The libp2p node, key exchanges, invitations, sealed messaging, identities and certificates.',
+    tagline: 'The libp2p node, streams, app calls, key exchanges, invitations, sealed messaging, identities and certificates.',
     about: [
       'Peer-to-peer networking for applications that keep their own data. The application brings its own request and response types, its own storage and its own policy; the crate brings the wire.',
       'Every identifier on the wire or under a signature comes from a <code>Profile</code>. <code>WEIRDNET</code> is the default (<code>/weirdnet/net/1</code>, <code>wnet-x1-offer:</code>, port 4747 and so on). Key cryptography is not here: every derivation, seal and open goes through <code>weirdnet-keys</code>.',
@@ -51,6 +51,8 @@ const crates = <Crate>[
     parts: [
       '<code>node</code>: a <code>Node&lt;Q, R&gt;</code> over TCP and QUIC (or an in-memory transport for tests) with Noise and Yamux, mDNS, Kademlia, identify, ping, a relay client and an opt-in relay server, DCUtR hole punching and AutoNAT. The swarm runs on its own thread; the handle is blocking. Requests are the application’s <code>Q</code>, answers its <code>R</code> (CBOR).',
       '<code>names</code>: signed peer records and withdrawals, a names (rendezvous) server, checked DHT records under <code>SHA-256("weirdnet/peer/" + user id)</code>, <code>_weirdnet.&lt;name&gt;</code> TXT bindings, and key-only dialing (<code>request_key</code>, <code>request_user</code>).',
+      '<code>app</code>: app calls for <code>weirdnet-&lt;app&gt;://</code> URLs. <code>Node::serve_app</code> serves an app (and announces it through identify), <code>Node::resolve_app</code> finds the peers serving it for a peer id, user id or bound name, and <code>Node::app_call</code> sends an HTTP-like request with a streamed body and gets a streamed response, directly or through relays. One stream per call on <code>/weirdnet/app/1</code> with CBOR heads; heads capped at 16 KiB, bodies uncapped, a 60-second idle timeout.',
+      '<code>stream</code>: byte streams with no size cap, backpressure and per-protocol limits, moving between relayed and direct paths without losing a byte; sealed streams bound to an exchange.',
       '<code>exchange</code>: signed offers and answers (Ed25519 node keys, fresh X25519 keys), the derived exchange key, a ten-digit short code and a fingerprint to compare out of band, tokens and links, scopes with an expiry, sealed messages bound to the exchange and direction.',
       '<code>sealed</code>: send a sealed request through the application’s envelope and open the answer (<code>call</code>), and answer one only for the exchange’s own, Noise-authenticated peer (<code>serve</code>).',
       '<code>invite</code>: invitation automation: connect, offers answered on the spot or kept for the owner, poll and settle, crossing offers settled on one exchange, trust on first use and impostor warnings.',

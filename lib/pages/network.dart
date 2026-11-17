@@ -79,6 +79,19 @@ standard protocols, so a node on any ids can reserve a slot on a <a href="/relay
 address (<code>…/p2p/&lt;relay peer id&gt;</code>), and be reached through it. weirdnet-relay’s tests run nodes on Muninn’s
 <code>/muninn/...</code> ids through a relay. The Kademlia DHT and relay discovery are per protocol id, so an app on its own
 ids lists its relays by address instead of finding them in the DHT.</p>
+<h3 id="app-calls">App calls</h3>
+<p>A <code>weirdnet-&lt;app&gt;://</code> URL names an app and a person (or a node), and an app call carries an HTTP-like
+request to the node that serves it. A node serves an app with <code>Node::serve_app</code> and tells peers which apps it
+serves through identify. A caller resolves the URL’s locator (a peer id, a user id, or a name bound by
+<code>_weirdnet.&lt;name&gt;</code> TXT) to that user’s record on the names servers or in the DHT, keeps the peers that
+serve the app, and calls one with <code>Node::app_call</code>. The call goes directly or by hole punching first, then
+through the relay circuits in the record.</p>
+<p>Each call is one libp2p stream on <code>/weirdnet/app/1</code>. A CBOR head <code>{v, app, method, path, headers}</code> comes first,
+prefixed with its unsigned-varint length. The body follows as varint-length frames that end with an empty one. The answer
+is a CBOR <code>{v, status, headers}</code> head, or <code>{v, error, message}</code>, followed by its own frames. Bodies stream both
+ways with no size cap. Heads are capped at 16 KiB, and a call that goes 60 seconds without a byte ends. Dropping a call
+resets its stream, which stops the server’s handler. Relays only forward the bytes, within their circuit limits. A node
+that serves an app keeps its relay reservations, even in the background.</p>
 
 <h2 id="identities">Identities and certificates</h2>
 <p>There are two kinds of key. A <b>node key</b> is an Ed25519 keypair per device, made on first use; its public key is
@@ -192,6 +205,9 @@ QUIC, mDNS and AutoNAT.</li>
 without a restart, and renewal by the CA's renewal window with backoff. Muninn orders its certificates through it.</li>
 <li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.4.0</a>): byte
 streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
+<li><b>App calls</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.5.0</a>): HTTP-like
+requests with streamed bodies to the node that serves an app, for <code>weirdnet-&lt;app&gt;://</code> URLs, found by peer id,
+user id or name and reached directly or through relays (<a href="#app-calls">how</a>).</li>
 <li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-access">weirdnet-access 0.1.1</a>): private or
 public and open or members-only as separate settings, a shared permission core apps extend, ranked roles, and the order
 every request is checked in. A private resource is seen only by its owner and trusted users; members must be trusted too. Muninn's org roles use its catalog and rank rules.</li>
