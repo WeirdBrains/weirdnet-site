@@ -199,6 +199,37 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
     origin: 'TAUR',
   ),
   Crate(
+    slug: 'agent',
+    status: Status.fresh,
+    tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
+    about: [
+      'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
+      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Inference (<code>weirdnet-model</code>), MCP client transports (<code>weirdnet-mcp</code>) and remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
+    ],
+    parts: [
+      '<code>AgentSession::run</code>: one task. Calls the <code>ModelBackend</code>, checks each tool call against the <code>Policy</code>, asks the app’s <code>Approver</code> when needed, charges the budget, runs the tool with a timeout and a <code>CancelToken</code>, and streams <code>AgentEvent</code>s: text, approvals, skipped-approval notices, tool start and finish, trace steps.',
+      '<code>Tool</code>, <code>ToolSource</code>, <code>ToolRegistry</code>: in-process tools now, MCP servers and remote nodes as further sources. Per-source and per-tool switches; a tier override can only make a tool stricter.',
+      '<code>Policy</code>: tiers <code>Read</code> (attached content), <code>Navigate</code>, <code>Research</code>, <code>Interact</code> and <code>Never</code>; per-agent, per-site <code>Off</code>, <code>Ask</code> and <code>Act</code>; approvals for once or for the task; revocable “Always allow” for navigate (a site or everywhere) and research (optionally one provider), for one agent or all. Off always wins, signed-in research is never covered by Always allow, and an all-agents allow covers an outside agent only after its first approval.',
+      '<code>Budget</code>: searches, pages (with extensions), concurrency, per-page and per-task time, tokens kept per page, model steps. Defaults: 3 searches, 12 pages (+5), 2 at a time, 15 s a page, 90 s a task.',
+      '<code>Trace</code>, <code>Citation</code>: every search, fetch, tool call, approval and notice is a step with its agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps fetched; a citation without a step is never shown.',
+      'Serde on everything that is stored or synced. The <code>testing</code> feature has a scripted model, approver and closure tools.',
+    ],
+    usedBy: ['Morph (Companions, in progress)'],
+    dependsOn: [],
+    example: '''use std::sync::Arc;
+use weirdnet_agent::{AgentConfig, AgentIdentity, AgentKind, AgentSession, CancelToken, LocalTools, Policy, ToolRegistry};
+
+let atlas = AgentIdentity::new("atlas", "Atlas", AgentKind::Local);
+let mut tools = ToolRegistry::new();
+tools.add_source(Arc::new(LocalTools::new("browser").with(navigate_tool)));
+tools.refresh().await?;
+let mut session = AgentSession::new(AgentConfig::new(atlas), model, Arc::new(tools), Policy::new().shared(), approver);
+let (events, _rx) = tokio::sync::mpsc::unbounded_channel();
+let outcome = session.run("find docs on tokio cancellation", Some(events), CancelToken::new()).await;
+println!("{} ({} steps)", outcome.text, outcome.trace.steps.len());''',
+    notes: 'New and not yet released: version 0.1.0 is on GitHub, not crates.io. The API may change while Morph’s Companions are built on it.',
+  ),
+  Crate(
     slug: 'plugin',
     tagline: 'The plugin SDK: the stable C ABI (v2), host API, frames and result views.',
     about: [
