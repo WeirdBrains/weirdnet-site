@@ -203,7 +203,7 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
-      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Inference (<code>weirdnet-model</code>), MCP client transports (<code>weirdnet-mcp</code>) and remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
+      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait; MCP client transports (<code>weirdnet-mcp</code>) and remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
     ],
     parts: [
       '<code>AgentSession::run</code>: one task. Calls the <code>ModelBackend</code>, checks each tool call against the <code>Policy</code>, asks the app’s <code>Approver</code> when needed, charges the budget, runs the tool with a timeout and a <code>CancelToken</code>, and streams <code>AgentEvent</code>s: text, approvals, skipped-approval notices, tool start and finish, trace steps.',
@@ -227,6 +227,34 @@ let (events, _rx) = tokio::sync::mpsc::unbounded_channel();
 let outcome = session.run("find docs on tokio cancellation", Some(events), CancelToken::new()).await;
 println!("{} ({} steps)", outcome.text, outcome.trace.steps.len());''',
     notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
+  ),
+  Crate(
+    slug: 'model',
+    tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, and streaming llama.cpp inference on a worker thread with cancel.',
+    about: [
+      'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
+      'llama.cpp and the agent backend are optional features, so a build that only needs downloads and the catalog has no native dependencies.',
+    ],
+    parts: [
+      '<code>catalog</code>: Gemma 4 E2B (about 2.8 GB, for phones and small laptops) and E4B (about 4.6 GB, for desktop) as Q4_0 GGUFs from <code>ggml-org</code> on Hugging Face, with pinned size and SHA-256. <code>default_for(Device)</code> picks one.',
+      '<code>ModelStore</code>, <code>download</code>: a cache directory (<code>WEIRDNET_MODEL_DIR</code> overrides it), a <code>Consent</code> that must name the model, <code>Progress</code> callbacks, <code>.part</code> resume and a checksum check before the file is kept. Nothing downloads without consent.',
+      '<code>hf</code>: lists a repo’s GGUF files and sizes for a model picker.',
+      '<code>prompt</code>: chat turns rendered through the model’s own chat template, and a streaming parser that turns <code>&lt;tool_call&gt;</code> tags into tool calls.',
+      '<code>Worker</code>, <code>Engine</code>: the engine lives on one thread; <code>generate</code> returns a <code>Generation</code> that streams <code>Chunk</code>s and cancels from any thread. Tests use a mock engine.',
+      '<code>llama</code> feature: <code>LlamaEngine</code> on llama.cpp (CPU; needs cmake and a C++ compiler). <code>vulkan</code> and <code>metal</code> add GPU offload.',
+      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, streaming text to the agent loop and returning parsed tool calls.',
+    ],
+    usedBy: ['Morph (Companions, in progress)'],
+    dependsOn: ['agent'],
+    example: r'''use std::sync::Arc;
+use weirdnet_model::{agent::LocalModel, catalog, llama::{LlamaEngine, LlamaOptions}, ModelStore, Worker};
+
+let spec = catalog::default_for(catalog::Device::Desktop);
+let store = ModelStore::from_env();
+// After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
+let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
+let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only.',
   ),
   Crate(
     slug: 'plugin',
