@@ -40,7 +40,7 @@ crates.</p>
 <code>weirdnet-morph://</code>, such as <code>weirdnet-morph://join/</code> for invitations.</li>
 <li><b>Relays</b>: Morph nodes start with WeirdBrains relays and bootstrap nodes; desktops with a domain can run their own.
 Phones dial out and keep a slot on a home relay.</li>
-<li><b>Companions</b>: Morph’s local AI agents run on <a href="/crates/agent">weirdnet-agent</a>: the agent loop,
+<li><b>Companions</b>: Morph’s local AI agents run on <a href="/crates/agent">weirdnet-agent</a> (0.1.0 on crates.io): the agent loop,
 approvals with per-site grants, research budgets and traces with footnotes. <span class="tag wip">in progress</span></li>
 </ul>
 <h2 id="muninn">Alongside Muninn</h2>

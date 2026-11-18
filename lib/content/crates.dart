@@ -200,7 +200,6 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
   ),
   Crate(
     slug: 'agent',
-    status: Status.fresh,
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
@@ -227,7 +226,7 @@ let mut session = AgentSession::new(AgentConfig::new(atlas), model, Arc::new(too
 let (events, _rx) = tokio::sync::mpsc::unbounded_channel();
 let outcome = session.run("find docs on tokio cancellation", Some(events), CancelToken::new()).await;
 println!("{} ({} steps)", outcome.text, outcome.trace.steps.len());''',
-    notes: 'New and not yet released: version 0.1.0 is on GitHub, not crates.io. The API may change while Morph’s Companions are built on it.',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'plugin',
