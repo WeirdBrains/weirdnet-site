@@ -45,7 +45,7 @@ final overviewDiagram = _svg(
       '<text x="480" y="112" text-anchor="middle" fill="#b8bec7" font-size="13">apps bring their own data, storage, policy and /app/... protocols</text>'
       '${_box(30, 130, 210, 70, 'weirdnet-net', 'node, exchanges, sealed msgs')}${_box(260, 130, 210, 70, 'weirdnet-keys', 'keys, seal, words, shards')}'
       '${_box(490, 130, 210, 70, 'weirdnet-storage', 'SQLCipher, migrations')}${_box(720, 130, 210, 70, 'weirdnet-relay', 'relay + bootstrap')}'
-      '<text x="480" y="232" text-anchor="middle" fill="#b8bec7" font-size="13">plus update, access, accounts, mcp, plugin, code-spaces, pipelines, rules, render, themes</text>'
+      '<text x="480" y="232" text-anchor="middle" fill="#b8bec7" font-size="13">plus sync, push, access, accounts, agent, model, ext, schemes, update and 12 more crates</text>'
       '<rect x="30" y="255" width="900" height="80" rx="12" fill="#00122b" stroke="#00316b" stroke-width="1.6"/>'
       '<text x="480" y="288" text-anchor="middle" fill="#fff" font-size="16" font-weight="650">libp2p 0.57</text>'
       '<text x="480" y="312" text-anchor="middle" fill="#b8bec7" font-size="13">TCP · QUIC · Noise · Yamux · Kademlia · identify · mDNS · AutoNAT · circuit relay v2 · DCUtR</text>',
