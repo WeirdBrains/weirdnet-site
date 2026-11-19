@@ -4,6 +4,7 @@ import 'package:jaspr/jaspr.dart';
 import '../components/diagrams.dart';
 import '../content/crates.dart';
 import '../site.dart';
+import 'crates.dart';
 
 class Home extends StatelessComponent {
   const Home({super.key});
@@ -89,18 +90,13 @@ class Home extends StatelessComponent {
             h2([
               span(classes: 'gradient-text', [Component.text('The pieces')]),
             ]),
-            p([Component.text('Each crate does one job and lives in its own WeirdBrains repository.')]),
+            p([Component.text('Each crate does one job and lives in a WeirdBrains repository. Every one has a guide: how it works, what it brings, and an example.')]),
           ]),
-          div(classes: 'grid', [
-            for (final k in crates)
-              a(href: '/crates/${k.slug}', classes: 'card', [
-                h3([
-                  span(classes: 'crate-name', [Component.text(k.name)]),
-                  if (k.status == Status.fresh) span(classes: 'tag new', [Component.text('new')]),
-                ]),
-                p([Component.text(k.tagline)]),
-              ]),
-          ]),
+          for (final g in groupsInUse()) ...[
+            h3(classes: 'group-head', [Component.text(g)]),
+            div(classes: 'grid', [for (final k in crates.where((c) => c.group == g)) crateCard(k, more: false)]),
+          ],
+          a(href: '/crates#all', classes: 'more', [Component.text('All ${crates.length} crates in one table →')]),
         ]),
       ]),
       section(classes: 'section', [
