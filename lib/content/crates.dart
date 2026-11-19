@@ -205,18 +205,21 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'mcp',
-    version: '0.1.0',
-    tagline: 'A transport-agnostic Model Context Protocol tools server and stdio bridge.',
+    version: '0.2.0',
+    tagline: 'A transport-agnostic Model Context Protocol tools server and stdio bridge, plus an optional MCP client and agent tool source.',
     about: [
       'A stateless MCP tools server extracted from TAUR and shared with Salty Gull. The HTTP route stays in the app’s server.',
+      'Since 0.2.0 it can also be the other side: an MCP client (feature <code>client</code>) and, with feature <code>agent</code>, a <a href="/crates/agent">weirdnet-agent</a> tool source, so an agent can use any MCP server’s tools. Both are off by default, and the server API is unchanged.',
     ],
     parts: [
       '<code>Server::handle</code>: one JSON-RPC 2.0 message or batch plus the caller’s bearer token in, the reply out: <code>initialize</code> with version negotiation, <code>ping</code>, <code>tools/list</code>, <code>tools/call</code>.',
       '<code>ToolSpec</code> / <code>Param</code>: static tool tables with input schemas and read-only, destructive and open-world hints.',
       'The app implements <code>Tools::call</code>; failures become <code>isError</code> results. <code>args</code>: argument getters with uniform messages.',
       '<code>stdio::bridge</code>: the <code>&lt;app&gt;ctl mcp</code> loop that forwards stdio lines to a remote <code>/mcp</code>.',
+      '<code>client</code> feature: <code>Client::connect(transport, ClientOptions)</code>, <code>list_tools</code> (follows cursors), <code>call_tool</code> and <code>call_tool_until</code>; <code>StdioTransport</code> (<code>StdioCommand</code>) and <code>HttpTransport</code> (<code>HttpConfig</code>); <code>Secret</code> for tokens and environment values.',
+      '<code>agent</code> feature: <code>agent::McpSource</code>, a <code>weirdnet_agent::ToolSource</code>, with <code>SourceOptions::tier_floor</code> (default <code>Research</code>).',
     ],
-    usedBy: ['TAUR'],
+    usedBy: ['TAUR', 'Salty Gull (<code>saltyctl mcp</code>)'],
     origin: 'TAUR',
   ),
   Crate(
@@ -225,7 +228,7 @@ const crates = <Crate>[
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
-      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait; MCP client transports (<code>weirdnet-mcp</code>) and remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
+      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.2.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
     ],
     parts: [
       '<code>AgentSession::run</code>: one task. Calls the <code>ModelBackend</code>, checks each tool call against the <code>Policy</code>, asks the app’s <code>Approver</code> when needed, charges the budget, runs the tool with a timeout and a <code>CancelToken</code>, and streams <code>AgentEvent</code>s: text, approvals, skipped-approval notices, tool start and finish, trace steps.',

@@ -355,7 +355,10 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
     brings: r'''
 <p>A Model Context Protocol tools server an app can mount on its own HTTP route, so AI clients can call the app's tools,
 plus the stdio bridge behind <code>&lt;app&gt;ctl mcp</code>. It is stateless and transport-agnostic: the app decodes the request,
-the crate speaks MCP. TAUR uses it from v1.10.0.</p>
+the crate speaks MCP. TAUR uses it from v1.10.0, and Salty Gull for its server and <code>saltyctl mcp</code>.</p>
+<p>From 0.2.0 it also works the other way round: with the <code>client</code> feature an app talks to any MCP server, and with
+<code>agent</code> that server's tools become a tool source for <a href="/crates/agent">weirdnet-agent</a>, under the
+agent's approval policy.</p>
 ''',
     works: r'''
 <ol>
@@ -372,7 +375,31 @@ messages.</li>
 </ol>
 <p><code>stdio::bridge</code> is the loop for a CLI: read JSON-RPC lines on stdin, forward them to the remote
 <code>/mcp</code>, write the replies.</p>
+<h3>The client (0.2.0, feature <code>client</code>)</h3>
+<ol>
+<li><code>Client::connect(transport, ClientOptions)</code> runs <code>initialize</code>; then <code>list_tools</code> follows
+cursors, and <code>call_tool</code> or <code>call_tool_until(name, args, cancel)</code> calls a tool.</li>
+<li>Every request has a timeout. A timeout or a cancel sends <code>notifications/cancelled</code> to the server.</li>
+<li>Transports: <code>StdioTransport</code> (<code>spawn(&amp;StdioCommand)</code> or <code>from_io</code>) for a local command,
+and <code>HttpTransport</code> (<code>HttpConfig</code>) for streamable HTTP: JSON or SSE responses, the
+<code>Mcp-Session-Id</code> and <code>MCP-Protocol-Version</code> headers, and no redirects.</li>
+<li>Local-command servers run with the user's permissions: show <code>StdioCommand::warning()</code> before starting one.
+Environment values and bearer tokens are <code>Secret</code>s, redacted in <code>Debug</code>; keep them in a per-machine
+store, never in synced settings.</li>
+</ol>
+<h3>As an agent tool source (feature <code>agent</code>)</h3>
+<p><code>agent::McpSource</code> implements <code>weirdnet_agent::ToolSource</code>. Tool annotations map to the agent's tiers
+with MCP's defaults (undeclared means not read-only, destructive and open world): destructive is <code>Interact</code>,
+read-only and closed-world <code>Read</code>, read-only and open-world <code>Research</code>, anything else
+<code>Navigate</code>. Each is raised to <code>SourceOptions::tier_floor</code>, which defaults to <code>Research</code>
+because a server's hints are untrusted, so an outside tool never counts as reading only what the user attached. The agent's
+cancel token stops a running call.</p>
 ''',
+    features: [
+      '<code>client</code> (off by default): the MCP client with stdio and streamable HTTP transports, timeouts and cancel, and <code>Secret</code>. Pulls in tokio and reqwest (rustls).',
+      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.1.0</code>).',
+      'Neither is needed for the server API, which is unchanged from 0.1.',
+    ],
   ),
   'agent': Guide(
     brings: r'''
