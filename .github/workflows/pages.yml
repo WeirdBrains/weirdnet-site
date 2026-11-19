@@ -26,6 +26,8 @@ jobs:
         run: dart pub global activate jaspr_cli 0.24.0-beta.1
       - run: dart pub get
       - run: dart analyze
+      - name: Every published weirdnet crate has a page
+        run: python3 tool/check_crates.py
       - name: Build the static site
         run: jaspr build --sitemap-domain https://net.weirdbrains.com
       - name: Check the output
