@@ -241,6 +241,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'model',
+    version: '0.1.0',
     tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
       'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
