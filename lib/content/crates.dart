@@ -88,7 +88,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'relay',
-    version: '0.5.0',
+    version: '0.6.0',
     binary: true,
     group: 'Network',
     tagline: 'A relay and bootstrap node you can run: circuit relay v2, Kademlia server, an info page.',
@@ -100,7 +100,7 @@ const crates = <Crate>[
       'Circuit relay v2 server with configurable limits (unlimited by default).',
       'Kademlia server mode and the <code>/weirdnet/relay/1</code> provider record, so nodes find relays they were not configured with.',
       'Its node key and state in a SQLCipher database (<code>weirdnet-storage</code>), keyed from a systemd credential.',
-      'A names server (<code>/weirdnet/names/1</code>) for signed peer records, kept in the same database.',
+      'A names server (<code>/weirdnet/names/2</code>, weirdnet-net 0.8) for signed peer records, kept in the same database.',
       'An info page: HTML at <code>/</code> and <code>/.well-known/weirdnet-relay.json</code>.',
       'A TOML config file, flags and environment variables; structured logs; a hardened systemd unit.',
     ],
@@ -417,7 +417,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'device-link',
-    version: '0.1.0',
+    version: '0.2.0',
     group: 'Identity and access',
     tagline: 'Move a Weirdnet identity to another device over a QR offer, a 6-digit code check and a sealed transfer.',
     about: [
@@ -427,7 +427,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
       '<code>offer</code>: <code>Offer</code>, <code>VerifiedOffer</code>, <code>encode_link</code>, <code>decode_link</code>, <code>offer_addrs</code>.',
       '<code>invite</code>: the reverse direction, where the existing device shows the QR.',
       '<code>session</code>: <code>Host</code> and <code>Sender</code>, both sides without the network, and <code>make_transfer</code>.',
-      '<code>net</code>: <code>HostNode</code> and <code>Pairing</code> over weirdnet-net on <code>/weirdnet/link/1</code>.',
+      '<code>net</code>: <code>HostNode</code> and <code>Pairing</code> over weirdnet-net on <code>/weirdnet/link/2</code> (and invites on <code>/weirdnet/link-invite/2</code>).',
       '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code> (CBOR).',
     ],
     dependsOn: ['net', 'keys'],

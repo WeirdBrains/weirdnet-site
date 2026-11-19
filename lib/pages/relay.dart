@@ -33,7 +33,7 @@ class RelayPage extends StatelessComponent {
 
 final _html =
     '''
-<div class="callout">weirdnet-relay 0.1 is out: <a href="https://github.com/WeirdBrains/weirdnet-relay">github.com/WeirdBrains/weirdnet-relay</a>. Commands and settings below are those of version 0.1.</div>
+<div class="callout">weirdnet-relay 0.6 is out: <a href="https://github.com/WeirdBrains/weirdnet-relay">github.com/WeirdBrains/weirdnet-relay</a>. It runs weirdnet-net 0.8, so its names server and info request are <code>/2</code> and answer 0.8 nodes only. The commands and settings below work the same in 0.6; later versions add the optional sections in the <a href="/crates/relay">crate guide</a>.</div>
 <h2 id="what">What a relay does</h2>
 <ul>
 <li><b>Circuit relay v2</b>: nodes behind NAT reserve a slot and are reachable through <code>…/p2p/RELAY/p2p-circuit/p2p/NODE</code>.
@@ -41,7 +41,7 @@ Circuits have no time or data cap unless you set one.</li>
 <li><b>Hole punching</b>: peers that meet through the relay try DCUtR for a direct connection; the circuit is the fallback.</li>
 <li><b>Bootstrap and DHT</b>: Kademlia in server mode, and the <code>/weirdnet/relay/1</code> provider record so nodes find it.</li>
 <li><b>AutoNAT</b>: answers the probes nodes use to learn whether they are reachable.</li>
-<li><b>Names server</b>: devices register signed peer records with their home relay (<code>/weirdnet/names/1</code>) and others
+<li><b>Names server</b>: devices register signed peer records with their home relay (<code>/weirdnet/names/2</code>) and others
 look them up by user id. Records are checked and kept in the relay’s encrypted database until they expire.</li>
 <li><b>Info page</b>: HTML and JSON with its name, peer id and addresses.</li>
 </ul>
@@ -60,7 +60,7 @@ installed is in <a href="https://github.com/WeirdBrains/weirdnet-relay/blob/main
 <h2 id="build">Install</h2>
 <p>Each <a href="https://github.com/WeirdBrains/weirdnet-relay/releases">release</a> has a <code>.deb</code> for amd64 and
 arm64 (Debian 12+, Ubuntu 24.04+) and <code>tar.gz</code> builds, with a <code>SHA256SUMS</code> file:</p>
-<pre><code>V=0.1.0; ARCH=\$(dpkg --print-architecture)
+<pre><code>V=0.6.0; ARCH=\$(dpkg --print-architecture)
 curl -fLO https://github.com/WeirdBrains/weirdnet-relay/releases/download/v\$V/weirdnet-relay_\$V-1_\$ARCH.deb
 sudo apt-get install ./weirdnet-relay_\$V-1_\$ARCH.deb</code></pre>
 <p>It installs the binary, the hardened systemd unit and <code>/etc/weirdnet-relay/relay.toml</code>, and starts nothing
@@ -116,12 +116,12 @@ no capabilities.</p>
 
 <h2 id="info">The info page</h2>
 <p><code>GET /</code> is a page for people. <code>GET /.well-known/weirdnet-relay.json</code> is for apps (CORS open),
-<code>GET /healthz</code> is for monitoring, and peers can ask for the same document over <code>/weirdnet/relay/info/1</code>:</p>
+<code>GET /healthz</code> is for monitoring, and peers can ask for the same document over <code>/weirdnet/relay/info/2</code>:</p>
 <pre><code>{
   "v": 1,
   "name": "My relay",
   "contact": "abuse@example.com",
-  "software": "weirdnet-relay/0.1.0",
+  "software": "weirdnet-relay/0.6.0",
   "peer_id": "12D3KooW…",
   "addrs": ["/dns4/relay.example.com/tcp/4747/p2p/12D3KooW…",
             "/dns4/relay.example.com/udp/4747/quic-v1/p2p/12D3KooW…"],

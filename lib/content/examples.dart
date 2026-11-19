@@ -479,9 +479,9 @@ fn main() -> weirdnet_schemes::Result<()> {
   ),
   'device-link': Example(
     r'''[dependencies]
-weirdnet-device-link = "0.1.0"
+weirdnet-device-link = "0.2.0"
 weirdnet-keys = "0.1.0"
-weirdnet-net = "0.4.0"''',
+weirdnet-net = "0.8.0"''',
     r'''// Both sides of a device link without the network (HostNode and Pairing carry it over
 // weirdnet-net): offer, matching 6-digit codes, confirm, then the sealed transfer.
 use weirdnet_device_link::{Host, HostStatus, LinkReply, Sender, decode_link};

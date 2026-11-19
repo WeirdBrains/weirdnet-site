@@ -143,8 +143,8 @@ same release.</p>
 <p>Types that already use <code>serde_bytes</code> or a bytes visitor keep working. A <code>PeerId</code> (or another type that only
 accepts <code>visit_bytes</code>) inside an internally tagged, adjacently tagged or untagged enum, or a <code>flatten</code>ed
 struct, cannot be read: carry it as a string there. Nothing under a signature changes: certificates, records and tokens are
-signed over JSON. Crates that pin net 0.7 or earlier (weirdnet-device-link, weirdnet-relay) stay on the old
-wire until they release on 0.8; weirdnet-sync moved to net 0.8 in 0.5.0.</p>
+signed over JSON. weirdnet-sync 0.5.0, weirdnet-relay 0.6.0 and weirdnet-device-link 0.2.0 are on net 0.8, and the WeirdBrains public
+relay runs weirdnet-relay 0.6.0, so its names server answers 0.8 nodes only.</p>
 ''',
     comingSoon: [
       'How an app uses the discovery toggle and manual peers, with Morph as the example. In Morph 0.2.0, Settings &gt; Relays turns discovery off and adds peers by hand, and an admin policy can lock discovery off.',
@@ -169,7 +169,7 @@ slots given the relay's full address.</li>
 <li><b>One encrypted database</b>: the node key, peers seen and the names server's records, in SQLCipher through
 <code>weirdnet-storage</code>. The 32-byte key comes from <code>--db-key-file</code> or the systemd credential
 <code>db-key</code>; lose it and the relay gets a new peer id.</li>
-<li><b>Names server</b> (<code>/weirdnet/names/1</code>): signed peer records and withdrawals, checked by weirdnet-net, kept
+<li><b>Names server</b> (<code>/weirdnet/names/2</code>): signed peer records and withdrawals, checked by weirdnet-net, kept
 until they expire.</li>
 <li><b>Wake path</b> (<code>[wake]</code>, on by default): phones without APNs or FCM keep a stream open on
 <code>/weirdnet/wake/1</code> (weirdnet-push's <code>relaywake</code>); sealed payloads are passed on unread, held briefly, and
@@ -184,13 +184,19 @@ stops a site.</li>
 <code>AAAA</code> and <code>_dnsaddr</code> records current at DigitalOcean or DNSimple; never deletes records, and changes
 nothing when the zone is ambiguous.</li>
 <li><b>Info page</b>: HTML at <code>/</code>, JSON at <code>/.well-known/weirdnet-relay.json</code>, <code>/healthz</code>, and
-the same document on <code>/weirdnet/relay/info/1</code>.</li>
+the same document on <code>/weirdnet/relay/info/2</code>.</li>
 </ul>
 <p>Commands: <code>run</code> (default), <code>id</code>, <code>info</code>, <code>check-config</code>, <code>gen-key</code>,
 <code>ddns [--apply]</code>, <code>revoke-site</code>, <code>unrevoke-site</code>, <code>revoked-sites</code>. Every config key
 has a flag and a <code>WEIRDNET_RELAY_*</code> variable; flags win over the environment, which wins over the file. The
-systemd unit runs it as a dynamic user with no capabilities and a <code>@system-service</code> syscall filter. 0.5.0 is built
-on weirdnet-net 0.4.0.</p>
+systemd unit runs it as a dynamic user with no capabilities and a <code>@system-service</code> syscall filter. 0.6.0 is built
+on weirdnet-net 0.8.0.</p>
+<h3>Moving to 0.6.0</h3>
+<p>0.6.0 moves to weirdnet-net 0.8, whose requests carry byte fields as CBOR byte strings. The names server is now
+<code>/weirdnet/names/2</code> and the info request <code>/weirdnet/relay/info/2</code> (were <code>/1</code>), so nodes on
+weirdnet-net 0.7 or earlier can no longer register or look up names on a 0.6 relay; they fail to negotiate rather than
+misread. Circuits, Kademlia, identify, the wake path and update announcements are unchanged, so older nodes still reserve
+slots and bootstrap. Upgrade the relay with your 0.8 apps. The config, the database and the peer id carry over.</p>
 ''',
     install: r'''# Packages for Debian/Ubuntu, Fedora/openSUSE and Arch are on each GitHub release (see Run a relay).
 cargo install weirdnet-relay
@@ -924,7 +930,8 @@ without anyone else on the network being able to take it. Built in Morph as "Log
 <li><b>Offer</b>: the new device (no identity yet) shows a QR code or link: its node key, a fresh X25519 key, its addresses
 (including a relay circuit, so devices on other networks connect) and a 120-second expiry, signed by its node key. Nothing
 secret is in it. Or the other way round: the existing device shows an <code>Invite</code> and the new one scans it.</li>
-<li><b>Pairing</b>: the existing device connects on <code>/weirdnet/link/1</code>. Both derive a key and a 6-digit short
+<li><b>Pairing</b>: the existing device connects on <code>/weirdnet/link/2</code> (invites arrive on
+<code>/weirdnet/link-invite/2</code>). Both derive a key and a 6-digit short
 authentication string from the X25519 agreement and a transcript hash, and show the code.</li>
 <li><b>Transfer</b>: only after the user confirms the codes match on the existing device does it send the seed, the profile
 name and a node certificate for the new device, sealed with that key.</li>
@@ -934,9 +941,14 @@ secrets.</li>
 <p>Modules: <code>offer</code> (offers and links), <code>invite</code>, <code>session</code> (both sides without the network:
 <code>Host</code>, <code>Sender</code>), <code>net</code> (<code>HostNode</code>, <code>Pairing</code> over weirdnet-net) and
 <code>wire</code> (CBOR messages).</p>
+<h3>Moving to 0.2.0</h3>
+<p>0.2.0 is built on weirdnet-net 0.8.0. Its streams moved to <code>/weirdnet/link/2</code> and
+<code>/weirdnet/link-invite/2</code> (were <code>/1</code>), so a 0.1 device and a 0.2 device fail to connect rather than
+misread each other: put both devices on apps with the same version. Offers, links, codes and the sealed transfer are
+unchanged, and so is the API.</p>
 ''',
     comingSoon: [
-      '0.1.0 pins <code>weirdnet-net = "=0.4.0"</code> and <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-net 0.6.0 or weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it to current versions.',
+      '0.2.0 still pins <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it.',
     ],
   ),
   'ext': Guide(
