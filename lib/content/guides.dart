@@ -438,10 +438,17 @@ were needed in this crate for the move.</li>
 <li><b>Stdio client</b>: a server that prints a line over 4 MiB now has it dropped and the waiting call times out; raise the limit
 with <code>spawn_limited</code> if a server legitimately sends more.</li>
 </ul>
+<h3>Moving to 0.5.0</h3>
+<ul>
+<li><b>Server API and <code>client</code> feature</b>: unchanged.</li>
+<li><b>Apps with the <code>agent</code> feature</b> (breaking for them only): 0.5.0 depends on weirdnet-agent <code>=0.4.0</code>
+(0.4.0 used <code>=0.3.0</code>). Move to <a href="/crates/agent">weirdnet-agent</a> 0.4.0 together with it. No source changes were
+needed in this crate.</li>
+</ul>
 ''',
     features: [
       '<code>client</code> (off by default): the MCP client with stdio and streamable HTTP transports, timeouts and cancel, and <code>Secret</code>. Pulls in tokio and reqwest (rustls).',
-      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.2.0</code> since 0.3.0; <code>=0.1.0</code> in 0.2.0).',
+      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.4.0</code> since 0.5.0; <code>=0.3.0</code> in 0.4.0, <code>=0.2.0</code> in 0.3.0).',
       'Neither is needed for the server API, which is unchanged from 0.1.',
     ],
   ),
@@ -517,8 +524,63 @@ waits 5 s for the node to wind down). The result is a <code>RemoteOutcome</code>
 conversation: the history lives with the asker, which sends it with each task. The serving app implements <code>TaskHost</code>
 to build a session for the companion, and refuses companions that do not run there.</li>
 </ul>
-<p>Inference (weirdnet-model) and MCP client transports (weirdnet-mcp) implement this crate's traits in their own crates, and the
-apps wire the <code>Dialer</code> to weirdnet-net streams.</p>
+<p>Inference (weirdnet-model) and MCP client transports (weirdnet-mcp) implement this crate's traits in their own crates. Since
+0.4.0 the <code>pool</code> and <code>serve</code> features wire the protocols to weirdnet-net streams; apps can still supply
+their own <code>Dialer</code>.</p>
+<h3>Inference v2 (0.4.0)</h3>
+<p><code>/weirdnet-agent/infer/2</code> (<code>remote::infer::v2</code>) carries CBOR frames; <code>/weirdnet-agent/infer/1</code>
+stays JSON and is still served, so 0.3 nodes keep working. A <code>Request</code> has an id, an optional <code>job_id</code> and
+<code>attempt</code>, a model, a <code>Priority</code> (<code>Interactive</code> by default, <code>Batch</code> or
+<code>Background</code>), the input (inline messages, or a <code>context_ref</code> to a stored conversation), sampling settings,
+a seed, a <code>response_format</code> (text, JSON or a JSON schema), tools, and <code>raw</code> for a node that should skip
+its own prompt handling. Optionally it carries an assistant prefix and its length in characters: the part of the answer already
+shown, which a node continues from.</p>
+<ol>
+<li>The node checks the caller (see below). When all its slots are busy it answers <code>Queued{position}</code> and repeats it
+every few seconds; each one resets the asker's accept timeout, so a queued request is not mistaken for a dead node. Higher
+priorities go first; a full queue answers <code>Busy</code>.</li>
+<li><code>Accepted</code> names the model and says whether the node can resume from a prefix.</li>
+<li><code>Delta</code> (text), <code>Reasoning</code> and <code>ToolCall</code> frames stream with their character offset in the
+answer, then <code>Usage</code> and <code>Done</code> with the finish reason and metadata: the node that served it, queue and
+first-token timings, and any resumes. <code>Cancel</code> can go the other way at any time.</li>
+<li>Embedding requests get one <code>Embedding</code> frame per input, the vector as little-endian f32 in a CBOR byte string.</li>
+</ol>
+<p>Hosts implement <code>InferBackend</code> (and <code>EmbedBackend</code>); a plain <code>ModelBackend</code> is adapted.
+<code>DeltaSink::reasoning</code> and <code>AgentEvent::ReasoningDelta</code> carry reasoning text to the app (task/1 does not
+forward it).</p>
+<h3>Pool, failover and resume (0.4.0)</h3>
+<p><code>remote::pool::Pool</code> runs a request across nodes from a <code>NodeSource</code>, best first. It moves to the next
+node when one is unreachable, busy, refuses, lacks the model or does not accept in time, and uses infer/1 with nodes that do not
+serve infer/2. Once a stream has started, the pool cancels it when no frame arrives for <code>max(15 s, 3 &times; the recent
+gap between tokens)</code> (25 s at most, and 25 s for the first token), under weirdnet-net's 30 s stream resume window. It then
+resumes on a node that supports it: the same <code>job_id</code> and seed, the next <code>attempt</code>, and the text already
+shown as the prefix. Frames are placed by offset, so nothing is shown twice, and a gap fails that attempt. At most two resumes
+per answer by default; if nothing can take over, the partial answer comes back with the error.</p>
+<p>The pool also runs embeddings, background jobs (<code>submit</code> returns a <code>Job</code> to watch, wait for or cancel), and
+catalog queries and subscriptions (<code>/weirdnet-agent/catalog/1</code>: each model's purpose, state, replicas, speed and
+context) that move to another node when one goes away. <code>RemoteModel</code> is a thin <code>ModelBackend</code> over a pool;
+resume is opt-in there (<code>with_resume(true)</code>).</p>
+<h3>Serving inference to linked devices (0.4.0)</h3>
+<p>The serving side gets a <code>Caller</code>: the transport-authenticated peer plus any certificate the request presented.
+<code>InferHost::authorize</code> and <code>CatalogHost::authorize</code> run before anything else; a refusal is sent with its reason.
+With the <code>serve</code> feature, <code>serve::RosterAuth</code> does this with weirdnet-sync's
+<a href="/crates/sync">caller check</a>, and <code>Server::start(&amp;node, Serving { infer, catalog, announce })</code> accepts
+infer/1, infer/2 and catalog/1 streams and announces the node as an inference node. With the <code>pool</code> feature,
+<code>pool::connect(node, roster, Some(&amp;my_cert))</code> builds a pool over <code>LinkedNodes</code>: the roster's active devices
+that announce inference, direct connections first.</p>
+<h3>Moving to 0.4.0</h3>
+<ul>
+<li><b>Serving inference</b>: implement <code>InferHost::authorize(&amp;self, caller: &amp;Caller)</code> (for Weirdnet,
+<code>RosterAuth</code>); <code>InferHost::open</code> is now <code>open(&amp;self, caller: &amp;Caller, model: Option&lt;&amp;str&gt;)</code>
+and <code>infer::serve</code> is <code>serve(channel, caller: &amp;Caller, host, admission)</code>. The caller check that apps did before
+calling <code>serve</code> now lives in <code>authorize</code>.</li>
+<li><b>Enums are <code>#[non_exhaustive]</code></b>: add a wildcard arm where you match <code>AgentEvent</code> (new:
+<code>ReasoningDelta</code>), <code>RemoteError</code> (new: <code>Unsupported</code>, <code>BadRequest</code>, <code>Cancelled</code>,
+<code>Stalled</code>; infer/1 sends them as <code>failed</code>), <code>Role</code>, <code>ModelError</code> and the others.</li>
+<li><b><code>RemoteModel</code></b> keeps its API; it now tries infer/2 first and falls back to infer/1, so it works with 0.3 nodes.</li>
+<li>weirdnet-model 0.4.0 and weirdnet-mcp 0.5.0 move their <code>agent</code> features to weirdnet-agent <code>=0.4.0</code>; move all
+three together.</li>
+</ul>
 <h3>Moving to 0.3.0</h3>
 <ul>
 <li><b>No source changes</b> are needed: the new API is additive (<code>ToolTimer</code>, <code>PagesPrompt</code>,
@@ -534,7 +596,11 @@ cancel with your own timer (use <code>wall_elapsed</code> to show elapsed time).
 before those still pin <code>=0.2.0</code> and can't be mixed with agent 0.3.</li>
 </ul>
 ''',
-    features: ['<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).'],
+    features: [
+      '<code>pool</code> (0.4.0): the pool over <a href="/crates/net">weirdnet-net</a> 0.8: <code>LinkedNodes</code> finds inference nodes among the user’s linked devices (<a href="/crates/sync">weirdnet-sync</a> 0.5 roster), <code>NetDialer</code> opens streams, <code>connect</code> builds the <code>Pool</code>.',
+      '<code>serve</code> (0.4.0): <code>Server</code> serves infer/1, infer/2 and catalog/1 on a weirdnet-net node and announces it; <code>RosterAuth</code> admits only linked devices.',
+      '<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).',
+    ],
     comingSoon: [
       'How Morph’s Companions use the agent runtime: the approval tiers and tools they use and the approval screen. Local inference plugs in through <a href="/crates/model">weirdnet-model</a>.',
     ],
@@ -558,6 +624,16 @@ that streams <code>Chunk</code>s and can be cancelled from any thread. <code>pro
 own chat template and parses <code>&lt;tool_call&gt;</code> tags into tool calls as they stream. With the <code>agent</code> feature,
 <code>agent::LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, so the <a href="/crates/agent">agent loop</a> can
 run on a local model. Tests use a mock <code>Engine</code> and never download a model.</p>
+<h3>Hardware and sizing (0.4.0)</h3>
+<p><code>hw::detect()</code> reports the OS, CPU threads, system memory and GPUs: NVIDIA through <code>nvidia-smi</code> (name, memory,
+compute capability, driver), AMD through sysfs, and Apple silicon. Devices that share system memory (Apple, GB10, AMD APUs) are
+marked unified. It never fails; a missing tool means fewer devices.</p>
+<p><code>hw::budget(&amp;hw, memory_budget, reserve)</code> is the memory models may use: 85% of VRAM, or 85% of unified memory after an
+OS reserve (an eighth of RAM, at least 4 GiB). Both can be overridden. <code>hw::catalog()</code> is a tiered list from SmolLM2 135M
+through Gemma 4 E2B and E4B, Qwen3 8B, 14B, 30B-A3B and 32B and gpt-oss 20B, plus Qwen3 Embedding 0.6B. Each entry has a pinned
+<code>ModelSpec</code> (so it downloads through the consent gate) and a footprint: the file, the KV cache for its context and slots,
+and 10% headroom. <code>hw::plan(&amp;hw, budget)</code> picks the largest chat model that fits, a Gemma 4 stand-in and the embedding
+model. CPU-only machines only get models with at most 4B active parameters, so answers stay usable.</p>
 <h3>CPU support (0.2.0)</h3>
 <p>llama.cpp's build turns on AVX, AVX2, BMI2, FMA and F16C by default, so a plain <code>llama</code> build only runs on x86 CPUs that
 have them (roughly Haswell and Excavator, 2013 to 2015, and later). Two things keep older CPUs from crashing with an illegal
@@ -591,7 +667,7 @@ target directory can fail with "File exists" on the library symlinks; deleting t
       '<code>llama</code>: <code>LlamaEngine</code> on llama.cpp, CPU. Needs cmake and a C++ compiler to build.',
       '<code>cpu-dispatch</code> (implies <code>llama</code>): llama.cpp for every CPU level, chosen at run time; the app ships the shared libraries.',
       '<code>vulkan</code>, <code>metal</code> (imply <code>llama</code>): GPU offload.',
-      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.2.0</code> since 0.2.1, was <code>^0.1</code>).',
+      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.4.0</code> since 0.4.0; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
     ],
   ),
   'plugin': Guide(
@@ -825,6 +901,24 @@ network protocol moved.</li>
 </ul>
 <p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
+<h3>Checking callers on a serving node</h3>
+<p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
+transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's
+devices. Call <code>Roster::check_caller(profile, &amp;user_key, &amp;peer, presented)</code> for every incoming stream or call:</p>
+<ul>
+<li><code>peer</code> is the peer id the transport authenticated (for weirdnet-net, <code>Stream::peer()</code>), never a value
+from the request body.</li>
+<li><code>presented</code> is an optional <code>NodeCert</code> the caller sent. It must name that peer and this user and verify
+against the user key, or the answer is <code>WrongUser</code>; a revoked one is <code>Revoked</code>.</li>
+<li>Only a certificate the roster itself holds admits a caller. A presented certificate alone is never enough, because anyone with
+the user seed (a revoked device too) can mint one: a peer the roster does not know is <code>Unknown</code>.</li>
+<li><code>Linked</code> admits. <code>CallerCheck::reason()</code> gives a short refusal string to send back:
+<code>unknown-device</code>, <code>revoked</code>, <code>wrong-user</code> or <code>needs-admission</code> (a device not yet in the
+key chain's head).</li>
+</ul>
+<p>Check on each new stream rather than once per connection, with the roster as it is now, so a revocation takes effect for the
+next call. <a href="/crates/agent">weirdnet-agent</a>'s <code>serve</code> feature does exactly this for inference
+(<code>serve::RosterAuth</code>).</p>
 ''',
     comingSoon: [
       'A closer look at sync in Morph. Morph 0.2.0 syncs bookmarks, folders and tags, history, and the search engine, home page and theme between linked devices, and Settings &gt; Linked devices lists linked devices and revokes one. See <a href="/morph">Morph</a>.',

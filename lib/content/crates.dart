@@ -205,11 +205,11 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'mcp',
-    version: '0.4.0',
+    version: '0.5.0',
     tagline: 'A transport-agnostic Model Context Protocol tools server and stdio bridge, plus an optional MCP client and agent tool source.',
     about: [
       'A stateless MCP tools server extracted from TAUR and shared with Salty Gull. The HTTP route stays in the app’s server.',
-      'Since 0.2.0 it can also be the other side: an MCP client (feature <code>client</code>) and, with feature <code>agent</code>, a <a href="/crates/agent">weirdnet-agent</a> tool source, so an agent can use any MCP server’s tools. Both are off by default, and the server API is unchanged. 0.3.0 caps the length of a line the stdio client accepts at 4 MiB. 0.4.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.3.0</code> (it was <code>=0.2.0</code> in 0.3.0): breaking for <code>agent</code> users only, with no source changes. An app on weirdnet-agent 0.3 needs weirdnet-mcp 0.4 for <code>McpSource</code>; without the <code>agent</code> feature nothing changes.',
+      'Since 0.2.0 it can also be the other side: an MCP client (feature <code>client</code>) and, with feature <code>agent</code>, a <a href="/crates/agent">weirdnet-agent</a> tool source, so an agent can use any MCP server’s tools. Both are off by default, and the server API is unchanged. 0.3.0 caps the length of a line the stdio client accepts at 4 MiB. 0.4.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.3.0</code> (it was <code>=0.2.0</code> in 0.3.0): breaking for <code>agent</code> users only, with no source changes. An app on weirdnet-agent 0.3 needs weirdnet-mcp 0.4 for <code>McpSource</code>; without the <code>agent</code> feature nothing changes. 0.5.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.4.0</code> in the same way: apps on agent 0.4 need weirdnet-mcp 0.5.',
     ],
     parts: [
       '<code>Server::handle</code>: one JSON-RPC 2.0 message or batch plus the caller’s bearer token in, the reply out: <code>initialize</code> with version negotiation, <code>ping</code>, <code>tools/list</code>, <code>tools/call</code>.',
@@ -217,18 +217,19 @@ const crates = <Crate>[
       'The app implements <code>Tools::call</code>; failures become <code>isError</code> results. <code>args</code>: argument getters with uniform messages.',
       '<code>stdio::bridge</code>: the <code>&lt;app&gt;ctl mcp</code> loop that forwards stdio lines to a remote <code>/mcp</code>.',
       '<code>client</code> feature: <code>Client::connect(transport, ClientOptions)</code>, <code>list_tools</code> (follows cursors), <code>call_tool</code> and <code>call_tool_until</code>; <code>StdioTransport</code> (<code>StdioCommand</code>) and <code>HttpTransport</code> (<code>HttpConfig</code>); <code>Secret</code> for tokens and environment values. The stdio transport reads server lines with a cap (<code>DEFAULT_MAX_LINE</code>, 4 MiB; <code>spawn_limited</code> and <code>from_io_limited</code> set another) (0.3.0).',
-      '<code>agent</code> feature: <code>agent::McpSource</code>, a <code>weirdnet_agent::ToolSource</code>, with <code>SourceOptions::tier_floor</code> (default <code>Research</code>); depends on weirdnet-agent <code>=0.3.0</code> since 0.4.0 (<code>=0.2.0</code> in 0.3.0).',
+      '<code>agent</code> feature: <code>agent::McpSource</code>, a <code>weirdnet_agent::ToolSource</code>, with <code>SourceOptions::tier_floor</code> (default <code>Research</code>); depends on weirdnet-agent <code>=0.4.0</code> since 0.5.0 (<code>=0.3.0</code> in 0.4.0).',
     ],
     usedBy: ['TAUR', 'Salty Gull (<code>saltyctl mcp</code>)'],
     origin: 'TAUR',
   ),
   Crate(
     slug: 'agent',
-    version: '0.3.0',
-    tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
+    version: '0.4.0',
+    tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks, plus remote inference across the user’s own devices.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
-      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.4.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Since 0.2.0 the <code>remote</code> module runs model turns and whole tasks on another of the user’s own nodes; the app supplies the transport (a <code>Dialer</code>), so the crate itself does not depend on <code>weirdnet-net</code>.',
+      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.5.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Since 0.2.0 the <code>remote</code> module runs model turns and whole tasks on another of the user’s own nodes; the core supplies only protocols over an app-supplied <code>Dialer</code>, so it does not depend on <code>weirdnet-net</code>.',
+      '0.4.0 adds <code>/weirdnet-agent/infer/2</code> (CBOR, with priorities and a queue, reasoning and tool-call frames, embeddings and resume), a model catalog protocol, and a <code>Pool</code> that fails over and resumes an answer on another node without repeating text. The <code>pool</code> and <code>serve</code> features wire these to <a href="/crates/net">weirdnet-net</a> 0.8 and <a href="/crates/sync">weirdnet-sync</a> 0.5: finding inference nodes among the user’s linked devices, and serving them only to those devices.',
     ],
     parts: [
       '<code>AgentSession::run</code>: one task. Calls the <code>ModelBackend</code>, checks each tool call against the <code>Policy</code>, asks the app’s <code>Approver</code> when needed, charges the budget, runs the tool with a timeout and a <code>CancelToken</code>, and streams <code>AgentEvent</code>s: text, approvals, skipped-approval notices, tool start and finish, trace steps.',
@@ -236,18 +237,21 @@ const crates = <Crate>[
       '<code>Policy</code>: tiers <code>Read</code> (attached content), <code>Navigate</code>, <code>Research</code>, <code>Interact</code> and <code>Never</code>; per-agent, per-site <code>Off</code>, <code>Ask</code> and <code>Act</code>; approvals for once or for the task; revocable “Always allow” for navigate (a site or everywhere) and research (optionally one provider), for one agent or all. Off always wins, signed-in research is never covered by Always allow, and an all-agents allow covers an outside agent only after its first approval.',
       '<code>Budget</code>: searches, pages (with extensions), concurrency, per-page time and per-task tool time, tokens kept per page, model steps. Defaults: 3 searches, 12 pages (+5), 2 at a time, 15 s a page, 90 s of tool time a task (model turns and approval waits don’t count, since 0.3.0). When the page budget runs out, <code>Approver::extend_pages</code> can offer “+5 pages” (<code>PagesPrompt</code>; default no).',
       '<code>Trace</code>, <code>Citation</code>: every search, fetch, tool call, approval and notice is a step with its agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps fetched; a citation without a step is never shown.',
-      '<code>remote::infer</code>, <code>RemoteModel</code>: one model turn on another node, streamed, cancellable, with fallback to the next node or a local model (0.2.0).',
+      '<code>remote::infer</code>, <code>RemoteModel</code>: one model turn on another node, streamed, cancellable, with fallback to the next node or a local model (0.2.0). Since 0.4.0 <code>RemoteModel</code> speaks infer/2 and falls back to infer/1 for 0.3 nodes.',
+      '<code>remote::infer::v2</code> (0.4.0): <code>/weirdnet-agent/infer/2</code> in CBOR. Priorities (<code>Interactive</code>, <code>Batch</code>, <code>Background</code>) behind <code>Queued{position}</code>, sampling, seed, response format, tools and raw mode; <code>Delta</code>, <code>Reasoning</code> and <code>ToolCall</code> frames with character offsets, <code>Usage</code>, and <code>Done</code> with metadata; f32 embeddings as byte strings. Hosts implement <code>InferBackend</code> and <code>EmbedBackend</code>, or keep a plain <code>ModelBackend</code>.',
+      '<code>remote::pool::Pool</code> (0.4.0): tries nodes in order, cancels a stalled stream and resumes it elsewhere from the text already shown, runs embeddings and background jobs, and queries or subscribes to the catalog with failover. <code>remote::catalog</code>: <code>/weirdnet-agent/catalog/1</code>, the models nodes have and their state.',
+      '<code>pool</code> and <code>serve</code> features (0.4.0): <code>LinkedNodes</code>, <code>NetDialer</code> and <code>connect</code> on the app side; <code>Server</code> and <code>RosterAuth</code> on inference nodes, admitting only linked devices.',
       '<code>remote::task</code>: a whole agent task on another node, events streamed back, approvals answered on the asking device (0.2.0).',
       'Serde on everything that is stored or synced. The <code>testing</code> feature has a scripted model, approver and closure tools.',
     ],
     usedBy: ['Morph (Companions, in progress)'],
-    dependsOn: [],
-    notes: 'Version 0.3.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.3.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
+    dependsOn: ['net', 'sync'],
+    notes: 'Version 0.4.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.0">docs.rs</a>). 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'model',
-    version: '0.3.0',
-    tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, and streaming llama.cpp inference on a worker thread with cancel.',
+    version: '0.4.0',
+    tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, hardware detection and model sizing, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
       'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
       'llama.cpp and the agent backend are optional features, so a build that only needs downloads and the catalog has no native dependencies.',
@@ -259,7 +263,8 @@ const crates = <Crate>[
       '<code>prompt</code>: chat turns rendered through the model’s own chat template, and a streaming parser that turns <code>&lt;tool_call&gt;</code> tags into tool calls.',
       '<code>Worker</code>, <code>Engine</code>: the engine lives on one thread; <code>generate</code> returns a <code>Generation</code> that streams <code>Chunk</code>s and cancels from any thread. Tests use a mock engine.',
       '<code>llama</code> feature: <code>LlamaEngine</code> on llama.cpp (CPU; needs cmake and a C++ compiler). <code>vulkan</code> and <code>metal</code> add GPU offload.',
-      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.3.0</code> since 0.3.0; <code>=0.2.0</code> in 0.2.1), streaming text to the agent loop and returning parsed tool calls.',
+      '<code>hw</code> (0.4.0): <code>detect()</code> finds GPUs (NVIDIA, AMD, Apple silicon), CPU threads and memory; <code>budget()</code> is the memory models may use; <code>catalog()</code> is a tiered list of chat and embedding models with footprints; <code>plan()</code> picks a main model, a stand-in and an embedding model that fit.',
+      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.4.0</code> since 0.4.0; <code>=0.3.0</code> in 0.3.0), streaming text to the agent loop and returning parsed tool calls.',
       '<code>cpu-dispatch</code> feature (0.2.0): llama.cpp built for every CPU level and chosen at run time, so a release binary runs local models on any CPU; the app ships the llama.cpp shared libraries (see the guide).',
       '<code>cpu</code> (0.2.0): <code>cpu::check()</code>, <code>required()</code> and <code>missing()</code> say whether this CPU can run the compiled-in llama.cpp. <code>LlamaEngine::load</code> checks first and returns <code>Error::UnsupportedCpu</code> instead of crashing with an illegal instruction.',
       '<code>examples/model.rs</code> (0.2.0): a small CLI with the <code>llama</code> feature. <code>fetch [id]</code> downloads a model with progress (running the command is the consent) and checks its size and SHA-256; <code>chat [id] "question"</code> loads it and streams the answer with load, first-chunk and total timings. The <code>cpu</code> command prints the CPU check. Run from a clone: <code>cargo run --release --example model --features llama -- chat gemma-4-e4b "Why is the sky blue?"</code>.',
@@ -267,7 +272,7 @@ const crates = <Crate>[
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: ['agent'],
     example: r'''# Cargo.toml
-weirdnet-model = { version = "0.3", features = ["llama", "agent"] }
+weirdnet-model = { version = "0.4", features = ["llama", "agent"] }
 
 // main.rs
 use std::sync::Arc;
@@ -278,7 +283,7 @@ let store = ModelStore::from_env();
 // After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
 let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
 let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
-    notes: 'Version 0.3.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.3.0">docs.rs</a>). 0.3.0 makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.3.0</code> (it was <code>=0.2.0</code>), so apps on agent 0.3 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged, no source changes were needed, and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
+    notes: 'Version 0.4.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.0">docs.rs</a>). 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
     slug: 'plugin',
