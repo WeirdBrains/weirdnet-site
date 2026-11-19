@@ -367,12 +367,12 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'sync',
-    version: '0.3.1',
+    version: '0.4.0',
     group: 'Network',
     status: Status.fresh,
-    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, a device roster with key rotation on revoke.',
+    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke.',
     about: [
-      'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, and the <code>/weirdnet/sync/1</code> pull protocol.',
+      'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, the <code>/weirdnet/sync/1</code> pull protocol, and (0.4.0) records too big for one page, split into hash-checked chunks, and sealed records that a device revoked before a write cannot open.',
       'Record types (bookmarks, history, settings, notes) and persistence stay in the application; <code>OpLog</code> is the in-memory log it snapshots.',
     ],
     parts: [
@@ -382,6 +382,8 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
       '<code>SyncState</code>, <code>SyncHandler</code>, <code>start_node</code>, <code>pull_from</code>: the protocol over a weirdnet-net node.',
       '<code>Roster</code>, <code>DeviceKey</code>, <code>Rotation</code>, <code>KeyChain</code>, <code>EpochKeys</code>, <code>KeyStatus</code>: certificates, revocation, key rotation and re-admission.',
       '<code>sync_key</code>, <code>seal_page</code>, <code>open_page</code>: typed keys and sealed pages.',
+      '<code>SyncState::configure</code>, <code>write</code>, <code>read</code>, <code>reseal_stale</code>, <code>pull_chunks</code>; <code>Limits</code>, <code>RecordOptions</code>, <code>RecordValue</code>: large and sealed records (0.4.0).',
+      '<code>Roster::check_caller</code>, <code>CallerCheck</code>: is the authenticated caller of an app call one of the user’s linked devices (0.4.0).',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],

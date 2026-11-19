@@ -635,6 +635,32 @@ longer drops the whole chain.</li>
 <li>Epoch keys (<code>EpochKeys</code>) are secret: store them encrypted (<code>export</code>/<code>import</code>). The chain is
 public and stored with the roster.</li>
 </ul>
+<h3>Large and sealed records (0.4.0)</h3>
+<p>Ops carry small values inline. <code>SyncState::write</code> takes a record value of any size up to
+<code>Limits::record_max</code> (default 16 MiB) and stores it as follows.</p>
+<ul>
+<li><b>Chunks</b>: a value over <code>Limits::inline_max</code> (default 32 KiB) is split into <code>chunk_size</code> pieces
+(default 48 KiB). Each piece is addressed by its BLAKE3 hash and stored as an entry of the companion type
+<code>&lt;type&gt;#chunks</code>; the record itself carries only the list of hashes and the length. A type's chunks are pulled
+right after the type (<code>Limits::eager_chunks</code>, on by default) or on demand with <code>pull_chunks</code>, and are served
+wherever the type is. <code>SyncState::read</code> reassembles the value only when every chunk, the length and the whole hash
+match, and otherwise returns <code>RecordValue::Pending</code> listing the missing chunks.</li>
+<li><b>Sealed records</b>: a type configured with <code>RecordOptions { sealed: true, .. }</code> seals every value under its
+own key, derived from the head epoch key and bound (as associated data) to the type, record id, epoch, rotation and writer. A
+device revoked before a write cannot open it, even holding the seed and every older key; members keep older epoch keys, so
+values sealed before a rotation stay readable, and <code>reseal_stale</code> can re-seal them under the head key. Nothing is
+sealed under seed-derived keys (the write fails with <code>no-epoch-key</code>), and an unsealed entry in a sealed type is
+refused.</li>
+<li><b>Older peers</b>: <code>write_with_fallback</code> lets an app give a small fallback op; a 0.3 peer ignores the new field
+and keeps the fallback, and a plain entry keeps the 0.3 wire shape.</li>
+<li><b>Page budget</b>: a page is now budgeted for what crosses the wire (<code>PAGE_BUDGET</code>, about a quarter of the
+256 KiB <code>PAGE_MAX</code>), because the sealed body is hex and the request-response codec sends bytes as an integer array.
+Before, a full page could exceed the 256 KiB reply cap and stall the stream.</li>
+<li><b>Caller check</b>: <code>Roster::check_caller</code> says whether the transport-authenticated caller of an app call is an
+active linked device of this user. A presented certificate must match the peer and user, a revoked one is refused, and a
+certificate the roster does not hold never admits a caller.</li>
+</ul>
+<p>0.4.0 depends on <a href="/crates/net">weirdnet-net</a> 0.7, whose types are in its API, so apps move to net 0.7 with it.</p>
 <p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
 ''',
