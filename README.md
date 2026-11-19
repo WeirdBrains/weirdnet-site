@@ -23,10 +23,32 @@ python3 -m http.server 8080 --directory build/jaspr
 ```
 
 Content lives in `lib/pages/` (page prose), `lib/content/crates.dart` (one entry per crate,
-from each crate's README) and `lib/components/diagrams.dart` (inline SVG diagrams). Theme:
+from each crate's README), `lib/content/guides.dart` (each crate page's guide: what it brings,
+how it works, feature flags, notes wanted), `lib/content/examples.dart` and
+`lib/components/diagrams.dart` (inline SVG diagrams). Theme:
 `web/styles.css`, after www.weirdbrains.com. The Weirdnet logo is `web/images/weirdnet-logo.svg`
 (mark: `weirdnet-mark.svg`). Inter is self-hosted under the SIL Open Font License
 (`web/fonts/LICENSE-Inter.txt`).
+
+### Crate examples
+
+Each crate page's usage example is a real program in `tool/examples/<slug>.rs`, with its
+dependencies in `tool/examples/examples.toml`. `lib/content/examples.dart` is generated from them:
+
+```sh
+python3 tool/gen_examples.py                      # rewrite lib/content/examples.dart
+python3 tool/gen_examples.py --harness /tmp/ex    # also one cargo package per example
+sh /tmp/ex/check.sh                               # build them all, run the runnable ones
+```
+
+Build the harness in a scratch directory outside the repository, never inside it. Every
+example builds against the published crates.
+
+### Crate coverage
+
+`tool/check_crates.py` asks crates.io for every `weirdnet*` crate and fails if a published one
+has no entry in `lib/content/crates.dart` (a version that differs is a warning; `--strict`
+fails on it). The Pages workflow runs it on every push.
 
 ## Hosting
 

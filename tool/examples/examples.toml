@@ -1,0 +1,74 @@
+# One entry per crate page example. `deps` is the [dependencies] table the page shows and
+# the example is checked against; `run = false` means build only (it needs the network,
+# a CA, a host process or a cdylib loader). `lib = true` builds it as a cdylib.
+# Regenerate the Dart and the check workspace: python3 tool/gen_examples.py --harness DIR
+
+[net]
+deps = { weirdnet-net = "0.6.0" }
+
+[tls]
+deps = { weirdnet-tls = "0.2.0", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
+run = false
+
+[keys]
+deps = { weirdnet-keys = "0.1.1" }
+
+[storage]
+deps = { weirdnet-storage = "0.1.0" }
+
+[update]
+deps = { weirdnet-update = "0.2.0", semver = "1" }
+
+[accounts]
+deps = { weirdnet-accounts = "0.1.0" }
+
+[mcp]
+deps = { weirdnet-mcp = "0.1.0", serde_json = "1" }
+
+[agent]
+deps = { weirdnet-agent = { version = "0.1.0", features = ["testing"] }, tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
+
+[plugin]
+deps = { weirdnet-plugin = "0.1.0" }
+lib = true
+run = false
+
+[code-spaces]
+deps = { weirdnet-code-spaces = "0.1.0" }
+
+[pipelines]
+deps = { weirdnet-pipelines = "0.1.0", serde = { version = "1", features = ["derive"] }, serde_json = "1" }
+
+[rules]
+deps = { weirdnet-rules = "0.1.0" }
+
+[render]
+deps = { weirdnet-render = "0.1.0" }
+
+[themes]
+deps = { weirdnet-themes = "0.1.0" }
+
+[sync]
+deps = { weirdnet-sync = "0.3.1" }
+
+[access]
+deps = { weirdnet-access = "0.1.1" }
+
+[push]
+deps = { weirdnet-push = "0.1.0" }
+
+[schemes]
+deps = { weirdnet-schemes = "0.1.0" }
+
+[device-link]
+deps = { weirdnet-device-link = "0.1.0", weirdnet-keys = "0.1.0", weirdnet-net = "0.4.0" }
+
+[ext]
+deps = { weirdnet-ext = "0.1.0" }
+
+[ext-sdk]
+deps = { weirdnet-ext-sdk = "0.1.0", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
+run = false
+
+[ext-proto]
+deps = { weirdnet-ext-proto = "0.1.0" }
