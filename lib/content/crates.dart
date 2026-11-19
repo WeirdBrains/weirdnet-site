@@ -377,6 +377,34 @@ cache.put("qwen3-8b", &request, &CachedAnswer::from(&answer));''',
     origin: 'Ymir',
   ),
   Crate(
+    slug: 'alerts',
+    version: '0.1.0',
+    tagline: 'Host alerts for nodes: weirdnet-rules over observations, a default rule pack, probes, and SMTP, webhook and push-wake sinks.',
+    about: [
+      'An application feeds the alerter observations (an engine crashed, the default route moved to Wi-Fi, a disk is nearly full, a GPU is hot); <a href="/crates/rules">weirdnet-rules</a> specs turn them into failing, recovered and one-off alerts, deduped per key, and sinks deliver them.',
+    ],
+    parts: [
+      '<code>Alerter</code>, <code>Observation</code>, <code>Action</code> (<code>fail</code>, <code>ok</code>, <code>event</code>), <code>Alert</code>, <code>AlertStatus</code>: evaluation, per-key dedupe with a repeat interval, and recovery notices.',
+      '<code>rules</code>: <code>default_rules</code> and <code>Thresholds</code>: engine crash loops, failed loads and crashes; the default route; free disk; GPU temperature with hysteresis.',
+      '<code>probe</code>: <code>route</code>, <code>disk</code>, <code>gpus</code> (Linux and Unix).',
+      '<code>sinks</code>: <code>Sink</code>, <code>SmtpSink</code>, <code>WebhookSink</code>, <code>LogSink</code>, <code>MemorySink</code>, and <code>PushSink</code> (feature <code>push</code>).',
+      '<code>config</code>: <code>AlertsConfig</code> builds the alerter and its sinks; secrets are <code>env:</code> or <code>file:</code> references only.',
+      '<code>engine</code> (feature <code>backends</code>): <code>observation</code>, <code>probes</code> and <code>monitor</code> for <a href="/crates/backends">weirdnet-backends</a> supervisor events.',
+    ],
+    dependsOn: ['rules', 'push', 'backends'],
+    example: r'''# Cargo.toml
+weirdnet-alerts = "0.1"
+
+// main.rs
+use weirdnet_alerts::{AlertsConfig, Observation};
+
+let cfg: AlertsConfig = toml::from_str(&std::fs::read_to_string("alerts.toml")?)?;
+let alerter = cfg.alerter("gpu-01")?.with_product("my-node");
+alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_pct": 4.0}))).await;''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-alerts">crates.io</a> (<a href="https://docs.rs/weirdnet-alerts/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-alerts</code>. Push alerts are wake-ups only: the alert text stays on the node. The <code>push</code> feature pulls in aws-lc through reqwest. Keyring secrets are not supported yet.',
+    origin: 'Ymir',
+  ),
+  Crate(
     slug: 'plugin',
     version: '0.1.0',
     group: 'Extensions and plugins',

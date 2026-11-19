@@ -760,6 +760,31 @@ an answer only when everything that could change it is equal. Only answers that 
 <code>ExactCache::with_store</code> takes any store.</p>
 ''',
   ),
+  'alerts': Guide(
+    brings: r'''
+<p>Tell an operator when a node needs attention: an engine that keeps crashing, a default route that fell back to Wi-Fi, a
+filesystem running out of space, a GPU running hot. Rules are data, so an application ships defaults and users add their own.</p>
+''',
+    works: r'''
+<ul>
+<li><b>Observations</b>: a kind (<code>engine.crash_loop</code>, <code>net.route</code>, <code>disk</code>, <code>gpu</code>, or
+anything the application emits) and JSON fields. Probes produce the built-in ones; the <code>backends</code> feature maps
+supervisor events and runs a <code>monitor</code> loop until told to stop.</li>
+<li><b>Rules</b>: <a href="/crates/rules">weirdnet-rules</a> specs whose actions are <code>fail</code> (raise an alert under a key),
+<code>ok</code> (clear it, sending a recovery notice) and <code>event</code> (a one-off). Titles are templates over the fields. A
+failing key repeats at most every <code>repeat_secs</code> (an hour by default).</li>
+<li><b>Sinks</b>: SMTP (lettre over rustls), JSON webhooks, the log, memory for tests, and push wakes through
+<a href="/crates/push">weirdnet-push</a>, which carry only a reason code. Every sink has a dry run that builds the message and
+sends nothing. Subjects read <code>[product host] title</code>; <code>with_product</code> sets the product.</li>
+<li><b>Secrets</b>: SMTP passwords and webhook tokens are <code>env:NAME</code> or <code>file:/path</code> references; inline
+values are refused.</li>
+</ul>
+''',
+    features: [
+      '<code>push</code>: <code>PushSink</code>, wakes through weirdnet-push 0.1 (pulls in aws-lc through reqwest).',
+      '<code>backends</code>: <code>engine::observation</code>, <code>engine::probes</code> and <code>engine::monitor</code> for weirdnet-backends 0.1.',
+    ],
+  ),
   'plugin': Guide(
     brings: r'''
 <p>The SDK a code space plugin is written against. It has no dependencies, so plugins build offline, and a stable C ABI, so a
