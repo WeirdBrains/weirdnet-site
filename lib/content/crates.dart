@@ -249,12 +249,13 @@ const crates = <Crate>[
     ],
     parts: [
       '<code>catalog</code>: Gemma 4 E2B (about 2.8 GB, for phones and small laptops) and E4B (about 4.6 GB, for desktop) as Q4_0 GGUFs from <code>ggml-org</code> on Hugging Face, with pinned size and SHA-256. <code>default_for(Device)</code> picks one.',
-      '<code>ModelStore</code>, <code>download</code>: a cache directory (<code>WEIRDNET_MODEL_DIR</code> overrides it), a <code>Consent</code> that must name the model, <code>Progress</code> callbacks, <code>.part</code> resume and a checksum check before the file is kept. Nothing downloads without consent.',
+      '<code>ModelStore</code>, <code>download</code>: a cache directory (<code>WEIRDNET_MODELS_DIR</code> overrides it), a <code>Consent</code> that must name the model, <code>Progress</code> callbacks, <code>.part</code> resume and a checksum check before the file is kept. Nothing downloads without consent.',
       '<code>hf</code>: lists a repo’s GGUF files and sizes for a model picker.',
       '<code>prompt</code>: chat turns rendered through the model’s own chat template, and a streaming parser that turns <code>&lt;tool_call&gt;</code> tags into tool calls.',
       '<code>Worker</code>, <code>Engine</code>: the engine lives on one thread; <code>generate</code> returns a <code>Generation</code> that streams <code>Chunk</code>s and cancels from any thread. Tests use a mock engine.',
       '<code>llama</code> feature: <code>LlamaEngine</code> on llama.cpp (CPU; needs cmake and a C++ compiler). <code>vulkan</code> and <code>metal</code> add GPU offload.',
       '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, streaming text to the agent loop and returning parsed tool calls.',
+      '<code>examples/model.rs</code> <span class="tag wip">on main, not in 0.1.0</span>: a small CLI with the <code>llama</code> feature. <code>fetch [id]</code> downloads a model with progress (running the command is the consent) and checks its size and SHA-256; <code>chat [id] "question"</code> loads it and streams the answer with load, first-chunk and total timings. Run from a clone: <code>cargo run --release --example model --features llama -- chat gemma-4-e4b "Why is the sky blue?"</code>.',
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: ['agent'],
@@ -266,7 +267,7 @@ let store = ModelStore::from_env();
 // After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
 let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
 let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only.',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
     slug: 'plugin',
