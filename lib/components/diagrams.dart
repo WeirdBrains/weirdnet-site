@@ -72,7 +72,7 @@ final exchangeDiagram = _svg(
       '<line x1="150" y1="80" x2="150" y2="400" stroke="#00316b" stroke-width="2"/><line x1="810" y1="80" x2="810" y2="400" stroke="#00316b" stroke-width="2"/>'
       '<text x="150" y="112" text-anchor="middle" fill="#dfe3ea" font-size="13">offer: node key + fresh X25519 + scope + expiry</text>'
       '<text x="150" y="130" text-anchor="middle" fill="#b8bec7" font-size="12.5">signed (Ed25519)</text>'
-      '${_arrow(160, 160, 800, 160, 'invitation link  weirdnet://join/…  (or connect over the node)')}'
+      '${_arrow(160, 160, 800, 160, 'invitation link  weirdnet-morph://join/…  (or connect over the node)')}'
       '<text x="810" y="196" text-anchor="middle" fill="#dfe3ea" font-size="13">verify signature, scope, expiry</text>'
       '${_arrow(800, 230, 160, 230, 'signed answer, bound to SHA-256 of the offer')}'
       '<text x="480" y="282" text-anchor="middle" fill="#fff" font-size="14" font-weight="600">both derive: exchange key = HKDF(X25519 secret, transcript)</text>'

@@ -381,7 +381,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. The README’s status line still says key rotation is unreleased; it shipped in 0.3.0.',
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository.',
   ),
   Crate(
     slug: 'push',
