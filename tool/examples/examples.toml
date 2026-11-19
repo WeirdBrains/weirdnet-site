@@ -49,7 +49,7 @@ deps = { weirdnet-render = "0.1.0" }
 deps = { weirdnet-themes = "0.1.0" }
 
 [sync]
-deps = { weirdnet-sync = "0.4.0" }
+deps = { weirdnet-sync = "0.5.0" }
 
 [access]
 deps = { weirdnet-access = "0.1.1" }

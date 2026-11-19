@@ -143,8 +143,8 @@ same release.</p>
 <p>Types that already use <code>serde_bytes</code> or a bytes visitor keep working. A <code>PeerId</code> (or another type that only
 accepts <code>visit_bytes</code>) inside an internally tagged, adjacently tagged or untagged enum, or a <code>flatten</code>ed
 struct, cannot be read: carry it as a string there. Nothing under a signature changes: certificates, records and tokens are
-signed over JSON. Crates that pin net 0.7 or earlier (weirdnet-sync 0.4.0, weirdnet-device-link, weirdnet-relay) stay on the old
-wire until they release on 0.8.</p>
+signed over JSON. Crates that pin net 0.7 or earlier (weirdnet-device-link, weirdnet-relay) stay on the old
+wire until they release on 0.8; weirdnet-sync moved to net 0.8 in 0.5.0.</p>
 ''',
     comingSoon: [
       'How an app uses the discovery toggle and manual peers, with Morph as the example. In Morph 0.2.0, Settings &gt; Relays turns discovery off and adds peers by hand, and an admin policy can lock discovery off.',
@@ -561,7 +561,7 @@ target directory can fail with "File exists" on the library symlinks; deleting t
       '<code>llama</code>: <code>LlamaEngine</code> on llama.cpp, CPU. Needs cmake and a C++ compiler to build.',
       '<code>cpu-dispatch</code> (implies <code>llama</code>): llama.cpp for every CPU level, chosen at run time; the app ships the shared libraries.',
       '<code>vulkan</code>, <code>metal</code> (imply <code>llama</code>): GPU offload.',
-      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code>.',
+      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.2.0</code> since 0.2.1, was <code>^0.1</code>).',
     ],
   ),
   'plugin': Guide(
@@ -727,7 +727,7 @@ of the same element keeps the add; a remove strictly later than the add wins. Th
 be kept 30 days for the app's UI. <code>folder_cycle</code> catches moves that would make a folder its own ancestor.</li>
 </ul>
 <h3>The protocol</h3>
-<p><code>/weirdnet/sync/1</code>, length-prefixed CBOR, one request and reply at a time: <code>Hello</code> /
+<p><code>/weirdnet/sync/2</code> (<code>/1</code> before 0.5.0), length-prefixed CBOR, one request and reply at a time: <code>Hello</code> /
 <code>HelloOk</code> or <code>Refuse</code>, <code>Pull</code>, <code>Page</code>, <code>Ack</code>, <code>Roster</code>. A session is
 accepted only from a node with an unrevoked <code>NodeCert</code> for the same user. Pulls ask for one type, and positions are
 kept per (node, type), so pulling one type never skips another. A server answers only up to what it holds completely, and
@@ -771,14 +771,28 @@ sealed under seed-derived keys (the write fails with <code>no-epoch-key</code>),
 refused.</li>
 <li><b>Older peers</b>: <code>write_with_fallback</code> lets an app give a small fallback op; a 0.3 peer ignores the new field
 and keeps the fallback, and a plain entry keeps the 0.3 wire shape.</li>
-<li><b>Page budget</b>: a page is now budgeted for what crosses the wire (<code>PAGE_BUDGET</code>, about a quarter of the
-256 KiB <code>PAGE_MAX</code>), because the sealed body is hex and the request-response codec sends bytes as an integer array.
-Before, a full page could exceed the 256 KiB reply cap and stall the stream.</li>
+<li><b>Page budget</b>: a page is now budgeted for what crosses the wire (<code>PAGE_BUDGET</code>; in 0.4.0 about 60 KiB, a
+quarter of the 256 KiB <code>PAGE_MAX</code>), because the sealed body is hex and, with weirdnet-net 0.7, the request-response
+codec sent bytes as an integer array. Before, a full page could exceed the 256 KiB reply cap and stall the stream. 0.5.0
+raises the budget to 112 KiB (see below).</li>
 <li><b>Caller check</b>: <code>Roster::check_caller</code> says whether the transport-authenticated caller of an app call is an
 active linked device of this user. A presented certificate must match the peer and user, a revoked one is refused, and a
 certificate the roster does not hold never admits a caller.</li>
 </ul>
 <p>0.4.0 depends on <a href="/crates/net">weirdnet-net</a> 0.7, whose types are in its API, so apps move to net 0.7 with it.</p>
+<h3>Moving to 0.5.0</h3>
+<ul>
+<li><b>weirdnet-net 0.8</b>: 0.5.0 depends on <a href="/crates/net">weirdnet-net</a> 0.8, whose types are in this crate's API, so
+apps move to net 0.8 with it. There are no other API changes from 0.4.</li>
+<li><b>Protocol <code>/weirdnet/sync/2</code></b> (was <code>/1</code>): requests and replies carry byte fields as CBOR byte
+strings. A 0.4 node and a 0.5 node fail to negotiate rather than fail to decode, so 0.5.0 does not talk to 0.4 peers. Upgrade
+every device together.</li>
+<li><b>Bigger pages</b>: <code>PAGE_BUDGET</code> is now <code>(PAGE_MAX - 16 KiB) / 2 - 8 KiB</code>, 114,688 bytes (112 KiB; was
+about 60 KiB). A page is hex-sealed (2x) inside one CBOR byte string (1x), no longer four times the plaintext. A full page is
+about 225 KiB on the wire, under the 256 KiB <code>PAGE_MAX</code>, and <code>CHUNK_MAX</code> grows with it.</li>
+<li><b>Stored data is unchanged</b>: op logs, records, chunks, sealed values and key chains read exactly as in 0.4. Only the
+network protocol moved.</li>
+</ul>
 <p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
 ''',

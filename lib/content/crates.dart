@@ -246,7 +246,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'model',
-    version: '0.2.0',
+    version: '0.2.1',
     tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
       'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
@@ -259,7 +259,7 @@ const crates = <Crate>[
       '<code>prompt</code>: chat turns rendered through the model’s own chat template, and a streaming parser that turns <code>&lt;tool_call&gt;</code> tags into tool calls.',
       '<code>Worker</code>, <code>Engine</code>: the engine lives on one thread; <code>generate</code> returns a <code>Generation</code> that streams <code>Chunk</code>s and cancels from any thread. Tests use a mock engine.',
       '<code>llama</code> feature: <code>LlamaEngine</code> on llama.cpp (CPU; needs cmake and a C++ compiler). <code>vulkan</code> and <code>metal</code> add GPU offload.',
-      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, streaming text to the agent loop and returning parsed tool calls.',
+      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.2.0</code> since 0.2.1), streaming text to the agent loop and returning parsed tool calls.',
       '<code>cpu-dispatch</code> feature (0.2.0): llama.cpp built for every CPU level and chosen at run time, so a release binary runs local models on any CPU; the app ships the llama.cpp shared libraries (see the guide).',
       '<code>cpu</code> (0.2.0): <code>cpu::check()</code>, <code>required()</code> and <code>missing()</code> say whether this CPU can run the compiled-in llama.cpp. <code>LlamaEngine::load</code> checks first and returns <code>Error::UnsupportedCpu</code> instead of crashing with an illegal instruction.',
       '<code>examples/model.rs</code> (0.2.0): a small CLI with the <code>llama</code> feature. <code>fetch [id]</code> downloads a model with progress (running the command is the consent) and checks its size and SHA-256; <code>chat [id] "question"</code> loads it and streams the answer with load, first-chunk and total timings. The <code>cpu</code> command prints the CPU check. Run from a clone: <code>cargo run --release --example model --features llama -- chat gemma-4-e4b "Why is the sky blue?"</code>.',
@@ -278,7 +278,7 @@ let store = ModelStore::from_env();
 // After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
 let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
 let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
-    notes: 'Version 0.2.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.2.0">docs.rs</a>). Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
+    notes: 'Version 0.2.1 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.2.1">docs.rs</a>). 0.2.1 makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.2.0</code> (it was <code>^0.1</code>), so apps on agent 0.2 can use <code>LocalModel</code>; <code>ModelBackend</code> is unchanged. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
     slug: 'plugin',
@@ -375,12 +375,12 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'sync',
-    version: '0.4.0',
+    version: '0.5.0',
     group: 'Network',
     status: Status.fresh,
     tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke.',
     about: [
-      'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, the <code>/weirdnet/sync/1</code> pull protocol, and (0.4.0) records too big for one page, split into hash-checked chunks, and sealed records that a device revoked before a write cannot open.',
+      'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, the <code>/weirdnet/sync/2</code> pull protocol, and (0.4.0) records too big for one page, split into hash-checked chunks, and sealed records that a device revoked before a write cannot open.',
       'Record types (bookmarks, history, settings, notes) and persistence stay in the application; <code>OpLog</code> is the in-memory log it snapshots.',
     ],
     parts: [
@@ -395,7 +395,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. See <code>SECURITY.md</code> in the repository.',
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged.',
   ),
   Crate(
     slug: 'push',

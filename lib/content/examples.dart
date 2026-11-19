@@ -398,7 +398,7 @@ fn main() {
   ),
   'sync': Example(
     r'''[dependencies]
-weirdnet-sync = "0.4.0"''',
+weirdnet-sync = "0.5.0"''',
     r'''// The merge rules underneath linked-device sync: hybrid logical clocks, LWW and an OR-set.
 use weirdnet_sync::{Hlc, Lww, NodeId, OrSet, lww};
 
