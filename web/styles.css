@@ -21,6 +21,7 @@
   --pink: #ec4899;
   --radius: 0.5rem;
   --wrap: 72rem;
+  --gutter: clamp(1rem, 5vw, 1.25rem);
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   color-scheme: dark;
 }
@@ -51,7 +52,8 @@ pre { background: var(--bg-deep); border: 1px solid var(--border); border-radius
 img, svg, video { max-width: 100%; }
 pre code { background: none; border: 0; padding: 0; }
 
-.wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 1.25rem; }
+/* side gutter; other classes that share .wrap (hero, page-hero, doc) must set padding-block only, never the padding shorthand */
+.wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding-inline: var(--gutter); }
 .skip-link { position: absolute; left: -999px; top: 0.5rem; background: var(--yellow); color: var(--bg); padding: 0.4rem 0.8rem; border-radius: var(--radius); z-index: 50; }
 .skip-link:focus { left: 0.5rem; }
 
@@ -69,13 +71,13 @@ pre code { background: none; border: 0; padding: 0; }
 @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
 
 /* hero */
-.hero { padding: 6rem 0 4rem; text-align: center; }
+.hero { padding-block: 6rem 4rem; text-align: center; }
 .hero-mark { width: 7rem; height: 7rem; margin: 0 auto 1.5rem; display: block; filter: drop-shadow(0 0 24px rgba(168, 85, 247, 0.45)); }
 .eyebrow { display: inline-block; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yellow); margin-bottom: 1rem; }
 .gradient-text { background: linear-gradient(90deg, var(--yellow), var(--purple), var(--yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 h1 { font-size: clamp(2.4rem, 5vw, 3.9rem); line-height: 1.1; margin: 0 0 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
 .lede { font-size: 1.3rem; color: var(--text-muted); max-width: 46rem; margin: 0 auto 2rem; }
-.page-hero { padding: 4.5rem 0 2.5rem; }
+.page-hero { padding-block: 4.5rem 2.5rem; }
 .page-hero h1 { font-size: clamp(2.1rem, 4vw, 3.1rem); }
 .page-hero .lede { margin: 0; }
 
@@ -94,7 +96,7 @@ h2 .gradient-text, h2.gradient-text { display: inline-block; }
 .button.solid { background: linear-gradient(90deg, rgba(250, 204, 21, 0.16), rgba(168, 85, 247, 0.22)); }
 
 /* sections */
-.section { padding: 4.5rem 0; }
+.section { padding-block: 4.5rem; }
 .band { background: rgba(0, 0, 0, 0.5); }
 .section-head { text-align: center; margin-bottom: 2.75rem; }
 .section-head p { color: var(--text-muted); max-width: 42rem; margin: 0 auto; font-size: 1.1rem; }
@@ -144,7 +146,7 @@ figure.diagram figcaption { color: var(--text-muted); font-size: 0.88rem; margin
 .facts a { color: var(--purple-soft); }
 
 /* footer */
-.site-footer { border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.35); padding: 2.2rem 0; font-size: 0.92rem; color: var(--text-muted); }
+.site-footer { border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.35); padding-block: 2.2rem; font-size: 0.92rem; color: var(--text-muted); }
 .footer-inner { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
 .footer-links { display: flex; gap: 1.3rem; flex-wrap: wrap; }
 
@@ -154,6 +156,12 @@ figure.diagram figcaption { color: var(--text-muted); font-size: 0.88rem; margin
   .toc { position: static; }
   .site-nav { gap: 0.9rem; font-size: 0.88rem; }
   .header-inner { height: auto; padding-top: 0.8rem; padding-bottom: 0.8rem; flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .hero { padding-block: 4rem 3rem; }
+  .page-hero { padding-block: 3rem 2rem; }
+  .section { padding-block: 3rem; }
+  pre { padding: 0.9rem 1rem; }
 }
 
 /* Crate guides: version tags, grouped cards, the all-crates table, details coming soon. */
