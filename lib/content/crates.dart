@@ -250,7 +250,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'model',
-    version: '0.4.0',
+    version: '0.4.1',
     tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, hardware detection and model sizing, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
       'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
@@ -283,7 +283,7 @@ let store = ModelStore::from_env();
 // After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
 let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
 let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
-    notes: 'Version 0.4.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.0">docs.rs</a>). 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
+    notes: 'Version 0.4.1 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.1">docs.rs</a>). 0.4.1 fixes the note <code>hw::plan()</code> gives when no catalog chat model fits: it no longer names another application’s command and says to add a smaller GGUF model; the <code>agent</code> feature still pins weirdnet-agent <code>=0.4.0</code>. 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
     slug: 'backends',
