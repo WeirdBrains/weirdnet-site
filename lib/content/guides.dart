@@ -87,6 +87,12 @@ fingerprint to compare out of band. Sealed messages are bound to the exchange, t
 <code>sealed::serve</code> answers only the exchange's own, Noise-authenticated peer. <code>invite</code> automates the
 flow: offers answered on the spot or kept for the owner, crossing offers settled on one exchange, trust on first use and
 impostor warnings.</p>
+<p>Invitation links go on the app's own scheme. <code>WEIRDNET</code> has no link scheme (0.7.0), so
+<code>Profile::link</code> returns an error until the app sets <code>join_link</code>, <code>answer_link</code> and
+<code>link_mark</code> to its <code>weirdnet-&lt;app&gt;://</code> scheme. Bare <code>weirdnet://</code> is reserved
+(<code>RESERVED_LINK_SCHEME</code>): <code>link</code> never makes a link on it and <code>parse_token</code> refuses one.
+Tokens (<code>wnet-x1-offer:…</code>) work with any profile. Upgrading from 0.6: set the app's scheme and handle the
+<code>Result</code> from <code>link</code>.</p>
 
 <h3>Names and locators</h3>
 <p>A <code>PeerRecord</code> (addresses, relay circuits, home relay, <code>seq</code>, at most a day's expiry) is signed by the

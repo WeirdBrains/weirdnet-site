@@ -57,6 +57,7 @@ prefixes, link schemes, signature domains and derivation labels. <code>WEIRDNET<
 <tr><td>Identify</td><td><code>/weirdnet/id/1</code></td></tr>
 <tr><td>Relay provider key</td><td><code>/weirdnet/relay/1</code></td></tr>
 <tr><td>Offer and answer tokens</td><td><code>wnet-x1-offer:</code>, <code>wnet-x1-answer:</code></td></tr>
+<tr><td>Invitation and answer links</td><td>None: each app sets its own <code>weirdnet-&lt;app&gt;://join/</code> (weirdnet-net 0.7.0)</td></tr>
 <tr><td>Signature domains</td><td><code>weirdnet/net/offer/v1</code>, <code>weirdnet/net/answer/v1</code>, <code>weirdnet-node-cert/1</code></td></tr>
 <tr><td>Sealed message label</td><td><code>weirdnet/net/msg/v1</code></td></tr>
 <tr><td>Default port</td><td>4747 (TCP and QUIC)</td></tr>
@@ -64,7 +65,9 @@ prefixes, link schemes, signature domains and derivation labels. <code>WEIRDNET<
 <p>Profiles never mix: tokens, signatures, sealed messages, certificates and sync keys made under one profile don’t verify
 or open under another, and nodes on different protocol ids don’t talk at all. Apps share one network on the default
 profile and keep their own traffic on their own protocol names (Morph uses <code>/morph/...</code>), so a node ignores
-traffic it doesn’t understand. Invitation links use each app’s own scheme, such as <code>weirdnet-morph://join/</code>.</p>
+traffic it doesn’t understand. Invitation links use each app’s own scheme, such as <code>weirdnet-morph://join/</code>:
+since weirdnet-net 0.7.0 the default profile has no link scheme, and links on the reserved bare <code>weirdnet://</code>
+are never made or read.</p>
 <h2 id="apps">Apps on Weirdnet</h2>
 <p>Each app joins Weirdnet under its own name, <code>weirdnet-&lt;app&gt;</code>, and keeps its own protocol ids for its own
 traffic. What the apps share is Weirdnet itself: identities and keys (a user key backed up as 24 words, node keys

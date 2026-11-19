@@ -64,7 +64,7 @@ class Crate {
 const crates = <Crate>[
   Crate(
     slug: 'net',
-    version: '0.6.0',
+    version: '0.7.0',
     group: 'Network',
     tagline: 'The libp2p node, streams, app calls, key exchanges, invitations, sealed messaging, identities and certificates.',
     about: [
