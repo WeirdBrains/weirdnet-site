@@ -697,7 +697,16 @@ again. Everything that happens is a <code>SupervisorEvent</code>.</p>
 request becomes an OpenAI streaming body for the engine (an assistant prefix becomes a trailing assistant message, with
 <code>continue_final_message</code> on vLLM), and the engine's server-sent events become infer/2 text, reasoning and tool-call
 frames. Cancelling the request drops the engine stream. Model nodes serve raw infer/2 only: the inference node has already
-assembled the messages.</p>
+assembled the messages. Since 0.1.1 raw prompts go to the engine's <code>/v1/completions</code>.</p>
+<h3>Its own protocol id (0.1.1)</h3>
+<p>An inference node serves <code>/weirdnet-agent/infer/2</code> to apps, so a machine that is both an inference node and a model node
+could not also take raw infer/2 for its models on the same id. 0.1.1 gives raw inference its own id,
+<code>/weirdnet-backends/infer/1</code> (<code>RAW_INFER_PROTOCOL</code>), with the same infer/2 framing. <code>NodeServer</code> always serves
+it and lists it in the <code>weirdnet-backends-node</code> announcement; it keeps serving infer/2 too, for 0.1.0 inference nodes, unless
+<code>NodeServer::start_with(.., NodeServerOptions::default().with_legacy_infer2(false))</code> leaves infer/2 to the inference role.
+On the inference node, wrap the dialer of the model-node <code>Pool</code> in <code>RawInferDialer</code>: infer/2 opens try the new id
+first and fall back to infer/2 on a node that doesn't accept it, remembering that node. Inference nodes on 0.1.0 keep working
+against 0.1.1 model nodes as they are.</p>
 <h3>node/1</h3>
 <p>A <code>Capability</code> record lists the hardware and memory budget (<code>weirdnet-model</code> <code>hw</code>), the engines, every
 configured model with its state, revision, quantization, context and slot limits, load-time estimate and measured speed, the
@@ -1016,6 +1025,27 @@ network protocol moved.</li>
 </ul>
 <p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
+<h3>Snapshots, merge-back and partial pulls (0.5.1)</h3>
+<p>A node's <code>SyncHandler</code> answers from the same <code>Arc&lt;Mutex&lt;SyncState&gt;&gt;</code> the app pulls into. Holding that
+lock for a whole pull stops the node answering, and two nodes pulling from each other at once then wait on each other until the
+request times out. <code>pull_from_shared(&amp;state, &amp;node, peer, &amp;addrs, typ)</code> avoids that: it takes a
+<code>SyncState::snapshot()</code>, pulls into it without the lock, and folds it back with <code>SyncState::merge_back</code>, also when
+the pull failed part-way.</p>
+<p><code>merge_back(&amp;snapshot)</code> is for apps that keep their own copies too (it replaces the deprecated
+<code>take_keys_from</code>). It keeps everything the state learned or wrote meanwhile:</p>
+<ul>
+<li>the roster merges as on the wire: a revocation on either side wins, and an active copy in the snapshot never un-revokes a
+device; the epoch is the higher one and the key chain merges;</li>
+<li>epoch keys and the adopted root come across, then any key the merged chain seals to this device;</li>
+<li>log entries it lacks are integrated (<code>OpLog::integrate</code>, so chunks and sealed values read back), peer and per-type
+cursors move to the further of the two, and the clock moves past both;</li>
+<li>types, record options and the device stay the state's own. Write locally to the shared state, not to the snapshot.</li>
+</ul>
+<p>It returns a <code>MergeOutcome</code> with the entries, keys and revocations it took.</p>
+<p>A pull applies and acks page by page, so if a later page is refused, the network drops or the closing rotation fails, the
+earlier pages stay applied and their cursors moved. <code>pull_from</code> keeps its signature and returns only the error;
+<code>pull_from_outcome</code> and <code>pull_from_shared</code> return a <code>PullOutcome { applied, error }</code> (non-exhaustive)
+with the count either way, so an app can show progress and retry from where it stopped.</p>
 <h3>Checking callers on a serving node</h3>
 <p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
 transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's

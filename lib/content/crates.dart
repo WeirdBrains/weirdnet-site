@@ -205,11 +205,11 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'mcp',
-    version: '0.5.0',
+    version: '0.5.1',
     tagline: 'A transport-agnostic Model Context Protocol tools server and stdio bridge, plus an optional MCP client and agent tool source.',
     about: [
       'A stateless MCP tools server extracted from TAUR and shared with Salty Gull. The HTTP route stays in the app’s server.',
-      'Since 0.2.0 it can also be the other side: an MCP client (feature <code>client</code>) and, with feature <code>agent</code>, a <a href="/crates/agent">weirdnet-agent</a> tool source, so an agent can use any MCP server’s tools. Both are off by default, and the server API is unchanged. 0.3.0 caps the length of a line the stdio client accepts at 4 MiB. 0.4.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.3.0</code> (it was <code>=0.2.0</code> in 0.3.0): breaking for <code>agent</code> users only, with no source changes. An app on weirdnet-agent 0.3 needs weirdnet-mcp 0.4 for <code>McpSource</code>; without the <code>agent</code> feature nothing changes. 0.5.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.4.0</code> in the same way: apps on agent 0.4 need weirdnet-mcp 0.5.',
+      'Since 0.2.0 it can also be the other side: an MCP client (feature <code>client</code>) and, with feature <code>agent</code>, a <a href="/crates/agent">weirdnet-agent</a> tool source, so an agent can use any MCP server’s tools. Both are off by default, and the server API is unchanged. 0.3.0 caps the length of a line the stdio client accepts at 4 MiB. 0.4.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.3.0</code> (it was <code>=0.2.0</code> in 0.3.0): breaking for <code>agent</code> users only, with no source changes. An app on weirdnet-agent 0.3 needs weirdnet-mcp 0.4 for <code>McpSource</code>; without the <code>agent</code> feature nothing changes. 0.5.0 moves the <code>agent</code> feature to weirdnet-agent <code>=0.4.0</code> in the same way: apps on agent 0.4 need weirdnet-mcp 0.5. 0.5.1 loosens that to <code>"0.4"</code> (any 0.4.x), so it works with agent 0.4.1 and later 0.4 patches; nothing else changes.',
     ],
     parts: [
       '<code>Server::handle</code>: one JSON-RPC 2.0 message or batch plus the caller’s bearer token in, the reply out: <code>initialize</code> with version negotiation, <code>ping</code>, <code>tools/list</code>, <code>tools/call</code>.',
@@ -217,14 +217,14 @@ const crates = <Crate>[
       'The app implements <code>Tools::call</code>; failures become <code>isError</code> results. <code>args</code>: argument getters with uniform messages.',
       '<code>stdio::bridge</code>: the <code>&lt;app&gt;ctl mcp</code> loop that forwards stdio lines to a remote <code>/mcp</code>.',
       '<code>client</code> feature: <code>Client::connect(transport, ClientOptions)</code>, <code>list_tools</code> (follows cursors), <code>call_tool</code> and <code>call_tool_until</code>; <code>StdioTransport</code> (<code>StdioCommand</code>) and <code>HttpTransport</code> (<code>HttpConfig</code>); <code>Secret</code> for tokens and environment values. The stdio transport reads server lines with a cap (<code>DEFAULT_MAX_LINE</code>, 4 MiB; <code>spawn_limited</code> and <code>from_io_limited</code> set another) (0.3.0).',
-      '<code>agent</code> feature: <code>agent::McpSource</code>, a <code>weirdnet_agent::ToolSource</code>, with <code>SourceOptions::tier_floor</code> (default <code>Research</code>); depends on weirdnet-agent <code>=0.4.0</code> since 0.5.0 (<code>=0.3.0</code> in 0.4.0).',
+      '<code>agent</code> feature: <code>agent::McpSource</code>, a <code>weirdnet_agent::ToolSource</code>, with <code>SourceOptions::tier_floor</code> (default <code>Research</code>); depends on weirdnet-agent <code>"0.4"</code> since 0.5.1 (<code>=0.4.0</code> in 0.5.0, <code>=0.3.0</code> in 0.4.0).',
     ],
     usedBy: ['TAUR', 'Salty Gull (<code>saltyctl mcp</code>)'],
     origin: 'TAUR',
   ),
   Crate(
     slug: 'agent',
-    version: '0.4.0',
+    version: '0.4.1',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks, plus remote inference across the user’s own devices.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
@@ -246,11 +246,11 @@ const crates = <Crate>[
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: ['net', 'sync'],
-    notes: 'Version 0.4.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.0">docs.rs</a>). 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
+    notes: 'Version 0.4.1 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.1">docs.rs</a>). 0.4.1 is additive: infer/2 raw prompts (<code>Input::Prompt</code>, <code>Request::prompt</code>; 0.4.0 servers close the stream and the pool moves on), early metadata (<code>Request::early_meta</code>, <code>ServerFrame::Meta</code>, <code>PoolEvent::Meta</code>, so a cache hit is known before the answer), embedding usage (<code>EmbedBackend::embed_counted</code>, <code>Embeddings::usage</code>), and a <code>Pool</code> that keeps error kinds: request errors (<code>BadRequest</code>, <code>Cancelled</code>) come back at once, and when every node fails the last node answer wins over a transport error. Weirdnet crates depend on it with caret requirements (<code>"0.4"</code>, or <code>"0.4.1"</code> where they use these APIs), so agent patch releases don’t force re-releases. 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'model',
-    version: '0.4.1',
+    version: '0.4.2',
     tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, hardware detection and model sizing, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
       'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
@@ -264,7 +264,7 @@ const crates = <Crate>[
       '<code>Worker</code>, <code>Engine</code>: the engine lives on one thread; <code>generate</code> returns a <code>Generation</code> that streams <code>Chunk</code>s and cancels from any thread. Tests use a mock engine.',
       '<code>llama</code> feature: <code>LlamaEngine</code> on llama.cpp (CPU; needs cmake and a C++ compiler). <code>vulkan</code> and <code>metal</code> add GPU offload.',
       '<code>hw</code> (0.4.0): <code>detect()</code> finds GPUs (NVIDIA, AMD, Apple silicon), CPU threads and memory; <code>budget()</code> is the memory models may use; <code>catalog()</code> is a tiered list of chat and embedding models with footprints; <code>plan()</code> picks a main model, a stand-in and an embedding model that fit.',
-      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.4.0</code> since 0.4.0; <code>=0.3.0</code> in 0.3.0), streaming text to the agent loop and returning parsed tool calls.',
+      '<code>agent</code> feature: <code>LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>"0.4"</code>, any 0.4.x, since 0.4.2; <code>=0.4.0</code> in 0.4.0 and 0.4.1; <code>=0.3.0</code> in 0.3.0), streaming text to the agent loop and returning parsed tool calls.',
       '<code>cpu-dispatch</code> feature (0.2.0): llama.cpp built for every CPU level and chosen at run time, so a release binary runs local models on any CPU; the app ships the llama.cpp shared libraries (see the guide).',
       '<code>cpu</code> (0.2.0): <code>cpu::check()</code>, <code>required()</code> and <code>missing()</code> say whether this CPU can run the compiled-in llama.cpp. <code>LlamaEngine::load</code> checks first and returns <code>Error::UnsupportedCpu</code> instead of crashing with an illegal instruction.',
       '<code>examples/model.rs</code> (0.2.0): a small CLI with the <code>llama</code> feature. <code>fetch [id]</code> downloads a model with progress (running the command is the consent) and checks its size and SHA-256; <code>chat [id] "question"</code> loads it and streams the answer with load, first-chunk and total timings. The <code>cpu</code> command prints the CPU check. Run from a clone: <code>cargo run --release --example model --features llama -- chat gemma-4-e4b "Why is the sky blue?"</code>.',
@@ -283,11 +283,11 @@ let store = ModelStore::from_env();
 // After the user agrees: weirdnet_model::download(&store, &spec, &consent, &mut on_progress)?; // on_progress returns false to cancel
 let worker = Arc::new(Worker::spawn(LlamaEngine::loader(store.path(&spec), LlamaOptions::default())));
 let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::ModelBackend''',
-    notes: 'Version 0.4.1 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.1">docs.rs</a>). 0.4.1 fixes the note <code>hw::plan()</code> gives when no catalog chat model fits: it no longer names another application’s command and says to add a smaller GGUF model; the <code>agent</code> feature still pins weirdnet-agent <code>=0.4.0</code>. 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
+    notes: 'Version 0.4.2 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.2">docs.rs</a>). 0.4.2 loosens the <code>agent</code> feature’s weirdnet-agent requirement from <code>=0.4.0</code> to <code>"0.4"</code>, so it works with agent 0.4.1 and later 0.4 patches; nothing else changes. 0.4.1 fixes the note <code>hw::plan()</code> gives when no catalog chat model fits: it no longer names another application’s command and says to add a smaller GGUF model. 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
     slug: 'backends',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'The model-node wrapper: llama.cpp and vLLM adapters, a supervisor with swap groups, idle unload and crash backoff, raw infer/2 serving, and /weirdnet-backends/node/1 with signed capability records.',
     about: [
       'A model node runs models and takes requests, like a llama.cpp or vLLM server; it can even be one, a stock server it only wraps. weirdnet-backends starts and stops the engines and serves them to inference nodes. It decides nothing beyond the node: what to load, and where, is the caller’s decision. It has no app-specific types.',
@@ -299,7 +299,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
       '<code>ChunkDecoder</code>, <code>ToolCalls</code>: OpenAI server-sent events decoded into <code>Chunk</code>s: text, reasoning (<code>reasoning_content</code> or <code>reasoning</code>), tool-call fragments joined into calls, finish reason and usage with cached and reasoning tokens.',
       '<code>openai</code>: engine request bodies from infer/2 requests: messages, sampling, seed, response format, tools, and assistant-prefix continuation (vLLM’s <code>continue_final_message</code>).',
       '<code>ModelHost</code>: an <code>InferHost</code> serving raw infer/2 and embeddings from the supervisor’s models. Cancel aborts the engine request; prefixes resume; a model that is not loaded is refused unless the request waits for it; draining refuses new requests; prefill and decode speed and time to first token are measured.',
-      '<code>node</code> feature: <code>NodeService</code>, <code>NodeServer</code> (node/1 and raw infer/2 on a <code>weirdnet-net</code> node, announced as <code>weirdnet-backends-node</code>), <code>NodeClient</code>, <code>Subscription</code>, <code>Verifier</code>, and <code>GroupWorkers</code> for the application’s cross-machine group workers.',
+      '<code>node</code> feature: <code>NodeService</code>, <code>NodeServer</code> (node/1 and raw inference on a <code>weirdnet-net</code> node, announced as <code>weirdnet-backends-node</code>), <code>NodeServerOptions</code>, <code>RAW_INFER_PROTOCOL</code> and <code>RawInferDialer</code> (0.1.1), <code>NodeClient</code>, <code>Subscription</code>, <code>Verifier</code>, and <code>GroupWorkers</code> for the application’s cross-machine group workers.',
     ],
     dependsOn: ['agent', 'model', 'net', 'sync'],
     example: r'''# Cargo.toml
@@ -315,13 +315,16 @@ let sup = Supervisor::new(vec![EngineConfig::llamacpp("llama-server")], vec![cha
 let _reaper = sup.spawn_reaper(std::time::Duration::from_secs(30));
 let host = Arc::new(ModelHost::new(sup, auth.clone())); // auth: weirdnet_agent::serve::RosterAuth
 let service = Arc::new(NodeService::new(host, node_keypair, Some(node_cert), auth).with_hardware(hw, budget));
-let _server = NodeServer::start(&node, service)?; // node/1 + raw infer/2''',
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-backends">crates.io</a> (<a href="https://docs.rs/weirdnet-backends/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-backends</code>. The supervisor runs on Unix and Windows; graceful stop, process groups and dying with the parent are Unix-only (see the platform table below), and vLLM is Linux-only. Ray and <code>rpc-server</code> group workers are not included: <code>GroupUp</code> goes to the application’s <code>GroupWorkers</code>. The API may change while Ymir moves onto it.',
+let _server = NodeServer::start(&node, service)?; // node/1 + raw inference on /weirdnet-backends/infer/1 and infer/2
+
+// On the inference node: dial model nodes on the new id, falling back to infer/2 for 0.1.0 nodes.
+let dialer = Arc::new(weirdnet_backends::RawInferDialer::new(net_dialer));''',
+    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-backends">crates.io</a> (<a href="https://docs.rs/weirdnet-backends/0.1.1">docs.rs</a>). 0.1.1 serves raw inference on its own protocol id, <code>/weirdnet-backends/infer/1</code> (<code>RAW_INFER_PROTOCOL</code>, the infer/2 framing), so one node can be an inference node and a model node; infer/2 is still served by default for 0.1.0 inference nodes (<code>NodeServerOptions::with_legacy_infer2(false)</code> turns it off), and <code>RawInferDialer</code> tries the new id and falls back to infer/2. It also serves raw prompts and reports embedding tokens (agent 0.4.1) and depends on weirdnet-agent <code>"0.4.1"</code> and weirdnet-model <code>"0.4"</code>. Extracted from Ymir’s <code>ymir-backends</code>. The supervisor runs on Unix and Windows; graceful stop, process groups and dying with the parent are Unix-only (see the platform table below), and vLLM is Linux-only. Ray and <code>rpc-server</code> group workers are not included: <code>GroupUp</code> goes to the application’s <code>GroupWorkers</code>. The API may change while Ymir moves onto it.',
     origin: 'Ymir',
   ),
   Crate(
     slug: 'openai',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'A loopback-only OpenAI-compatible bridge over a weirdnet-agent inference pool, with a token, a Host check and no CORS.',
     about: [
       'Local tools that speak the OpenAI API (editors, notebooks, <code>curl</code>) reach the user’s inference nodes through it: chat completions, streaming or not, the model list and embeddings, all through a <a href="/crates/agent">weirdnet-agent</a> 0.4 <code>Pool</code>, so failover, resume and stand-ins come with it.',
@@ -329,6 +332,7 @@ let _server = NodeServer::start(&node, service)?; // node/1 + raw infer/2''',
     ],
     parts: [
       '<code>POST /v1/chat/completions</code>: SSE streaming with <code>data: [DONE]</code>, or one JSON answer; reasoning as <code>reasoning_content</code>, tool calls, usage with cached and reasoning tokens. Dropping the response cancels the pool request.',
+      '<code>POST /v1/completions</code> (0.1.1): a raw prompt, whole or streamed as <code>text_completion</code> chunks; <code>n</code>/<code>best_of</code> above 1, <code>echo</code>, <code>suffix</code> and <code>logprobs</code> are refused with 400.',
       '<code>GET /v1/models</code>: the pool catalog, with state, purpose, replicas, context and revision under <code>weirdnet</code>. <code>POST /v1/embeddings</code>: float vectors.',
       '<code>x-weirdnet-model</code>, <code>x-weirdnet-cache: hit</code> and <code>x-weirdnet-standin</code> headers; <code>x-wait: 1</code> waits for the requested model instead of a stand-in.',
       '<code>GET /metrics</code>: Prometheus counters <code>weirdnet_bridge_{requests,errors,cache_hits,standin}_total</code>.',
@@ -345,12 +349,12 @@ use weirdnet_openai::{Bridge, BridgeOptions, new_token};
 let token = new_token(); // show it to the user once; keep it in their keychain
 let bridge = Bridge::bind(BridgeOptions::new(11435, token)).await?;
 bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::pool::Pool''',
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-openai">crates.io</a> (<a href="https://docs.rs/weirdnet-openai/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-openai</code>. <code>/v1/completions</code> answers 501 for now: infer/2 carries chat messages, not raw prompts. Content parts other than text are refused.',
+    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-openai">crates.io</a> (<a href="https://docs.rs/weirdnet-openai/0.1.1">docs.rs</a>). Extracted from Ymir’s <code>ymir-openai</code>. 0.1.1 (on weirdnet-agent <code>"0.4.1"</code>) makes <code>/v1/completions</code> work as an infer/2 raw prompt, whole or streamed (a node that can’t take raw prompts answers 501); streamed answers carry <code>x-weirdnet-cache: hit</code> from early metadata; <code>/v1/embeddings</code> reports real <code>usage.prompt_tokens</code> and keeps a node’s bad request a 400. Content parts other than text are still refused, and unknown parameters ignored (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/1">#1</a>); <code>Retry-After</code> is 1 s until busy nodes report a delay (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/2">#2</a>).',
     origin: 'Ymir',
   ),
   Crate(
     slug: 'semcache',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'The answer cache for inference nodes: the AnswerCache seam, a store trait, and an exact-match cache for deterministic requests.',
     about: [
       'Before an inference node routes a prompt it asks the cache; afterwards it offers the finished answer. Requests and answers are <a href="/crates/agent">weirdnet-agent</a> 0.4 infer/2 types, and the store is a trait, so answers can live in memory, on disk or be shared between nodes.',
@@ -373,7 +377,7 @@ if let Some(hit) = cache.get("qwen3-8b", &request) {
     // replay hit.text and mark the answer as a cache hit (infer/2 Meta::cache_hit)
 }
 cache.put("qwen3-8b", &request, &CachedAnswer::from(&answer));''',
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-semcache</code>. Semantic matching (nearest stored prompt by embedding) and shared or persistent stores are not in 0.1.0.',
+    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.1.1">docs.rs</a>). 0.1.1 depends on weirdnet-agent <code>"0.4"</code> instead of <code>=0.4.0</code>, so it builds with agent 0.4.1; raw prompts (agent 0.4.1 <code>Input::Prompt</code>) are not cached. Extracted from Ymir’s <code>ymir-semcache</code>. Semantic matching (nearest stored prompt by embedding) and shared or persistent stores are not in 0.1.0.',
     origin: 'Ymir',
   ),
   Crate(
@@ -499,7 +503,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'sync',
-    version: '0.5.0',
+    version: '0.5.1',
     group: 'Network',
     status: Status.fresh,
     tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke.',
@@ -512,6 +516,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>OpLog</code>, <code>LogEntry</code>: per-node sequences, per-(node, type) cursors, pages and <code>integrate</code>.',
       '<code>lww</code>, <code>OrSet</code>, <code>edit_vs_delete</code>, <code>can_gc_tombstone</code>, <code>folder_cycle</code>: the merge rules.',
       '<code>SyncState</code>, <code>SyncHandler</code>, <code>start_node</code>, <code>pull_from</code>: the protocol over a weirdnet-net node.',
+      '<code>SyncState::snapshot</code>, <code>merge_back</code> (<code>MergeOutcome</code>), <code>pull_from_shared</code>, <code>pull_from_outcome</code> and <code>PullOutcome</code>: pull without holding the shared lock, and keep the count of pages applied when a pull stops early (0.5.1).',
       '<code>Roster</code>, <code>DeviceKey</code>, <code>Rotation</code>, <code>KeyChain</code>, <code>EpochKeys</code>, <code>KeyStatus</code>: certificates, revocation, key rotation and re-admission.',
       '<code>sync_key</code>, <code>seal_page</code>, <code>open_page</code>: typed keys and sealed pages.',
       '<code>SyncState::configure</code>, <code>write</code>, <code>read</code>, <code>reseal_stale</code>, <code>pull_chunks</code>; <code>Limits</code>, <code>RecordOptions</code>, <code>RecordValue</code>: large and sealed records (0.4.0).',
@@ -519,7 +524,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged.',
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>.',
   ),
   Crate(
     slug: 'push',
