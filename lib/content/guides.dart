@@ -477,6 +477,61 @@ apps wire the <code>Dialer</code> to weirdnet-net streams.</p>
       'How Morph’s Companions use the agent runtime: the approval tiers and tools they use and the approval screen. Local inference plugs in through <a href="/crates/model">weirdnet-model</a>.',
     ],
   ),
+  'model': Guide(
+    brings: r'''
+<p>Run a small language model on the user's own machine, for any WeirdBrains app, without each app writing its own download,
+checksum and inference plumbing. Nothing downloads until the user has agreed to that exact model, and llama.cpp and the agent
+backend are optional features, so a build that only needs the catalog and downloads has no native dependencies.</p>
+''',
+    works: r'''
+<h3>Get a model</h3>
+<p><code>catalog</code> holds the Gemma 4 E2B (phones, small laptops) and E4B (desktop) GGUF defaults with repo, file, size and
+checksum, and <code>catalog::default_for(Device)</code> picks one. <code>ModelStore</code> is a cache directory
+(<code>WEIRDNET_MODELS_DIR</code> overrides it). <code>download</code> needs a <code>Consent</code> for exactly that model, reports
+<code>Progress</code>, resumes from a <code>.part</code> file and verifies the SHA-256. <code>hf</code> lists a repo's GGUF files
+and sizes for a model picker.</p>
+<h3>Run it</h3>
+<p><code>Worker</code>: one thread owns the <code>Engine</code>; <code>Worker::generate</code> returns a <code>Generation</code>
+that streams <code>Chunk</code>s and can be cancelled from any thread. <code>prompt</code> renders chat turns through the model's
+own chat template and parses <code>&lt;tool_call&gt;</code> tags into tool calls as they stream. With the <code>agent</code> feature,
+<code>agent::LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, so the <a href="/crates/agent">agent loop</a> can
+run on a local model. Tests use a mock <code>Engine</code> and never download a model.</p>
+<h3>CPU support (0.2.0)</h3>
+<p>llama.cpp's build turns on AVX, AVX2, BMI2, FMA and F16C by default, so a plain <code>llama</code> build only runs on x86 CPUs that
+have them (roughly Haswell and Excavator, 2013 to 2015, and later). Two things keep older CPUs from crashing with an illegal
+instruction:</p>
+<ul>
+<li><b>The guard, always on.</b> <code>build.rs</code> works out which instructions the linked llama.cpp contains.
+<code>LlamaEngine::load</code> calls <code>cpu::check()</code> first and returns <code>Error::UnsupportedCpu { missing }</code> on a CPU
+without them; <code>llama::describe()</code> then says <code>llama.cpp (unsupported CPU)</code>. An app can call
+<code>cpu::check()</code> itself to hide local models, or to offer another machine instead.</li>
+<li><b><code>cpu-dispatch</code>, for release binaries that should run local models on any CPU.</b> ggml is built once per CPU
+level (x86 from baseline x86-64 up to the AVX-512 levels; ARM from armv8.0 to armv9.2, Apple M1 to M4) and each library is asked at
+load time whether this CPU can run it, keeping the best. Speed on a modern CPU matches the static build. The price: llama.cpp
+becomes shared libraries the app must ship, and without them the app does not start at all.</li>
+</ul>
+<p>What to ship with <code>cpu-dispatch</code>: <code>libllama</code>, <code>libllama-common</code>, <code>libggml</code> and
+<code>libggml-base</code>, which the executable links against (point its rpath at them on Linux and macOS, or put the DLLs next to
+the <code>.exe</code> on Windows), and one <code>libggml-cpu-&lt;level&gt;</code> library per level, plus <code>libggml-vulkan</code> or
+<code>libggml-metal</code> with those features. They load from <code>llama::backends_dir()</code>: the directory given to
+<code>llama::set_backends_dir</code>, else <code>WEIRDNET_GGML_BACKENDS_DIR</code>, else the executable's directory; the working
+directory is never searched. If none loads, loading a model fails with <code>Error::NoCpuBackend</code>. The README's measured
+example on x86-64 Linux is a 4.3 MB executable plus 35 MB of libraries, against 9.4 MB for the static example.</p>
+<p>Without <code>cpu-dispatch</code>, a static build can run everywhere at a speed cost by building ggml for an older level, for
+example <code>GGML_AVX=OFF GGML_AVX2=OFF GGML_BMI2=OFF GGML_FMA=OFF GGML_F16C=OFF</code> (SSE4.2 and later); the guard follows those
+variables. ARM builds need nothing. Don't use <code>target-cpu=native</code> for anything you distribute.</p>
+<div class="callout warn"><b>Known build limits (README, 0.2.0).</b> <code>llama-cpp-sys-2</code> 0.1.161's shared-library build
+fails with Rust 1.100's build directory layout, so build <code>cpu-dispatch</code> with Rust 1.99 for now. A second build in the same
+target directory can fail with "File exists" on the library symlinks; deleting the <code>lib*.so*</code> symlinks under
+<code>target/&lt;profile&gt;/</code> between builds avoids it. The static <code>llama</code> build has neither problem.</div>
+''',
+    features: [
+      '<code>llama</code>: <code>LlamaEngine</code> on llama.cpp, CPU. Needs cmake and a C++ compiler to build.',
+      '<code>cpu-dispatch</code> (implies <code>llama</code>): llama.cpp for every CPU level, chosen at run time; the app ships the shared libraries.',
+      '<code>vulkan</code>, <code>metal</code> (imply <code>llama</code>): GPU offload.',
+      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code>.',
+    ],
+  ),
   'plugin': Guide(
     brings: r'''
 <p>The SDK a code space plugin is written against. It has no dependencies, so plugins build offline, and a stable C ABI, so a
