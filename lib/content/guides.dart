@@ -472,10 +472,20 @@ wins, signed-in research is never covered by a standing allow, and an all-agents
 first approval. Tools come from <code>ToolSource</code>s in a <code>ToolRegistry</code> (<code>LocalTools</code> in process
 now), with per-source and per-tool switches; tier overrides can only make a tool stricter.</p>
 <h3>Budgets and traces</h3>
-<p><code>Budget</code> defaults: 3 searches, 12 pages (+5 on extension), 2 at a time, 15 s per page, 90 s per task, 4k tokens kept
-per page, and a cap on model steps. Every search, fetch, tool call, approval and notice is a <code>TraceStep</code> with its
+<p><code>Budget</code> defaults: 3 searches, 12 pages (+5 on extension), 2 at a time, 15 s per page, 90 s of tool time per task, 4k
+tokens kept per page, and a cap on model steps. Since 0.3.0, <code>per_task</code> counts only time inside tool calls (a
+<code>ToolTimer</code> from <code>BudgetTracker::time_tool</code> wraps each one, and overlapping calls count once): model turns and
+waiting for the user to answer an approval card don't use it, and a model turn is no longer cut off when it runs out
+(<code>max_steps</code> and cancellation bound turns). <code>BudgetTracker::wall_elapsed</code> gives the task's wall-clock time for display. Every search, fetch, tool call, approval and notice is a <code>TraceStep</code> with its
 agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps
 fetched, and <code>retain_valid</code> drops such citations before display. Everything stored or synced implements serde.</p>
+<h3>More pages (0.3.0)</h3>
+<p>When a task's page budget runs out, the session asks <code>Approver::extend_pages(&amp;PagesPrompt)</code> (the "+5 pages" card).
+<code>PagesPrompt</code> has the agent, the task id, the pages used so far and the extension size (<code>Budget::page_extension</code>).
+An answer of <code>true</code> adds one extension and the page is read; the next time the extended limit runs out it asks again, and
+after a <code>false</code> it never asks again in that task. Waiting for the answer does not use the task's time. The default
+implementation answers no, so existing approvers behave as before. <code>remote::task</code> does not forward this question yet, so a
+remote task still stops at its page budget.</p>
 <h3>Remote inference and remote tasks (0.2.0)</h3>
 <p>The <code>remote</code> module has two protocols between one user's own nodes. The app supplies the transport: a
 <code>Dialer</code> opens a <code>Channel</code> (a <code>FrameTx</code> and a <code>FrameRx</code>) to a node for a protocol id, and
@@ -509,6 +519,19 @@ to build a session for the companion, and refuses companions that do not run the
 </ul>
 <p>Inference (weirdnet-model) and MCP client transports (weirdnet-mcp) implement this crate's traits in their own crates, and the
 apps wire the <code>Dialer</code> to weirdnet-net streams.</p>
+<h3>Moving to 0.3.0</h3>
+<ul>
+<li><b>No source changes</b> are needed: the new API is additive (<code>ToolTimer</code>, <code>PagesPrompt</code>,
+<code>BudgetTracker::time_tool</code> and <code>wall_elapsed</code>, and <code>Approver::extend_pages</code>, which has a default body).
+The wire protocols are unchanged: <code>/weirdnet-agent/infer/1</code> and <code>/weirdnet-agent/task/1</code>, so 0.2 and 0.3
+nodes still talk to each other.</li>
+<li><b>Behaviour change:</b> <code>Budget::per_task</code> now counts tool time only, not wall-clock time. A task can run longer than
+<code>per_task</code> in wall time, because model turns and approval waits no longer count. If you relied on it as a deadline,
+cancel with your own timer (use <code>wall_elapsed</code> to show elapsed time).</li>
+<li>To offer "+5 pages", implement <code>Approver::extend_pages</code>.</li>
+<li>weirdnet-model 0.2.1 and weirdnet-mcp 0.3.0 (features <code>agent</code>) still pin weirdnet-agent <code>=0.2.0</code>, so an app
+using their <code>agent</code> features can't move to 0.3.0 until they release a version that does.</li>
+</ul>
 ''',
     features: ['<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).'],
     comingSoon: [
