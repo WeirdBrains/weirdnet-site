@@ -179,7 +179,7 @@ fn main() -> weirdnet_accounts::Result<()> {
   ),
   'mcp': Example(
     r'''[dependencies]
-weirdnet-mcp = "0.2.0"
+weirdnet-mcp = "0.3.0"
 serde_json = "1"''',
     r'''// One read-only tool behind an MCP server; the app's HTTP route or stdio loop calls handle().
 use serde_json::{Value, json};

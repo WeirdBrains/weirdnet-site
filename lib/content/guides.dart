@@ -389,6 +389,10 @@ cursors, and <code>call_tool</code> or <code>call_tool_until(name, args, cancel)
 <li>Transports: <code>StdioTransport</code> (<code>spawn(&amp;StdioCommand)</code> or <code>from_io</code>) for a local command,
 and <code>HttpTransport</code> (<code>HttpConfig</code>) for streamable HTTP: JSON or SSE responses, the
 <code>Mcp-Session-Id</code> and <code>MCP-Protocol-Version</code> headers, and no redirects.</li>
+<li><b>Line cap (0.3.0).</b> The stdio transport reads each server line (one JSON message) with a cap, <code>DEFAULT_MAX_LINE</code>:
+4 MiB. A longer line is discarded without being buffered, so a misbehaving server cannot exhaust memory, and a request waiting
+for that reply times out. <code>StdioTransport::spawn_limited</code> and <code>from_io_limited</code> set a different limit;
+<code>spawn</code> and <code>from_io</code> keep their signatures and use the default.</li>
 <li>Local-command servers run with the user's permissions: show <code>StdioCommand::warning()</code> before starting one.
 Environment values and bearer tokens are <code>Secret</code>s, redacted in <code>Debug</code>; keep them in a per-machine
 store, never in synced settings.</li>
@@ -400,10 +404,20 @@ read-only and closed-world <code>Read</code>, read-only and open-world <code>Res
 <code>Navigate</code>. Each is raised to <code>SourceOptions::tier_floor</code>, which defaults to <code>Research</code>
 because a server's hints are untrusted, so an outside tool never counts as reading only what the user attached. The agent's
 cancel token stops a running call.</p>
+<h3>Moving to 0.3.0</h3>
+<ul>
+<li><b>Server API and <code>client</code> feature</b>: unchanged; no code changes, just the version.</li>
+<li><b>Apps with the <code>agent</code> feature</b> (breaking for them only): 0.3.0 depends on weirdnet-agent <code>=0.2.0</code>
+(0.2.0 used <code>=0.1.0</code>), so <code>McpSource</code> implements the 0.2.0 <code>ToolSource</code>. Move to
+<a href="/crates/agent">weirdnet-agent</a> 0.2.0 together with it; then the app has a single copy of the trait. No source changes
+were needed in this crate for the move.</li>
+<li><b>Stdio client</b>: a server that prints a line over 4 MiB now has it dropped and the waiting call times out; raise the limit
+with <code>spawn_limited</code> if a server legitimately sends more.</li>
+</ul>
 ''',
     features: [
       '<code>client</code> (off by default): the MCP client with stdio and streamable HTTP transports, timeouts and cancel, and <code>Secret</code>. Pulls in tokio and reqwest (rustls).',
-      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.1.0</code>).',
+      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.2.0</code> since 0.3.0; <code>=0.1.0</code> in 0.2.0).',
       'Neither is needed for the server API, which is unchanged from 0.1.',
     ],
   ),
