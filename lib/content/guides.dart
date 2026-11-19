@@ -3,8 +3,8 @@
 /// CHANGELOG, Cargo.toml and source (see the crate's repository). Usage examples live in
 /// `tool/examples/` and are generated into `examples.dart`.
 ///
-/// `todo` entries render as "notes wanted" callouts: places where the source is thin or
-/// where app teams (Morph) still have to send feature notes.
+/// `comingSoon` entries render as "Details coming soon" callouts for public readers: what the
+/// page will add once the sources cover it. Write them for readers, not as asks to a team.
 library;
 
 class Guide {
@@ -13,7 +13,7 @@ class Guide {
     required this.works,
     this.features = const [],
     this.install = '',
-    this.todo = const [],
+    this.comingSoon = const [],
   });
 
   /// What problems it solves, when to use it (HTML).
@@ -28,8 +28,8 @@ class Guide {
   /// Shell commands for crates that are programs (escaped by the page).
   final String install;
 
-  /// Notes wanted (HTML).
-  final List<String> todo;
+  /// Details coming soon (HTML).
+  final List<String> comingSoon;
 }
 
 const guides = <String, Guide>{
@@ -122,8 +122,8 @@ stream (<code>check_presented</code> ties it to the node speaking), and signed <
 <code>names_server</code>, <code>dns_servers</code>, <code>app_header_max</code>, <code>app_body_max</code>,
 <code>app_idle_timeout</code>. CI runs nodes in Linux network namespaces behind NAT routers (<code>harness/netns.sh</code>).</p>
 ''',
-    todo: [
-      'Morph team: how Morph 0.2.0 uses the discovery toggle and manual peers (which settings it exposes, where it keeps the hints), for a short “in an app” section.',
+    comingSoon: [
+      'How an app uses the discovery toggle and manual peers, with Morph as the example. In Morph 0.2.0, Settings &gt; Relays turns discovery off and adds peers by hand, and an admin policy can lock discovery off.',
     ],
   ),
   'relay': Guide(
@@ -347,8 +347,8 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
 </ul>
 <p>Roles and permissions are not here: they are <a href="/crates/access">weirdnet-access</a>.</p>
 ''',
-    todo: [
-      'Planned in the README, not released: sessions, email tokens, orgs, audit and moderation behind a storage interface (each app keeps its own schema). Add them here when they ship.',
+    comingSoon: [
+      'Planned, not released yet: sessions, email tokens, orgs, audit and moderation behind a storage interface, with each app keeping its own schema. This page will cover them when they ship.',
     ],
   ),
   'mcp': Guide(
@@ -409,8 +409,8 @@ fetched, and <code>retain_valid</code> drops such citations before display. Ever
 traits in their own crates.</p>
 ''',
     features: ['<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).'],
-    todo: [
-      'Morph team: what Companions in Morph 0.2.0 use today (which tiers and tools are wired, the approval UI), and the weirdnet-model backend once its page is on main.',
+    comingSoon: [
+      'How Morph’s Companions use the agent runtime: the approval tiers and tools they use and the approval screen. Local inference plugs in through <a href="/crates/model">weirdnet-model</a>.',
     ],
   ),
   'plugin': Guide(
@@ -512,7 +512,7 @@ re-enters itself, chains stop at <code>MAX_DEPTH</code>, and an outermost event 
 <code>due</code> and <code>next_run</code> drive the app's scheduler tick.</li>
 </ul>
 ''',
-    todo: ['A full <code>engine::Host</code> example (a small in-memory app with one rule) would help; the README has none yet.'],
+    comingSoon: ['A full <code>engine::Host</code> example: a small in-memory app with one rule.'],
   ),
   'render': Guide(
     brings: r'''
@@ -597,15 +597,16 @@ and a device that missed it gets the roster back and catches up.</li>
 both screens).</li>
 <li>The first rotation starts by itself once two devices are linked and all have device keys
 (<code>auto_first_rotation</code>); <code>devices_without_key</code> lets an app warn before a revoke. 0.3.1 fixes two devices
-that both started the first rotation splitting into two chains.</li>
+that both started the first rotation splitting into two chains, and revoking the device that made the first rotation no
+longer drops the whole chain.</li>
 <li>Epoch keys (<code>EpochKeys</code>) are secret: store them encrypted (<code>export</code>/<code>import</code>). The chain is
 public and stored with the roster.</li>
 </ul>
 <p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
 ''',
-    todo: [
-      'Morph team: which record types Morph 0.2.0 syncs and how Linked devices (with revoke) look in its UI, for an “in Morph” note.',
+    comingSoon: [
+      'A closer look at sync in Morph. Morph 0.2.0 syncs bookmarks, folders and tags, history, and the search engine, home page and theme between linked devices, and Settings &gt; Linked devices lists linked devices and revokes one. See <a href="/morph">Morph</a>.',
     ],
   ),
   'access': Guide(
@@ -743,8 +744,8 @@ secrets.</li>
 <code>Host</code>, <code>Sender</code>), <code>net</code> (<code>HostNode</code>, <code>Pairing</code> over weirdnet-net) and
 <code>wire</code> (CBOR messages).</p>
 ''',
-    todo: [
-      '0.1.0 pins <code>weirdnet-net = "=0.4.0"</code> and <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-net 0.6.0 or weirdnet-keys 0.1.1 yet. Update this page when a release moves it to current versions.',
+    comingSoon: [
+      '0.1.0 pins <code>weirdnet-net = "=0.4.0"</code> and <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-net 0.6.0 or weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it to current versions.',
     ],
   ),
   'ext': Guide(
@@ -786,8 +787,8 @@ kills stuck ones after a grace period. App services come in through the <code>Se
 <code>/etc/passwd</code>, write outside its data directory, open sockets, <code>ptrace</code>, <code>unshare</code> and use
 <code>io_uring</code>. It also covers crash restarts, idle stops, grant revocation and a tampered install.</p>
 ''',
-    todo: [
-      'Not done yet, per the README: the WASM (WIT) bridge for platforms without native support, and Windows AppContainer. Morph team: which capabilities Morph grants extensions today.',
+    comingSoon: [
+      'Not done yet: the WASM (WIT) bridge for platforms without native support, and Windows AppContainer. Also coming: which capabilities Morph grants extensions.',
     ],
   ),
   'ext-proto': Guide(
@@ -828,7 +829,7 @@ says stop.</li>
 <p>The sandbox leaves you no network, no files outside your package and data directory, and no <code>socket()</code> call:
 everything goes through the host.</p>
 ''',
-    todo: ['Morph team: the <code>morph.ext.v1</code> services and events extensions can use, once published.'],
+    comingSoon: ['The <code>morph.ext.v1</code> services and events extensions can use, once published.'],
   ),
   'weirdnetctl': Guide(
     brings: r'''

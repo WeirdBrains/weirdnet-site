@@ -6,8 +6,9 @@ The WeirdBrains collective `AGENTS.md` applies to this repository. On top of it:
   READMEs, SECURITY notes and source; mark anything not shipped as in progress.
 - Before every commit: `dart analyze` clean and `jaspr build` succeeds.
 - Every published `weirdnet*` crate has an entry in `lib/content/crates.dart` (CI checks with
-  `tool/check_crates.py`). A guide in `lib/content/guides.dart` lists in `todo` what the
-  sources don't cover yet, instead of guessing. Usage examples live in `tool/examples/` and must
+  `tool/check_crates.py`). A guide in `lib/content/guides.dart` lists in `comingSoon` what the
+  sources don't cover yet, instead of guessing; it renders as "Details coming soon", so write
+  it for public readers. Usage examples live in `tool/examples/` and must
   build against the published crate; regenerate `lib/content/examples.dart` with
   `tool/gen_examples.py`.
 - Changes go straight to `main`; the Pages workflow deploys `net.weirdbrains.com`.
