@@ -181,9 +181,9 @@ without mDNS and the DHT and dial peers from an app-kept address book; see <a hr
 <li><b>Device sync with key rotation</b> <span class="tag shipped">shipped</span> (<a href="/crates/sync">weirdnet-sync 0.4.0</a>):
 revoking a device rotates to a random epoch key sealed to each remaining device, so a revoked device that holds the seed
 cannot read later ops. 0.4.0 adds records over a page size (hash-checked chunks) and sealed records a revoked device cannot read.</li>
-<li><b>Agent runtime</b> <span class="tag shipped">shipped</span> (<a href="/crates/agent">weirdnet-agent 0.1.0</a>): the shared
+<li><b>Agent runtime</b> <span class="tag shipped">shipped</span> (<a href="/crates/agent">weirdnet-agent 0.2.0</a>): the shared
 agent loop with streaming events and cancellation, tool sources, tiered approval policy, research budgets and traces with
-citation checks. Morph’s Companions are its first user.</li>
+citation checks; since 0.2.0, model turns and whole tasks can run on another of the user’s nodes. Morph’s Companions are its first user.</li>
 <li><b>Data-carrying relays</b> <span class="tag shipped">shipped</span>: relay limits are configurable in <code>weirdnet-net</code>
 (<code>NodeConfig::relay_limits</code>, <code>RelayLimits::unlimited()</code>; the library default stays libp2p’s), and
 weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>

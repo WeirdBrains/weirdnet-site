@@ -224,11 +224,11 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'agent',
-    version: '0.1.0',
+    version: '0.2.0',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
-      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.2.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Remote agents over <code>weirdnet-net</code> plug in through its traits <span class="tag wip">in progress</span>.',
+      'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.2.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Since 0.2.0 the <code>remote</code> module runs model turns and whole tasks on another of the user’s own nodes; the app supplies the transport (a <code>Dialer</code>), so the crate itself does not depend on <code>weirdnet-net</code>.',
     ],
     parts: [
       '<code>AgentSession::run</code>: one task. Calls the <code>ModelBackend</code>, checks each tool call against the <code>Policy</code>, asks the app’s <code>Approver</code> when needed, charges the budget, runs the tool with a timeout and a <code>CancelToken</code>, and streams <code>AgentEvent</code>s: text, approvals, skipped-approval notices, tool start and finish, trace steps.',
@@ -236,11 +236,13 @@ const crates = <Crate>[
       '<code>Policy</code>: tiers <code>Read</code> (attached content), <code>Navigate</code>, <code>Research</code>, <code>Interact</code> and <code>Never</code>; per-agent, per-site <code>Off</code>, <code>Ask</code> and <code>Act</code>; approvals for once or for the task; revocable “Always allow” for navigate (a site or everywhere) and research (optionally one provider), for one agent or all. Off always wins, signed-in research is never covered by Always allow, and an all-agents allow covers an outside agent only after its first approval.',
       '<code>Budget</code>: searches, pages (with extensions), concurrency, per-page and per-task time, tokens kept per page, model steps. Defaults: 3 searches, 12 pages (+5), 2 at a time, 15 s a page, 90 s a task.',
       '<code>Trace</code>, <code>Citation</code>: every search, fetch, tool call, approval and notice is a step with its agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps fetched; a citation without a step is never shown.',
+      '<code>remote::infer</code>, <code>RemoteModel</code>: one model turn on another node, streamed, cancellable, with fallback to the next node or a local model (0.2.0).',
+      '<code>remote::task</code>: a whole agent task on another node, events streamed back, approvals answered on the asking device (0.2.0).',
       'Serde on everything that is stored or synced. The <code>testing</code> feature has a scripted model, approver and closure tools.',
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: [],
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
+    notes: 'Version 0.2.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.2.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'model',

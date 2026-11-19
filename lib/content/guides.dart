@@ -438,8 +438,39 @@ now), with per-source and per-tool switches; tier overrides can only make a tool
 per page, and a cap on model steps. Every search, fetch, tool call, approval and notice is a <code>TraceStep</code> with its
 agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps
 fetched, and <code>retain_valid</code> drops such citations before display. Everything stored or synced implements serde.</p>
-<p>Inference (weirdnet-model), MCP client transports (weirdnet-mcp) and remote agents over weirdnet-net implement this crate's
-traits in their own crates.</p>
+<h3>Remote inference and remote tasks (0.2.0)</h3>
+<p>The <code>remote</code> module has two protocols between one user's own nodes. The app supplies the transport: a
+<code>Dialer</code> opens a <code>Channel</code> (a <code>FrameTx</code> and a <code>FrameRx</code>) to a node for a protocol id, and
+the serving app must check that the caller is one of the user's linked devices before it calls <code>serve</code>. Messages are
+JSON; <code>remote::codec</code> frames them on byte streams (a big-endian <code>u32</code> length, messages up to 8 MiB), and
+<code>MemoryDialer</code> and <code>memory_pair</code> are in-process channels for tests. Failures are a <code>RemoteError</code>:
+unreachable, busy, refused, unavailable, failed, protocol, closed or timed out.</p>
+<ul>
+<li><b>Remote inference</b> (<code>remote::infer</code>, <code>/weirdnet-agent/infer/1</code>): offload one model turn. The asker
+sends the messages and tool specs (and optionally a model id); the node answers <code>Accepted</code> with the model it
+chose, streams <code>Delta</code> text, then <code>Done</code> with the turn, or <code>Failed</code> or <code>Cancelled</code>. A
+<code>Cancel</code> can go the other way at any time. The serving app implements <code>InferHost</code> to open a
+<code>ModelBackend</code> for the requested model, and <code>Admission::new(n)</code> limits concurrent turns; more are
+answered <code>Busy</code>. If the asker goes away the turn is cancelled.</li>
+<li><b><code>RemoteModel</code></b> is a <code>ModelBackend</code> over that protocol:
+<code>RemoteModel::new(dialer, nodes).with_model(..).with_fallback(local).with_accept_timeout(..)</code>. It tries the nodes in
+order, then the local fallback, whenever a node fails <em>before any token has streamed</em>: unreachable, busy, no such model, an
+error, or no <code>Accepted</code> within the accept timeout (default 10 s). Once tokens have streamed, a failure is returned as
+is, because the text already shown cannot be taken back. <code>last_route()</code> says where the last turn ran
+(<code>Route::Node</code> with the node and model, or <code>Route::Fallback</code>), and the backend name in traces reads
+<code>model@node</code>.</li>
+<li><b>Remote tasks</b> (<code>remote::task</code>, <code>/weirdnet-agent/task/1</code>): run a whole agent task on another node
+(Node companions). <code>task::run(dialer, node, request, events, approver, cancel)</code> sends a <code>TaskRequest</code> (the
+companion's <code>AgentId</code>, the input and the conversation so far) and the node's <code>AgentSession</code> runs it, under
+that node's tools, budget and policy. Its events come back as ordinary <code>AgentEvent</code>s, so an app's panel code is the
+same as for a local session. When the session needs approval, the node sends an <code>Ask</code> and the card is answered by the
+<code>Approver</code> on the asking device; a lost asker denies. The <code>CancelToken</code> stops the task there (the asker
+waits 5 s for the node to wind down). The result is a <code>RemoteOutcome</code> with the <code>Outcome</code> and the updated
+conversation: the history lives with the asker, which sends it with each task. The serving app implements <code>TaskHost</code>
+to build a session for the companion, and refuses companions that do not run there.</li>
+</ul>
+<p>Inference (weirdnet-model) and MCP client transports (weirdnet-mcp) implement this crate's traits in their own crates, and the
+apps wire the <code>Dialer</code> to weirdnet-net streams.</p>
 ''',
     features: ['<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).'],
     comingSoon: [
