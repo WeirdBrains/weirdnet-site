@@ -529,8 +529,9 @@ nodes still talk to each other.</li>
 <code>per_task</code> in wall time, because model turns and approval waits no longer count. If you relied on it as a deadline,
 cancel with your own timer (use <code>wall_elapsed</code> to show elapsed time).</li>
 <li>To offer "+5 pages", implement <code>Approver::extend_pages</code>.</li>
-<li>weirdnet-model 0.2.1 and weirdnet-mcp 0.3.0 (features <code>agent</code>) still pin weirdnet-agent <code>=0.2.0</code>, so an app
-using their <code>agent</code> features can't move to 0.3.0 until they release a version that does.</li>
+<li>weirdnet-model 0.3.0 and weirdnet-mcp 0.4.0 move their <code>agent</code> features to weirdnet-agent <code>=0.3.0</code> (breaking for
+<code>agent</code> users only; no source changes). An app that uses <code>LocalModel</code> or <code>McpSource</code> moves all three together; versions
+before those still pin <code>=0.2.0</code> and can't be mixed with agent 0.3.</li>
 </ul>
 ''',
     features: ['<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).'],
