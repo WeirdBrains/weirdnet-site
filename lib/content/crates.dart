@@ -16,6 +16,11 @@ class Crate {
     this.notes = '',
     this.group = 'Building blocks',
     this.origin = '',
+    this.version = '',
+    this.crateName = '',
+    this.repo = '',
+    this.binary = false,
+    this.docsRs = true,
   });
 
   final String slug;
@@ -36,12 +41,30 @@ class Crate {
   /// Where the code came from.
   final String origin;
 
-  String get name => 'weirdnet-$slug';
+  /// The latest version on crates.io; empty while unpublished.
+  final String version;
+
+  /// The crate name when it is not `weirdnet-<slug>` (weirdnetctl).
+  final String crateName;
+
+  /// The GitHub repository when it is not the crate name (crates in a workspace repo).
+  final String repo;
+
+  /// A program you install rather than a library you depend on.
+  final bool binary;
+
+  /// Has a library target, so docs.rs has API docs.
+  final bool docsRs;
+
+  String get name => crateName.isNotEmpty ? crateName : 'weirdnet-$slug';
+  String get repoName => repo.isNotEmpty ? repo : name;
+  bool get published => version.isNotEmpty;
 }
 
 const crates = <Crate>[
   Crate(
     slug: 'net',
+    version: '0.6.0',
     group: 'Network',
     tagline: 'The libp2p node, streams, app calls, key exchanges, invitations, sealed messaging, identities and certificates.',
     about: [
@@ -59,23 +82,14 @@ const crates = <Crate>[
       '<code>identity</code>, <code>user</code>, <code>sync</code>, <code>shard</code>, <code>addr</code>: node identities, user certificates, revocations, cards and link grants, the linked-node sync key, dark-shard blobs and address helpers.',
     ],
     dependsOn: ['keys'],
-    usedBy: ['Morph', 'Muninn', 'weirdnet-relay'],
+    usedBy: ['Morph', 'Muninn', 'weirdnet-relay', 'weirdnet-sync', 'weirdnet-device-link'],
     origin: 'Muninn',
-    example: '''use weirdnet_net::{WEIRDNET, Keypair, exchange::Token, profile::invite_scope};
-
-let (anna, ben) = (Keypair::generate_ed25519(), Keypair::generate_ed25519());
-let p = &WEIRDNET;
-let (offer, secret) = p.offer(&anna, "anna", vec![], invite_scope("garden", "member"), 0, 60_000).unwrap();
-let link = p.link(&p.offer_token(&offer).unwrap());
-let Token::Offer(seen) = p.parse_token(&link).unwrap() else { unreachable!() };
-p.verify_offer(&seen, 1).unwrap();
-let (answer, on_ben) = p.answer(&ben, &seen, "ben", vec![], 1).unwrap();
-let on_anna = p.complete(&answer, &offer, &secret[..]).unwrap();
-assert_eq!(on_anna.short_code, on_ben.short_code);''',
     notes: 'Not audited. Tested over libp2p’s in-memory transport with real Noise, Yamux and request-response. See <code>SECURITY.md</code> in the repository for what the crate enforces and what it leaves to the application.',
   ),
   Crate(
     slug: 'relay',
+    version: '0.5.0',
+    binary: true,
     group: 'Network',
     tagline: 'A relay and bootstrap node you can run: circuit relay v2, Kademlia server, an info page.',
     about: [
@@ -90,11 +104,12 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
       'An info page: HTML at <code>/</code> and <code>/.well-known/weirdnet-relay.json</code>.',
       'A TOML config file, flags and environment variables; structured logs; a hardened systemd unit.',
     ],
-    dependsOn: ['net', 'storage'],
+    dependsOn: ['net', 'storage', 'push', 'update'],
     usedBy: ['WeirdBrains public relays', 'self-hosters'],
   ),
   Crate(
     slug: 'tls',
+    version: '0.2.0',
     group: 'Network',
     tagline: 'TLS certificates: ACME issuance and renewal, certificate stores and an SNI resolver for rustls.',
     about: [
@@ -114,6 +129,7 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
   ),
   Crate(
     slug: 'keys',
+    version: '0.1.1',
     group: 'Keys and storage',
     tagline: '256-bit keys, BIP39 words, Shamir shards, KDFs, sealing, X25519 and an envelope keyring.',
     about: [
@@ -127,12 +143,13 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
       '<code>keyring</code>: envelope encryption for a database key, wrapped by a versioned service key and by a key derived from the master key: init, unlock, rotate, rekey with undo, recover, verify, export.',
       '<code>dark</code>: shards sealed with a shard password for custodians. <code>age</code>: password age files for exports.',
     ],
-    usedBy: ['weirdnet-net', 'Morph'],
+    usedBy: ['weirdnet-net', 'weirdnet-sync', 'weirdnet-push', 'weirdnet-device-link', 'Morph'],
     origin: 'Muninn',
     notes: 'Not audited. The shard checksum catches typos, not forgery: a forged share combines into a wrong key, which verification then rejects.',
   ),
   Crate(
     slug: 'storage',
+    version: '0.1.0',
     group: 'Keys and storage',
     tagline: 'SQLCipher databases opened with a caller-supplied raw key, migrations, savepoints, sync change log.',
     about: [
@@ -146,11 +163,12 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
       '<code>savepoint</code>, <code>begin</code>/<code>release</code>/<code>rollback</code>: all-or-nothing units that nest.',
       '<code>files</code> (private files written through a side file), <code>snapshot_to</code> (online copies), and <code>sync</code>: a trigger-kept change log, row codec and hash, three-way merge decisions.',
     ],
-    usedBy: ['Morph', 'weirdnet-relay'],
+    usedBy: ['Morph', 'weirdnet-relay', 'weirdnet-tls'],
     origin: 'Muninn',
   ),
   Crate(
     slug: 'update',
+    version: '0.2.0',
     group: 'Building blocks',
     tagline: 'Signed update metadata: org roots, manifests, freshness, verification, targeting, rollouts, consent, boot health.',
     about: [
@@ -164,11 +182,13 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
       '<b>Client</b>: the acceptance rule and anti-rollback state. <b>Targeting and rollout</b> on the device, no install id needed.',
       '<b>Consent</b> and <b>boot health</b>: trial boots, commit on ready, local rollback after two failed boots.',
     ],
-    usedBy: ['Salty Gull'],
+    usedBy: ['Salty Gull', 'weirdnet-relay'],
     origin: 'Salty Gull',
   ),
   Crate(
     slug: 'accounts',
+    version: '0.1.0',
+    group: 'Identity and access',
     tagline: 'Argon2id passwords, hashed tokens, name rules, per-client rate limits, org-scoped API keys.',
     about: [
       'Account building blocks for WeirdBrains services, extracted from TAUR and shared with Salty Gull. Storage stays with the application; the crate holds the rules and the cryptography and never opens a database.',
@@ -180,11 +200,12 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
       '<code>ratelimit</code>: in-memory fixed-window limits per client and class, with <code>X-Forwarded-For</code> honoured only from trusted proxies.',
       '<code>apikeys</code>: org-scoped API keys shown once and stored as SHA-256, with scopes, bindings, expiry and revocation.',
     ],
-    usedBy: ['TAUR'],
+    usedBy: ['TAUR', 'Salty Gull'],
     origin: 'TAUR',
   ),
   Crate(
     slug: 'mcp',
+    version: '0.1.0',
     tagline: 'A transport-agnostic Model Context Protocol tools server and stdio bridge.',
     about: [
       'A stateless MCP tools server extracted from TAUR and shared with Salty Gull. The HTTP route stays in the app’s server.',
@@ -200,6 +221,7 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
   ),
   Crate(
     slug: 'agent',
+    version: '0.1.0',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
@@ -215,17 +237,6 @@ assert_eq!(on_anna.short_code, on_ben.short_code);''',
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: [],
-    example: '''use std::sync::Arc;
-use weirdnet_agent::{AgentConfig, AgentIdentity, AgentKind, AgentSession, CancelToken, LocalTools, Policy, ToolRegistry};
-
-let atlas = AgentIdentity::new("atlas", "Atlas", AgentKind::Local);
-let mut tools = ToolRegistry::new();
-tools.add_source(Arc::new(LocalTools::new("browser").with(navigate_tool)));
-tools.refresh().await?;
-let mut session = AgentSession::new(AgentConfig::new(atlas), model, Arc::new(tools), Policy::new().shared(), approver);
-let (events, _rx) = tokio::sync::mpsc::unbounded_channel();
-let outcome = session.run("find docs on tokio cancellation", Some(events), CancelToken::new()).await;
-println!("{} ({} steps)", outcome.text, outcome.trace.steps.len());''',
     notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.1.0">docs.rs</a>). The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
@@ -258,6 +269,8 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'plugin',
+    version: '0.1.0',
+    group: 'Extensions and plugins',
     tagline: 'The plugin SDK: the stable C ABI (v2), host API, frames and result views.',
     about: [
       'The SDK for Weirdnet code space plugins. A plugin is a <code>cdylib</code> exporting <code>weirdnet_plugin_abi</code>, <code>weirdnet_plugin_info</code> and <code>weirdnet_plugin_run</code>; the crate has no dependencies, so plugins build offline. Hosts load plugins with <code>weirdnet-code-spaces</code>.',
@@ -270,17 +283,11 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
     ],
     usedBy: ['weirdnet-code-spaces'],
     origin: 'Muninn',
-    example: '''use weirdnet_plugin::prelude::*;
-
-pub fn run(host: &Host) -> Result<View> {
-    let bars = host.input()?;
-    let close = bars.f64("close")?;
-    Ok(View::chart("close").x("timestamp", bars.f64("timestamp")?, true).line("close", close))
-}
-weirdnet_plugin::plugin!(run);''',
   ),
   Crate(
     slug: 'code-spaces',
+    version: '0.1.0',
+    group: 'Extensions and plugins',
     tagline: 'Math, Polars, Rust and typed Python sources compiled into plugins against the plugin SDK.',
     about: [
       'Code spaces: small programs compiled into native plugins against <code>weirdnet-plugin</code> and run against the application’s data through host methods.',
@@ -297,6 +304,7 @@ weirdnet_plugin::plugin!(run);''',
   ),
   Crate(
     slug: 'pipelines',
+    version: '0.1.0',
     tagline: 'DAGs of application-defined sources, steps and sinks with validation, ordering and a runner.',
     about: [
       'Pipelines as graphs of nodes whose meaning belongs to the application. The runner reaches the application only through <code>Host</code>; lookups, permissions, approvals and storage stay in the application.',
@@ -311,6 +319,7 @@ weirdnet_plugin::plugin!(run);''',
   ),
   Crate(
     slug: 'rules',
+    version: '0.1.0',
     tagline: 'If-this-then-that rule specs, conditions, schedules and a loop-protected engine.',
     about: [
       'If-this-then-that over an event history, without knowing what the events or the actions are. The crate does no I/O and decides no permissions.',
@@ -325,6 +334,7 @@ weirdnet_plugin::plugin!(run);''',
   ),
   Crate(
     slug: 'render',
+    version: '0.1.0',
     tagline: 'Tables and line charts (or JSON describing them) drawn to PNG with input checks and size limits.',
     about: [
       'Structured data drawn to PNG. Inputs are plain data, not any application’s types, and every entry point checks its input against <code>Limits</code> instead of drawing something unbounded.',
@@ -338,6 +348,7 @@ weirdnet_plugin::plugin!(run);''',
   ),
   Crate(
     slug: 'themes',
+    version: '0.1.0',
     tagline: 'A TOML theme format: dark and light variants, semantic colour roles, contrast checks.',
     about: [
       'A theme format for terminal and GUI front ends: one TOML file per theme with <code>[meta]</code>, <code>[dark]</code> and <code>[light]</code> tables, 21 semantic colour roles, seven built-in palettes, WCAG contrast checks and lightness-inverted variants.',
@@ -349,6 +360,170 @@ weirdnet_plugin::plugin!(run);''',
     ],
     origin: 'Muninn',
   ),
+  Crate(
+    slug: 'sync',
+    version: '0.3.1',
+    group: 'Network',
+    status: Status.fresh,
+    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, a device roster with key rotation on revoke.',
+    about: [
+      'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, and the <code>/weirdnet/sync/1</code> pull protocol.',
+      'Record types (bookmarks, history, settings, notes) and persistence stay in the application; <code>OpLog</code> is the in-memory log it snapshots.',
+    ],
+    parts: [
+      '<code>Hlc</code>, <code>NodeId</code>: hybrid logical clocks with <code>tick</code> and <code>receive</code>.',
+      '<code>OpLog</code>, <code>LogEntry</code>: per-node sequences, per-(node, type) cursors, pages and <code>integrate</code>.',
+      '<code>lww</code>, <code>OrSet</code>, <code>edit_vs_delete</code>, <code>can_gc_tombstone</code>, <code>folder_cycle</code>: the merge rules.',
+      '<code>SyncState</code>, <code>SyncHandler</code>, <code>start_node</code>, <code>pull_from</code>: the protocol over a weirdnet-net node.',
+      '<code>Roster</code>, <code>DeviceKey</code>, <code>Rotation</code>, <code>KeyChain</code>, <code>EpochKeys</code>, <code>KeyStatus</code>: certificates, revocation, key rotation and re-admission.',
+      '<code>sync_key</code>, <code>seal_page</code>, <code>open_page</code>: typed keys and sealed pages.',
+    ],
+    dependsOn: ['net', 'keys'],
+    usedBy: ['Morph (bookmarks and linked devices)'],
+    notes: 'Not audited. The README’s status line still says key rotation is unreleased; it shipped in 0.3.0.',
+  ),
+  Crate(
+    slug: 'push',
+    version: '0.1.0',
+    group: 'Network',
+    tagline: 'Push wake-up: 96-byte sealed wake payloads, rotating wake handles, and a self-hostable server for APNs, FCM and relays.',
+    about: [
+      'A suspended phone can’t keep a connection, so a peer or its home relay asks a push service to wake it. This crate is that service, its client and the payload format, built so that Apple, Google and the push service see only ciphertext.',
+    ],
+    parts: [
+      '<code>wake</code>: <code>PushKey</code>, <code>Payload96</code>, <code>Reason</code>, <code>seal</code>, <code>ReplayGuard</code>.',
+      '<code>handle</code>: <code>WakeHandle</code>, <code>WakeCard</code>, <code>ControlSecret</code> (rotate and revoke).',
+      '<code>PushClient</code>: register, rotate, unregister, wake, follow announcements.',
+      '<code>relaywake</code>: the <code>/weirdnet/wake/1</code> relay wake path.',
+      '<code>server</code> and the <code>weirdnet-push</code> binary: APNs, FCM HTTP v1 and relay delivery.',
+    ],
+    dependsOn: ['keys'],
+    usedBy: ['weirdnet-relay'],
+  ),
+  Crate(
+    slug: 'device-link',
+    version: '0.1.0',
+    group: 'Identity and access',
+    tagline: 'Move a Weirdnet identity to another device over a QR offer, a 6-digit code check and a sealed transfer.',
+    about: [
+      '<code>weirdnet-device-link/v1</code>: move a user identity to another device of the same person without typing its recovery words. Built in Morph as “Login over QR” and moved here unchanged.',
+    ],
+    parts: [
+      '<code>offer</code>: <code>Offer</code>, <code>VerifiedOffer</code>, <code>encode_link</code>, <code>decode_link</code>, <code>offer_addrs</code>.',
+      '<code>invite</code>: the reverse direction, where the existing device shows the QR.',
+      '<code>session</code>: <code>Host</code> and <code>Sender</code>, both sides without the network, and <code>make_transfer</code>.',
+      '<code>net</code>: <code>HostNode</code> and <code>Pairing</code> over weirdnet-net on <code>/weirdnet/link/1</code>.',
+      '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code> (CBOR).',
+    ],
+    dependsOn: ['net', 'keys'],
+    usedBy: ['Morph'],
+    origin: 'Morph',
+  ),
+  Crate(
+    slug: 'access',
+    version: '0.1.1',
+    group: 'Identity and access',
+    tagline: 'Access policy: Private/Public and Open/Gated, a shared permission core apps extend, ranked roles, and the enforcement order.',
+    about: [
+      'Access policy for Weirdnet apps. It answers “may this peer do this to this resource?” the same way in every app, from facts the app has already checked.',
+    ],
+    parts: [
+      '<code>Visibility</code>, <code>Access</code>: the two independent settings.',
+      '<code>Catalog</code>, <code>Permission</code>: the core permissions, app permissions and implications.',
+      '<code>Role</code>, <code>RoleSet</code>, <code>Actor</code>, <code>presets</code>, <code>check_grant</code>, <code>check_over</code>: ranked roles and rank rules.',
+      '<code>decide</code>, <code>Facts</code>, <code>Settings</code>, <code>Decision</code>, <code>Transport</code>: enforcement.',
+    ],
+    usedBy: ['Muninn (org roles)', 'Morph'],
+    origin: 'Muninn',
+  ),
+  Crate(
+    slug: 'schemes',
+    version: '0.1.0',
+    group: 'Identity and access',
+    tagline: 'The URL scheme registry: signed prefixes and schemes, the canonical list, a resolver, and OS handler registration.',
+    about: [
+      'The registry every Weirdnet app shares, so a <code>weirdnet-&lt;app&gt;://</code> link means the same thing on every device and to every app. Prefixes beginning with <code>weirdnet</code> are reserved for WeirdBrains.',
+    ],
+    parts: [
+      '<code>names</code>: prefix and scheme rules, reserved and standard schemes, <code>first_party</code>.',
+      '<code>PrefixRecord</code>, <code>SchemeRecord</code>, <code>CanonicalList</code>, <code>RootRotation</code>, <code>TrustAnchors</code>, <code>Signed</code>: signed records.',
+      '<code>Registry</code>, <code>Resolution</code>: the local resolver with pins and conflict rules.',
+      '<code>Link</code>, <code>Action</code>: join, answer and resource links.',
+      '<code>os</code>: Linux, Windows, Apple and Android handler registration.',
+    ],
+    usedBy: ['Morph', 'weirdnetctl'],
+  ),
+  Crate(
+    slug: 'weirdnetctl',
+    crateName: 'weirdnetctl',
+    docsRs: false,
+    version: '0.1.0',
+    group: 'Identity and access',
+    binary: true,
+    tagline: 'Holds and rotates Weirdnet signing keys, signs scheme records, and builds the signed canonical list.',
+    about: [
+      'The maintainer’s CLI for Weirdnet signing keys and the records they sign: the WeirdBrains root key, prefix and scheme records for weirdnet-schemes, countersignatures for reserved prefixes, and the canonical list.',
+    ],
+    parts: [
+      '<code>key new|show|check|rotate</code>: passphrase-sealed Ed25519 key files.',
+      '<code>prefix</code>, <code>scheme</code>: sign registrations and withdrawals.',
+      '<code>countersign --as root|transfer</code>, <code>list</code>, <code>verify</code>.',
+    ],
+    dependsOn: ['schemes'],
+    usedBy: ['WeirdBrains (the root key)', 'app publishers'],
+  ),
+  Crate(
+    slug: 'ext',
+    version: '0.1.0',
+    group: 'Extensions and plugins',
+    tagline: 'The extension host: signed packages, install and update rules, capability grants, a per-OS sandbox and a supervisor.',
+    about: [
+      'What an app such as Morph needs to install and run third-party extensions safely: out of process, sandboxed, and reaching the app only through a gRPC broker on a private socket.',
+    ],
+    parts: [
+      '<code>package</code>: <code>Package</code>, <code>Installer</code>, <code>Plan</code>, <code>Installed</code>, <code>build</code>.',
+      '<code>manifest</code>: <code>Manifest</code>, <code>Capability</code>, signing and verification.',
+      '<code>Grants</code>: what the user granted, checked on every call.',
+      '<code>sandbox</code>: <code>Policy</code>, <code>Require</code>, <code>probe</code> (Landlock and seccomp, macOS sandbox).',
+      '<code>supervisor</code> and <code>broker</code>: <code>Config</code>, <code>Handle</code>, <code>Status</code>, the <code>Services</code> trait.',
+    ],
+    dependsOn: ['ext-proto'],
+    usedBy: ['Morph'],
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository for the threat model.',
+  ),
+  Crate(
+    slug: 'ext-proto',
+    repo: 'weirdnet-ext',
+    version: '0.1.0',
+    group: 'Extensions and plugins',
+    tagline: 'weirdnet.ext.v1: the protobuf contract between an extension host and its extensions, with tonic stubs.',
+    about: [
+      'The wire contract for Weirdnet extensions: lifecycle, handshake, capabilities, logging and health. App-specific services travel inside it as prost-encoded bytes. It lives in the weirdnet-ext repository.',
+    ],
+    parts: [
+      '<code>v1</code>: the generated messages and the <code>Host</code> service (client and server).',
+      '<code>API_VERSION</code>, <code>ENV_SOCKET</code>, <code>ENV_FD</code>, <code>ENV_TOKEN</code>, <code>ENV_ID</code>, <code>SESSION_HEADER</code>.',
+    ],
+    usedBy: ['weirdnet-ext', 'weirdnet-ext-sdk'],
+  ),
+  Crate(
+    slug: 'ext-sdk',
+    repo: 'weirdnet-ext',
+    version: '0.1.0',
+    group: 'Extensions and plugins',
+    tagline: 'Write Weirdnet extensions: connect to the host, call app services, log, report health, handle events.',
+    about: [
+      'The SDK for extension authors. It lives in the weirdnet-ext repository.',
+    ],
+    parts: [
+      '<code>Extension</code>: <code>connect</code>, <code>granted</code>, <code>has</code>, <code>call</code>, <code>log</code>, <code>health</code>, <code>run</code>.',
+      '<code>Event</code>, <code>Capability</code>, <code>Error</code>.',
+    ],
+    dependsOn: ['ext-proto'],
+  ),
 ];
 
 Crate crateBySlug(String slug) => crates.firstWhere((c) => c.slug == slug);
+
+/// The crate's name for a slug, or `weirdnet-<slug>` when it has no entry.
+String crateNameOf(String slug) => crates.where((c) => c.slug == slug).map((c) => c.name).firstOrNull ?? 'weirdnet-$slug';
