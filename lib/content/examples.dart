@@ -11,7 +11,7 @@ class Example {
 const examples = <String, Example>{
   'net': Example(
     r'''[dependencies]
-weirdnet-net = "0.7.0"''',
+weirdnet-net = "0.8.0"''',
     r'''// Anna invites Ben: a signed offer as a link, Ben's answer, and one shared short code.
 use weirdnet_net::{Keypair, Profile, WEIRDNET, exchange::Token, profile::invite_scope};
 

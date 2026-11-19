@@ -4,7 +4,7 @@
 # Regenerate the Dart and the check workspace: python3 tool/gen_examples.py --harness DIR
 
 [net]
-deps = { weirdnet-net = "0.7.0" }
+deps = { weirdnet-net = "0.8.0" }
 
 [tls]
 deps = { weirdnet-tls = "0.2.0", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }

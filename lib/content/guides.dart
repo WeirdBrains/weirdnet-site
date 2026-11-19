@@ -59,7 +59,7 @@ tests, with Noise and Yamux. Behaviours: mDNS, Kademlia, identify, ping, a relay
 (<code>NodeConfig::relay_limits</code>), DCUtR hole punching and AutoNAT. Requests are the app's <code>Q</code> and answers its
 <code>R</code>, CBOR on the wire, answered by a <code>Handler</code>.</p>
 <p>Every identifier on the wire or under a signature comes from a <code>Profile</code>. <code>WEIRDNET</code> is the default
-(<code>/weirdnet/net/1</code>, <code>wnet-x1-offer:</code>, port 4747). An app with nodes already in the field passes its own
+(<code>/weirdnet/net/2</code>, <code>wnet-x1-offer:</code>, port 4747). An app with nodes already in the field passes its own
 profile, so nothing changes for them. Apps share the network and add their own protocol ids
 (<code>/morph/...</code>, <code>/muninn/...</code>).</p>
 
@@ -97,7 +97,7 @@ Tokens (<code>wnet-x1-offer:…</code>) work with any profile. Upgrading from 0.
 <h3>Names and locators</h3>
 <p>A <code>PeerRecord</code> (addresses, relay circuits, home relay, <code>seq</code>, at most a day's expiry) is signed by the
 node key and chained to the user key by the certificate. It goes to the home relay's names server
-(<code>/weirdnet/names/1</code>) and, only while the device hosts something, to the DHT under
+(<code>/weirdnet/names/2</code>) and, only while the device hosts something, to the DHT under
 <code>SHA-256("weirdnet/peer/" + user id)</code>. Storing nodes accept it only with a valid signature, an unrevoked
 certificate, no expiry and a higher <code>seq</code>; a signed <code>Withdrawal</code> removes it. Private sites publish a
 <code>LocatorRecord</code> instead: sealed under per-site locator keys, signed by the locator key (never the user key), under a
@@ -127,6 +127,24 @@ stream (<code>check_presented</code> ties it to the node speaking), and signed <
 <code>request_timeout</code> (60 s), <code>relay_limits</code>, <code>discovery</code>, <code>peers</code>, <code>wss</code>,
 <code>names_server</code>, <code>dns_servers</code>, <code>app_header_max</code>, <code>app_body_max</code>,
 <code>app_idle_timeout</code>. CI runs nodes in Linux network namespaces behind NAT routers (<code>harness/netns.sh</code>).</p>
+
+<h3>Moving to 0.8.0</h3>
+<p>0.8.0 changes the wire. Requests and responses (<code>Node&lt;Q, R&gt;</code> and the names protocol) are written by a codec
+of the crate's own, <code>wire</code> (<code>to_vec</code>, <code>from_slice</code>, <code>Codec</code>). Every byte field,
+whether a <code>Vec&lt;u8&gt;</code>, a <code>[u8; N]</code> or any non-empty sequence of <code>u8</code>, is one CBOR byte string
+instead of an array of integers, with or without <code>serde_bytes</code>; everything else is laid out as before. A 240 KiB byte
+field takes 245,771 bytes on the wire instead of 468,352, about half. Reading refuses truncated input, trailing bytes, lengths
+past the end, indefinite lengths, tags and nesting deeper than <code>MAX_DEPTH</code>.</p>
+<p><b>Old and new nodes cannot talk to each other.</b> <code>WEIRDNET</code> moves to <code>/weirdnet/net/2</code> and
+<code>/weirdnet/names/2</code> (were <code>/1</code>), so a 0.8 node and an older one fail to negotiate instead of failing to
+decode. Upgrade every node that talks to the others together. An app with its own <code>Profile</code> bumps its
+<code>protocol</code> and <code>names</code> ids (for example <code>/myapp/net/1</code> to <code>/myapp/net/2</code>) in the
+same release.</p>
+<p>Types that already use <code>serde_bytes</code> or a bytes visitor keep working. A <code>PeerId</code> (or another type that only
+accepts <code>visit_bytes</code>) inside an internally tagged, adjacently tagged or untagged enum, or a <code>flatten</code>ed
+struct, cannot be read: carry it as a string there. Nothing under a signature changes: certificates, records and tokens are
+signed over JSON. Crates that pin net 0.7 or earlier (weirdnet-sync 0.4.0, weirdnet-device-link, weirdnet-relay) stay on the old
+wire until they release on 0.8.</p>
 ''',
     comingSoon: [
       'How an app uses the discovery toggle and manual peers, with Morph as the example. In Morph 0.2.0, Settings &gt; Relays turns discovery off and adds peers by hand, and an admin policy can lock discovery off.',

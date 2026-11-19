@@ -52,7 +52,7 @@ let answer = node.request(peer, &amp;addrs, MyRequest::Hello)?;</code></pre>
 prefixes, link schemes, signature domains and derivation labels. <code>WEIRDNET</code> is the default:</p>
 <table>
 <tr><th>What</th><th>Weirdnet value</th></tr>
-<tr><td>Request-response protocol</td><td><code>/weirdnet/net/1</code></td></tr>
+<tr><td>Request-response protocol</td><td><code>/weirdnet/net/2</code></td></tr>
 <tr><td>Kademlia</td><td><code>/weirdnet/kad/1</code></td></tr>
 <tr><td>Identify</td><td><code>/weirdnet/id/1</code></td></tr>
 <tr><td>Relay provider key</td><td><code>/weirdnet/relay/1</code></td></tr>
@@ -189,7 +189,7 @@ citation checks; since 0.2.0, model turns and whole tasks can run on another of 
 weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>
 <li><b>Names and rendezvous</b> <span class="tag shipped">shipped</span>: signed, versioned peer records (current addresses
 plus the home relay, chained to the user key by the node certificate) registered with the home relay’s names server
-(<code>/weirdnet/names/1</code>) and put in the DHT only while a site is hosted, with signed withdrawal tombstones; every
+(<code>/weirdnet/names/2</code>) and put in the DHT only while a site is hosted, with signed withdrawal tombstones; every
 storing node checks signatures, certificates, expiry and <code>seq</code>. Apps push records to trusted peers themselves.
 Encrypted, daily-blinded locator records for private sites ship in weirdnet-net 0.4.0.</li>
 <li><b>Key-only dialing</b> <span class="tag shipped">shipped</span>: <code>request_key</code> reaches a peer by its peer id
