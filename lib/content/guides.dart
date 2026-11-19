@@ -923,24 +923,42 @@ trust anchor (<code>TrustAnchors</code>).</p>
   'device-link': Guide(
     brings: r'''
 <p>Move a person's Weirdnet identity to their new device by scanning a QR code, without typing the 24 recovery words and
-without anyone else on the network being able to take it. Built in Morph as "Login over QR" and moved here unchanged.</p>
+without anyone else on the network being able to take it. Built in Morph as "Login over QR" and moved here; 0.3.0 brings
+over the rest of Morph's copy, so apps use this crate instead of their own.</p>
 ''',
     works: r'''
 <ol>
 <li><b>Offer</b>: the new device (no identity yet) shows a QR code or link: its node key, a fresh X25519 key, its addresses
-(including a relay circuit, so devices on other networks connect) and a 120-second expiry, signed by its node key. Nothing
-secret is in it. Or the other way round: the existing device shows an <code>Invite</code> and the new one scans it.</li>
+(up to three direct ones, one per host first, and a circuit for each of up to two relays, so devices on other networks
+connect) and a 120-second expiry, signed by its node key. Nothing secret is in it. Or the other way round: the existing
+device shows an <code>Invite</code> and the new one scans it. Codes are compact CBOR arrays: addresses are binary, and a
+circuit through the WeirdBrains public relay (<code>KNOWN_RELAYS</code>) is one byte, so the QR stays easy to scan off a
+laptop screen.</li>
 <li><b>Pairing</b>: the existing device connects on <code>/weirdnet/link/2</code> (invites arrive on
 <code>/weirdnet/link-invite/2</code>). Both derive a key and a 6-digit short
 authentication string from the X25519 agreement and a transcript hash, and show the code.</li>
 <li><b>Transfer</b>: only after the user confirms the codes match on the existing device does it send the seed, the profile
-name and a node certificate for the new device, sealed with that key.</li>
+name, the sync types the user opted in to (<code>Pairing::send_with</code>) and a node certificate for the new device, sealed
+with that key.</li>
+<li><b>Relays</b>: link nodes start with the relays in their <code>NodeConfig</code> and link-sized limits
+(<code>with_link_limits</code>: 256 KiB requests, 16 KiB responses, a 30-second timeout). <code>RelayProbe</code> reserves on
+the configured relays and measures each one's round trip, and <code>relay_states</code> turns node statuses into connected,
+reserved and round-trip state per relay, for a settings page.</li>
 <li>An offer is single use and dies after three pairing attempts, a cancel, a transfer or its expiry. Nothing logs
 secrets.</li>
 </ol>
 <p>Modules: <code>offer</code> (offers and links), <code>invite</code>, <code>session</code> (both sides without the network:
-<code>Host</code>, <code>Sender</code>), <code>net</code> (<code>HostNode</code>, <code>Pairing</code> over weirdnet-net) and
-<code>wire</code> (CBOR messages).</p>
+<code>Host</code>, <code>Sender</code>), <code>net</code> (<code>HostNode</code>, <code>Pairing</code> over weirdnet-net),
+<code>compact</code>, <code>reach</code>, <code>relays</code> and <code>wire</code> (CBOR messages).</p>
+<h3>Moving to 0.3.0</h3>
+<p>Codes changed: offers and invites are compact CBOR arrays (protocol version 2). A 0.2 code read by a 0.3 device, or the
+other way round, says to update rather than that the code is damaged, so put both devices on apps with the same version.
+The stream ids stay <code>/weirdnet/link/2</code> and <code>/weirdnet/link-invite/2</code>. Version mismatches are now
+<code>Error::OlderCode</code> and <code>Error::NewerCode</code> (were <code>Error::Invalid</code>); match them to word the
+message with your app's name. Link nodes now apply <code>with_link_limits</code> to the <code>NodeConfig</code> you pass.
+Everything else is added: <code>compact</code>, <code>reach</code>, <code>relays</code>, <code>Pairing::send_with</code>,
+<code>session::make_transfer_with</code> and <code>net_status()</code> on <code>HostNode</code>, <code>Pairing</code> and
+<code>InviteHost</code>.</p>
 <h3>Moving to 0.2.0</h3>
 <p>0.2.0 is built on weirdnet-net 0.8.0. Its streams moved to <code>/weirdnet/link/2</code> and
 <code>/weirdnet/link-invite/2</code> (were <code>/1</code>), so a 0.1 device and a 0.2 device fail to connect rather than
@@ -948,7 +966,7 @@ misread each other: put both devices on apps with the same version. Offers, link
 unchanged, and so is the API.</p>
 ''',
     comingSoon: [
-      '0.2.0 still pins <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it.',
+      '0.3.0 still pins <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it.',
     ],
   ),
   'ext': Guide(

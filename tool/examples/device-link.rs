@@ -20,8 +20,11 @@ fn main() {
 
     // After the user confirms, the identity moves, sealed.
     let seed = Key32::random().unwrap();
-    let t = weirdnet_device_link::session::make_transfer(&seed, "Work", "{}", sender.offer(), 4).unwrap();
+    let sync = vec!["notes".to_string()]; // the types the user opted in to sync
+    let t = weirdnet_device_link::session::make_transfer_with(&seed, "Work", "{}", &sync, sender.offer(), 4).unwrap();
     assert_eq!(host.handle(&phone, sender.transfer(&t).unwrap(), 5), LinkReply::Ok);
     host.confirm();
-    assert_eq!(host.take().unwrap().profile_name, "Work");
+    let moved = host.take().unwrap();
+    assert_eq!(moved.profile_name, "Work");
+    assert_eq!(moved.sync, sync);
 }

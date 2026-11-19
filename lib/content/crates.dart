@@ -417,17 +417,20 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'device-link',
-    version: '0.2.0',
+    version: '0.3.0',
     group: 'Identity and access',
     tagline: 'Move a Weirdnet identity to another device over a QR offer, a 6-digit code check and a sealed transfer.',
     about: [
-      '<code>weirdnet-device-link/v1</code>: move a user identity to another device of the same person without typing its recovery words. Built in Morph as “Login over QR” and moved here unchanged.',
+      '<code>weirdnet-device-link/v1</code>: move a user identity to another device of the same person without typing its recovery words. Built in Morph as “Login over QR” and moved here; 0.3.0 folds in the rest of Morph’s copy: compact codes, relay reach and relay status.',
     ],
     parts: [
       '<code>offer</code>: <code>Offer</code>, <code>VerifiedOffer</code>, <code>encode_link</code>, <code>decode_link</code>, <code>offer_addrs</code>.',
+      '<code>compact</code>: <code>KNOWN_RELAYS</code>, <code>pack_addr</code>, <code>unpack_addr</code>: the compact (version 2) code encoding.',
       '<code>invite</code>: the reverse direction, where the existing device shows the QR.',
-      '<code>session</code>: <code>Host</code> and <code>Sender</code>, both sides without the network, and <code>make_transfer</code>.',
+      '<code>session</code>: <code>Host</code> and <code>Sender</code>, both sides without the network, and <code>make_transfer</code> / <code>make_transfer_with</code>.',
       '<code>net</code>: <code>HostNode</code> and <code>Pairing</code> over weirdnet-net on <code>/weirdnet/link/2</code> (and invites on <code>/weirdnet/link-invite/2</code>).',
+      '<code>reach</code>: <code>with_link_limits</code> and <code>relay_groups</code>.',
+      '<code>relays</code>: <code>RelayProbe</code>, <code>RelayState</code>, <code>relay_states</code>: real relay state for a settings page.',
       '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code> (CBOR).',
     ],
     dependsOn: ['net', 'keys'],

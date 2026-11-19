@@ -235,7 +235,7 @@ every request is checked in. A private resource is seen only by its owner and tr
 payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
 <li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="/crates/schemes">weirdnet-schemes 0.1.0</a> and <a href="/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
 never hands a link to an unknown app without asking.</li>
-<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="/crates/device-link">weirdnet-device-link 0.1.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
+<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="/crates/device-link">weirdnet-device-link 0.3.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
 <li><b>Sandboxed extensions</b> <span class="tag shipped">shipped</span> (<a href="/crates/ext">weirdnet-ext 0.1.0</a>, with weirdnet-ext-proto and weirdnet-ext-sdk): extensions
 run out of process with no network or files beyond what the user grants (Landlock and seccomp on Linux, the sandbox on
 macOS).</li>

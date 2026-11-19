@@ -479,7 +479,7 @@ fn main() -> weirdnet_schemes::Result<()> {
   ),
   'device-link': Example(
     r'''[dependencies]
-weirdnet-device-link = "0.2.0"
+weirdnet-device-link = "0.3.0"
 weirdnet-keys = "0.1.0"
 weirdnet-net = "0.8.0"''',
     r'''// Both sides of a device link without the network (HostNode and Pairing carry it over
@@ -504,10 +504,13 @@ fn main() {
 
     // After the user confirms, the identity moves, sealed.
     let seed = Key32::random().unwrap();
-    let t = weirdnet_device_link::session::make_transfer(&seed, "Work", "{}", sender.offer(), 4).unwrap();
+    let sync = vec!["notes".to_string()]; // the types the user opted in to sync
+    let t = weirdnet_device_link::session::make_transfer_with(&seed, "Work", "{}", &sync, sender.offer(), 4).unwrap();
     assert_eq!(host.handle(&phone, sender.transfer(&t).unwrap(), 5), LinkReply::Ok);
     host.confirm();
-    assert_eq!(host.take().unwrap().profile_name, "Work");
+    let moved = host.take().unwrap();
+    assert_eq!(moved.profile_name, "Work");
+    assert_eq!(moved.sync, sync);
 }
 ''',
   ),
