@@ -286,6 +286,97 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
     notes: 'Version 0.4.0 is on <a href="https://crates.io/crates/weirdnet-model">crates.io</a> (<a href="https://docs.rs/weirdnet-model/0.4.0">docs.rs</a>). 0.4.0 adds the <code>hw</code> module and makes the <code>agent</code> feature depend on weirdnet-agent <code>=0.4.0</code> (it was <code>=0.3.0</code>), so apps on agent 0.4 can use <code>LocalModel</code>. This is breaking for <code>agent</code> users only; <code>ModelBackend</code> is unchanged and nothing changes without the <code>agent</code> feature. Adding variants to <code>Error</code> (0.2.0) is a breaking change. The API may change while Morph’s Companions are built on it. Real-model tests are ignored by default; CI builds llama.cpp on CPU only. Measured by the Morph team: Gemma 4 E4B on CPU (16 cores, warm load) takes about 1.6 s to load and give the first token, then runs at about 9 tokens/s with about 7 GiB peak RAM.',
   ),
   Crate(
+    slug: 'backends',
+    version: '0.1.0',
+    tagline: 'The model-node wrapper: llama.cpp and vLLM adapters, a supervisor with swap groups, idle unload and crash backoff, raw infer/2 serving, and /weirdnet-backends/node/1 with signed capability records.',
+    about: [
+      'A model node runs models and takes requests, like a llama.cpp or vLLM server; it can even be one, a stock server it only wraps. weirdnet-backends starts and stops the engines and serves them to inference nodes. It decides nothing beyond the node: what to load, and where, is the caller’s decision. It has no app-specific types.',
+      'Requests and errors are <a href="/crates/agent">weirdnet-agent</a> 0.4 infer/2 types, so a model node serves raw <code>/weirdnet-agent/infer/2</code> through <code>ModelHost</code>, an <code>InferHost</code>. The <code>node</code> feature adds <code>/weirdnet-backends/node/1</code> over <a href="/crates/net">weirdnet-net</a> 0.8: inference nodes subscribe to signed capability records and send <code>Load</code>, <code>Unload</code>, <code>Drain</code>, <code>GroupUp</code>/<code>GroupDown</code> and <code>Health</code>.',
+    ],
+    parts: [
+      '<code>EngineConfig</code>, <code>ModelLaunch</code>: how <code>llama-server</code> and <code>vllm serve</code> are launched: loopback only, a random port, a per-process API key in the environment (never the command line), context, slots and GPU layers. <code>Wrap</code> attaches to a stock OpenAI-compatible server on loopback without owning it.',
+      '<code>Supervisor</code>: load with a readiness probe, drain and unload; <b>swap groups</b> (loading one model of a group unloads the others); <b>idle unload</b> (<code>reap_idle</code>, <code>spawn_reaper</code>); crash restarts with exponential backoff and crash-loop detection (an explicit forced load clears it); <code>SupervisorEvent</code>s and per-model logs; chat, completion and embedding forwarding.',
+      '<code>ChunkDecoder</code>, <code>ToolCalls</code>: OpenAI server-sent events decoded into <code>Chunk</code>s: text, reasoning (<code>reasoning_content</code> or <code>reasoning</code>), tool-call fragments joined into calls, finish reason and usage with cached and reasoning tokens.',
+      '<code>openai</code>: engine request bodies from infer/2 requests: messages, sampling, seed, response format, tools, and assistant-prefix continuation (vLLM’s <code>continue_final_message</code>).',
+      '<code>ModelHost</code>: an <code>InferHost</code> serving raw infer/2 and embeddings from the supervisor’s models. Cancel aborts the engine request; prefixes resume; a model that is not loaded is refused unless the request waits for it; draining refuses new requests; prefill and decode speed and time to first token are measured.',
+      '<code>node</code> feature: <code>NodeService</code>, <code>NodeServer</code> (node/1 and raw infer/2 on a <code>weirdnet-net</code> node, announced as <code>weirdnet-backends-node</code>), <code>NodeClient</code>, <code>Subscription</code>, <code>Verifier</code>, and <code>GroupWorkers</code> for the application’s cross-machine group workers.',
+    ],
+    dependsOn: ['agent', 'model', 'net', 'sync'],
+    example: r'''# Cargo.toml
+weirdnet-backends = { version = "0.1", features = ["node"] }
+
+// main.rs
+use std::sync::Arc;
+use weirdnet_backends::{EngineConfig, EngineKind, ModelHost, ModelLaunch, Supervisor, SupervisorOptions};
+use weirdnet_backends::node::{NodeServer, NodeService};
+
+let chat = ModelLaunch::new("qwen3-8b", EngineKind::Llamacpp, "/models/qwen3-8b-q4_k_m.gguf");
+let sup = Supervisor::new(vec![EngineConfig::llamacpp("llama-server")], vec![chat], SupervisorOptions::default());
+let _reaper = sup.spawn_reaper(std::time::Duration::from_secs(30));
+let host = Arc::new(ModelHost::new(sup, auth.clone())); // auth: weirdnet_agent::serve::RosterAuth
+let service = Arc::new(NodeService::new(host, node_keypair, Some(node_cert), auth).with_hardware(hw, budget));
+let _server = NodeServer::start(&node, service)?; // node/1 + raw infer/2''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-backends">crates.io</a> (<a href="https://docs.rs/weirdnet-backends/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-backends</code>. The supervisor runs on Unix and Windows; graceful stop, process groups and dying with the parent are Unix-only (see the platform table below), and vLLM is Linux-only. Ray and <code>rpc-server</code> group workers are not included: <code>GroupUp</code> goes to the application’s <code>GroupWorkers</code>. The API may change while Ymir moves onto it.',
+    origin: 'Ymir',
+  ),
+  Crate(
+    slug: 'openai',
+    version: '0.1.0',
+    tagline: 'A loopback-only OpenAI-compatible bridge over a weirdnet-agent inference pool, with a token, a Host check and no CORS.',
+    about: [
+      'Local tools that speak the OpenAI API (editors, notebooks, <code>curl</code>) reach the user’s inference nodes through it: chat completions, streaming or not, the model list and embeddings, all through a <a href="/crates/agent">weirdnet-agent</a> 0.4 <code>Pool</code>, so failover, resume and stand-ins come with it.',
+      'It binds <code>127.0.0.1</code> only, checks the <code>Host</code> header against its own address, requires a bearer token and sends no CORS headers, so web pages can’t call it.',
+    ],
+    parts: [
+      '<code>POST /v1/chat/completions</code>: SSE streaming with <code>data: [DONE]</code>, or one JSON answer; reasoning as <code>reasoning_content</code>, tool calls, usage with cached and reasoning tokens. Dropping the response cancels the pool request.',
+      '<code>GET /v1/models</code>: the pool catalog, with state, purpose, replicas, context and revision under <code>weirdnet</code>. <code>POST /v1/embeddings</code>: float vectors.',
+      '<code>x-weirdnet-model</code>, <code>x-weirdnet-cache: hit</code> and <code>x-weirdnet-standin</code> headers; <code>x-wait: 1</code> waits for the requested model instead of a stand-in.',
+      '<code>GET /metrics</code>: Prometheus counters <code>weirdnet_bridge_{requests,errors,cache_hits,standin}_total</code>.',
+      '<code>request</code>: OpenAI bodies to infer/2 requests. <code>new_token()</code> makes a 32-byte hex token.',
+    ],
+    dependsOn: ['agent'],
+    example: r'''# Cargo.toml
+weirdnet-openai = "0.1"
+
+// main.rs
+use std::sync::Arc;
+use weirdnet_openai::{Bridge, BridgeOptions, new_token};
+
+let token = new_token(); // show it to the user once; keep it in their keychain
+let bridge = Bridge::bind(BridgeOptions::new(11435, token)).await?;
+bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::pool::Pool''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-openai">crates.io</a> (<a href="https://docs.rs/weirdnet-openai/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-openai</code>. <code>/v1/completions</code> answers 501 for now: infer/2 carries chat messages, not raw prompts. Content parts other than text are refused.',
+    origin: 'Ymir',
+  ),
+  Crate(
+    slug: 'semcache',
+    version: '0.1.0',
+    tagline: 'The answer cache for inference nodes: the AnswerCache seam, a store trait, and an exact-match cache for deterministic requests.',
+    about: [
+      'Before an inference node routes a prompt it asks the cache; afterwards it offers the finished answer. Requests and answers are <a href="/crates/agent">weirdnet-agent</a> 0.4 infer/2 types, and the store is a trait, so answers can live in memory, on disk or be shared between nodes.',
+    ],
+    parts: [
+      '<code>AnswerCache</code>: <code>get(model, request)</code> and <code>put(model, request, answer)</code>; <code>NoCache</code> caches nothing.',
+      '<code>CachedAnswer</code>: text, reasoning, tool calls, finish reason, usage and model, from a pool <code>Answer</code>.',
+      '<code>AnswerStore</code>: opaque bytes under 32-byte keys. <code>MemoryStore</code> is bounded and least-recently-used.',
+      '<code>ExactCache</code>: answers only byte-identical deterministic requests (temperature 0, no tools, inline messages, same model, seed, response format and raw flag) and keeps only answers that finished with <code>stop</code> or <code>length</code>. The key is SHA-256 over their CBOR.',
+    ],
+    dependsOn: ['agent'],
+    example: r'''# Cargo.toml
+weirdnet-semcache = "0.1"
+
+// main.rs
+use weirdnet_semcache::{AnswerCache, CachedAnswer, ExactCache};
+
+let cache = ExactCache::new(256);
+if let Some(hit) = cache.get("qwen3-8b", &request) {
+    // replay hit.text and mark the answer as a cache hit (infer/2 Meta::cache_hit)
+}
+cache.put("qwen3-8b", &request, &CachedAnswer::from(&answer));''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.1.0">docs.rs</a>). Extracted from Ymir’s <code>ymir-semcache</code>. Semantic matching (nearest stored prompt by embedding) and shared or persistent stores are not in 0.1.0.',
+    origin: 'Ymir',
+  ),
+  Crate(
     slug: 'plugin',
     version: '0.1.0',
     group: 'Extensions and plugins',

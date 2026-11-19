@@ -670,6 +670,96 @@ target directory can fail with "File exists" on the library symlinks; deleting t
       '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.4.0</code> since 0.4.0; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
     ],
   ),
+  'backends': Guide(
+    brings: r'''
+<p>Use weirdnet-backends on a machine that runs models for the user's other devices. It wraps llama.cpp's <code>llama-server</code>
+and <code>vllm serve</code> (or a stock OpenAI-compatible server already running on loopback) and keeps them healthy, so
+inference nodes only have to say what should be loaded and send requests.</p>
+<ul>
+<li><b>Engines handled</b>: loopback-only ports, a per-process API key in the environment, readiness probes, logs.</li>
+<li><b>Memory handled</b>: swap groups so models that share a GPU never load together, and idle unload.</li>
+<li><b>Failures handled</b>: restarts with backoff, crash loops reported rather than retried forever.</li>
+<li><b>One protocol</b>: signed capability records and commands over <code>weirdnet-net</code>, inference over infer/2.</li>
+</ul>
+''',
+    works: r'''
+<h3>The supervisor</h3>
+<p><code>Supervisor::new(engines, models, options)</code> knows every model the node may run (<code>ModelLaunch</code>: id, engine,
+GGUF path or Hugging Face id, context, slots, GPU layers, swap group, idle timeout, extra flags, or a <code>Wrap</code>).
+<code>load</code> picks a free loopback port and a random API key, starts the engine in its own process group, and polls
+<code>/health</code> until it answers; loading a model in a swap group first drains and stops the group's other models. Load and
+unload are serialized, so swaps never interleave. <code>unload</code> waits for requests under way (up to <code>drain_timeout</code>),
+then stops the engine: SIGTERM, then SIGKILL after <code>stop_grace</code>. A crash while serving restarts the engine after a backoff
+that doubles per crash; <code>max_crashes</code> within <code>crash_window</code> is a crash loop, and only a forced load starts it
+again. Everything that happens is a <code>SupervisorEvent</code>.</p>
+<h3>Serving infer/2</h3>
+<p><code>ModelHost</code> is a <code>weirdnet-agent</code> <code>InferHost</code>. Each request names a model (or gets the default); the
+request becomes an OpenAI streaming body for the engine (an assistant prefix becomes a trailing assistant message, with
+<code>continue_final_message</code> on vLLM), and the engine's server-sent events become infer/2 text, reasoning and tool-call
+frames. Cancelling the request drops the engine stream. Model nodes serve raw infer/2 only: the inference node has already
+assembled the messages.</p>
+<h3>node/1</h3>
+<p>A <code>Capability</code> record lists the hardware and memory budget (<code>weirdnet-model</code> <code>hw</code>), the engines, every
+configured model with its state, revision, quantization, context and slot limits, load-time estimate and measured speed, the
+load (queued, active, slots, in flight), warm prefix hashes, swap groups, and the draining and group-job flags. The node signs
+the CBOR record with its own key; the record carries the user's <code>NodeCert</code> for that node, an increasing sequence number
+and a 90 second expiry. Subscribers get one at once, every 15 seconds and on every change; <code>Verifier</code> checks the
+signature, that the signer is the peer on the stream, the expiry and the user's certificate, and <code>Subscription</code> rejects a
+sequence that goes backwards. Withdrawal ends subscriptions.</p>
+<p>Commands are one per stream: <code>Load</code> (waits until ready), <code>Unload</code>, <code>Drain</code> (stops new requests and
+waits for those under way), <code>GroupUp</code>/<code>GroupDown</code> and <code>Health</code>. Who may send them is an
+<code>Authorize</code> hook; <code>RosterAuth</code> admits the user's linked devices.</p>
+<h3>Platforms</h3>
+<table>
+<tr><th></th><th>Linux</th><th>macOS</th><th>Windows</th></tr>
+<tr><td>llama.cpp</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>vLLM</td><td>yes</td><td>no</td><td>no</td></tr>
+<tr><td>Graceful stop (SIGTERM, then SIGKILL)</td><td>yes</td><td>yes</td><td>no: killed outright</td></tr>
+<tr><td>Own process group</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>Dies with the node process</td><td>yes</td><td>no</td><td>no</td></tr>
+</table>
+''',
+    features: [
+      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <code>weirdnet-model</code> 0.4 hardware in the records and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
+    ],
+  ),
+  'openai': Guide(
+    brings: r'''
+<p>Use weirdnet-openai to let the user's local tools that already speak the OpenAI API use their own devices' models. Point the
+tool at <code>http://127.0.0.1:&lt;port&gt;/v1</code> with the bridge token as the API key; requests go through a
+<code>weirdnet-agent</code> pool, so failover, resume and stand-ins work as they do for the app.</p>
+''',
+    works: r'''
+<h3>Who can call it</h3>
+<p>The bridge binds <code>127.0.0.1</code> only. Every request must have a <code>Host</code> of <code>127.0.0.1:&lt;port&gt;</code> or
+<code>localhost:&lt;port&gt;</code> (so a web page can't reach it by DNS rebinding) and the bearer token (at least 16 characters,
+compared in constant time). It sends no CORS headers, so browsers block pages from reading its answers.</p>
+<h3>Requests</h3>
+<p>Chat bodies become infer/2 requests: messages (string content or text parts), sampling, <code>seed</code>,
+<code>response_format</code> and function tools; other parameters are ignored. <code>x-wait: 1</code> sets <code>wait_for_model</code>.
+A streamed answer starts when a node accepts the request, so an error before that is a plain HTTP error; after that, an error
+arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-model</code>, <code>x-weirdnet-cache</code> and
+<code>x-weirdnet-standin</code>, and the same under <code>weirdnet</code> in the body (on the last chunk when streaming).</p>
+<p>Errors map to OpenAI-style bodies: unknown model 404, bad request 400, busy 503 with <code>Retry-After</code>, unavailable 503,
+refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
+''',
+  ),
+  'semcache': Guide(
+    brings: r'''
+<p>Use weirdnet-semcache on an inference node to answer repeated deterministic prompts without running a model again.</p>
+''',
+    works: r'''
+<h3>Exact matches</h3>
+<p>Only deterministic requests are cached: temperature exactly 0, no tools, messages inline (not a context reference). The key is
+SHA-256 over the CBOR of a version, the model, the input, sampling, seed, response format and the raw flag, so two requests share
+an answer only when everything that could change it is equal. Only answers that finished with <code>stop</code> or
+<code>length</code> are kept; an unreadable stored entry is dropped. A hit should be marked with infer/2
+<code>Meta::cache_hit</code>, which <a href="/crates/openai">weirdnet-openai</a> shows as <code>x-weirdnet-cache: hit</code>.</p>
+<h3>Stores</h3>
+<p><code>AnswerStore</code> keeps opaque bytes under 32-byte keys; <code>MemoryStore::new(max)</code> evicts the least recently used.
+<code>ExactCache::with_store</code> takes any store.</p>
+''',
+  ),
   'plugin': Guide(
     brings: r'''
 <p>The SDK a code space plugin is written against. It has no dependencies, so plugins build offline, and a stable C ABI, so a
