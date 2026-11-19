@@ -26,7 +26,7 @@ class NetworkPage extends StatelessComponent {
         ('sealed', 'Sealed messaging'),
         ('discovery', 'Peer discovery'),
         ('relays', 'Relays and hole punching'),
-        ('next', 'Being built now'),
+        ('next', 'What has shipped'),
         ('security', 'Security boundaries'),
       ], _html),
     ]);
@@ -144,6 +144,14 @@ run Kademlia in server mode.</li>
 <code>relay</code> if it relays, and <code>kad</code> if it serves the DHT.</li>
 <li><b>Relays by provider key</b>: relays provide the profile’s relay key (<code>/weirdnet/relay/1</code>) in the DHT, and
 nodes look it up every minute, so they find relays they were not configured with.</li>
+<li><b>Turning discovery off</b> (weirdnet-net 0.6.0): <code>DiscoveryMode::Disabled</code> on <code>NodeConfig</code> turns off
+mDNS and Kademlia (bootstrap, advertising, and learning peers from identify). Configured relays, listening, request-response,
+app calls, content streams and manual peers still work; the DHT calls return “peer discovery is disabled”, and
+<code>Status</code> reports whether discovery is on.</li>
+<li><b>Manual peers</b> (weirdnet-net 0.6.0): <code>PeerHint</code>, <code>NodeConfig::peers</code> and
+<code>Node::add_peer</code> / <code>remove_peer</code> / <code>peers</code>, with <code>encode_peers</code> /
+<code>decode_peers</code> for the app to persist them. A hint is an address, not trust: the node certificate and the app’s
+roster still decide who a peer is.</li>
 </ul>
 $discoveryDiagram
 
@@ -161,9 +169,18 @@ running your own is optional and needs a domain tied to the machine through Grin
 <span class="tag shipped">live</span>: <a href="https://relay.net.weirdbrains.com/">its info page</a>. See
 <a href="/relay#public">Run a relay</a> for its addresses.</div>
 
-<h2 id="next">Being built now <span class="tag wip">in progress</span></h2>
-<p>These pieces are being built into Weirdnet now, following the design in Morph’s architecture:</p>
+<h2 id="next">What has shipped</h2>
+<p>These pieces were built into Weirdnet following the design in Morph’s architecture, and all of them have shipped.
+Each links to its crate guide.</p>
 <ul>
+<li><b>Discovery toggle and manual peers</b> <span class="tag shipped">shipped</span> (<a href="/crates/net">weirdnet-net 0.6.0</a>): run
+without mDNS and the DHT and dial peers from an app-kept address book; see <a href="#discovery">Peer discovery</a>.</li>
+<li><b>Device sync with key rotation</b> <span class="tag shipped">shipped</span> (<a href="/crates/sync">weirdnet-sync 0.3.1</a>):
+revoking a device rotates to a random epoch key sealed to each remaining device, so a revoked device that holds the seed
+cannot read later ops; 0.3.1 fixes split chains when two devices rotate at once.</li>
+<li><b>Agent runtime</b> <span class="tag shipped">shipped</span> (<a href="/crates/agent">weirdnet-agent 0.1.0</a>): the shared
+agent loop with streaming events and cancellation, tool sources, tiered approval policy, research budgets and traces with
+citation checks. Morph’s Companions are its first user.</li>
 <li><b>Data-carrying relays</b> <span class="tag shipped">shipped</span>: relay limits are configurable in <code>weirdnet-net</code>
 (<code>NodeConfig::relay_limits</code>, <code>RelayLimits::unlimited()</code>; the library default stays libp2p’s), and
 weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>
@@ -203,25 +220,25 @@ routers: relay reservations, hole punching from a relayed stream to a direct one
 QUIC, mDNS and AutoNAT.</li>
 <li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.2.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
 without a restart, and renewal by the CA's renewal window with backoff. Muninn orders its certificates through it.</li>
-<li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.4.0</a>): byte
+<li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="/crates/net">weirdnet-net 0.4.0</a>): byte
 streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
-<li><b>App calls</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-net">weirdnet-net 0.5.0</a>): HTTP-like
+<li><b>App calls</b> <span class="tag shipped">shipped</span> (<a href="/crates/net">weirdnet-net 0.5.0</a>): HTTP-like
 requests with streamed bodies to the node that serves an app, for <code>weirdnet-&lt;app&gt;://</code> URLs, found by peer id,
 user id or name and reached directly or through relays (<a href="#app-calls">how</a>).</li>
-<li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-access">weirdnet-access 0.1.1</a>): private or
+<li><b>Access policy</b> <span class="tag shipped">shipped</span> (<a href="/crates/access">weirdnet-access 0.1.1</a>): private or
 public and open or members-only as separate settings, a shared permission core apps extend, ranked roles, and the order
 every request is checked in. A private resource is seen only by its owner and trusted users; members must be trusted too. Muninn's org roles use its catalog and rank rules.</li>
-<li><b>Push wake-up</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-push">weirdnet-push 0.1.0</a>): sealed wake
+<li><b>Push wake-up</b> <span class="tag shipped">shipped</span> (<a href="/crates/push">weirdnet-push 0.1.0</a>): sealed wake
 payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
-<li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-schemes">weirdnet-schemes 0.1.0</a> and <a href="https://crates.io/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
+<li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="/crates/schemes">weirdnet-schemes 0.1.0</a> and <a href="/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
 never hands a link to an unknown app without asking.</li>
-<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-device-link">weirdnet-device-link 0.1.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
-<li><b>Sandboxed extensions</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-ext">weirdnet-ext 0.1.0</a>, with weirdnet-ext-proto and weirdnet-ext-sdk): extensions
+<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="/crates/device-link">weirdnet-device-link 0.1.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
+<li><b>Sandboxed extensions</b> <span class="tag shipped">shipped</span> (<a href="/crates/ext">weirdnet-ext 0.1.0</a>, with weirdnet-ext-proto and weirdnet-ext-sdk): extensions
 run out of process with no network or files beyond what the user grants (Landlock and seccomp on Linux, the sandbox on
 macOS).</li>
-<li><b>Relay wake-up path</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-relay">weirdnet-relay 0.3.0</a>): phones without APNs or FCM keep a stream open to their home relay, and trusted peers or a push service wake them with sealed, fixed-size payloads the relay can't read.</li>
-<li><b>Update announcements</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-update">weirdnet-update 0.2.0</a>, carried by weirdnet-relay 0.4.0): signed news of an update, carried by relays for the orgs they trust and checked by every device against its own root before it fetches anything.</li>
-<li><b>Dynamic DNS for your own relay</b> <span class="tag shipped">shipped</span> (<a href="https://crates.io/crates/weirdnet-relay">weirdnet-relay 0.5.0</a>): through Grindvakt, a self-hosted relay keeps its name and <code>_dnsaddr</code> records pointed at its public address on DigitalOcean or DNSimple, never deleting a record and changing nothing when the zone is ambiguous.</li>
+<li><b>Relay wake-up path</b> <span class="tag shipped">shipped</span> (<a href="/crates/relay">weirdnet-relay 0.3.0</a>): phones without APNs or FCM keep a stream open to their home relay, and trusted peers or a push service wake them with sealed, fixed-size payloads the relay can't read.</li>
+<li><b>Update announcements</b> <span class="tag shipped">shipped</span> (<a href="/crates/update">weirdnet-update 0.2.0</a>, carried by weirdnet-relay 0.4.0): signed news of an update, carried by relays for the orgs they trust and checked by every device against its own root before it fetches anything.</li>
+<li><b>Dynamic DNS for your own relay</b> <span class="tag shipped">shipped</span> (<a href="/crates/relay">weirdnet-relay 0.5.0</a>): through Grindvakt, a self-hosted relay keeps its name and <code>_dnsaddr</code> records pointed at its public address on DigitalOcean or DNSimple, never deleting a record and changing nothing when the zone is ambiguous.</li>
 </ul>
 
 <h2 id="security">Security boundaries</h2>

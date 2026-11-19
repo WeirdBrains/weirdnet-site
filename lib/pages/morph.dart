@@ -35,7 +35,21 @@ crates.</p>
 <li><b>Identity</b>: each Morph profile has a user key made or restored at onboarding, backed up as 24 words
 (<code>weirdnet-keys</code>), with a node key per device certified by it (<code>weirdnet-net</code>).</li>
 <li><b>Storage</b>: its store is a SQLCipher database through <code>weirdnet-storage</code>.</li>
-<li><b>Device linking</b>: moving an identity to another device over a QR offer, a short-code check and a sealed transfer.</li>
+<li><b>Device linking</b>: moving an identity to another device over a QR offer, a short-code check and a sealed transfer
+(<a href="/crates/device-link">weirdnet-device-link</a>).</li>
+<li><b>Sync between linked devices</b> (Morph 0.2.0, <a href="/crates/sync">weirdnet-sync</a>): bookmarks, folders and tags,
+history (visits, deletes, clear-all), and the search engine, home page and theme sync over Weirdnet, soon after unlock and
+every 30 seconds.</li>
+<li><b>Linked devices</b> (Morph 0.2.0): Settings &gt; Linked devices lists linked devices and revokes one, on desktop and
+the phone app.</li>
+<li><b>Key rotation on revoke</b> <span class="tag wip">in progress</span> (on Morph main, unreleased, on weirdnet-sync 0.3.1):
+revoking a linked device changes the sync key, so that device can’t read anything synced afterwards, even with the recovery
+words. Keys also rotate once by themselves after the first link, and Linked devices warns before a revoke about devices
+that would be left out of the new key.</li>
+<li><b>Discovery off and manual peers</b> (Morph 0.2.0, <a href="/crates/net">weirdnet-net 0.6.0</a>): Settings &gt; Relays
+can turn Weirdnet discovery off and add peers by hand, and an admin policy can lock discovery off.</li>
+<li><b>App calls</b> (Morph 0.2.0): <code>weirdnet-&lt;app&gt;://</code> links call the app over Weirdnet and show its answer,
+with a clear page for each failure.</li>
 <li><b>One network</b>: Morph joins Weirdnet as <code>weirdnet-morph</code>. It uses the default Weirdnet profile and its own <code>/morph/...</code> protocols, and links on
 <code>weirdnet-morph://</code>, such as <code>weirdnet-morph://join/</code> for invitations.</li>
 <li><b>Relays</b>: Morph nodes start with WeirdBrains relays and bootstrap nodes; desktops with a domain can run their own.
@@ -50,6 +64,6 @@ protocol ids (<code>/muninn/...</code>, where Morph has <code>/morph/...</code>)
 relays: Muninn nodes can use <a href="/relay">weirdnet-relay</a>, given the relay’s address. See
 <a href="/network#apps">Apps on Weirdnet</a>.</p>
 <h2 id="status">Status</h2>
-<p>Morph is in alpha. See <a href="$morphSiteUrl">morph.weirdbrains.com</a> and the
+<p>Morph is in alpha; the latest release is 0.2.1 (November 18, 2026), on weirdnet-net 0.6.0. See <a href="$morphSiteUrl">morph.weirdbrains.com</a> and the
 <a href="https://github.com/WeirdBrains/morph">source on GitHub</a>.</p>
 ''';
