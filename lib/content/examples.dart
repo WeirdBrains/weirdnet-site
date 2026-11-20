@@ -103,7 +103,7 @@ fn main() -> Result<(), StorageError> {
   ),
   'update': Example(
     r'''[dependencies]
-weirdnet-update = "0.2.0"
+weirdnet-update = "0.2.1"
 semver = "1"''',
     r'''// An org root (one root key, one release key), a signed manifest, and the client's check.
 use weirdnet_update::{
@@ -216,7 +216,7 @@ fn main() {
   ),
   'agent': Example(
     r'''[dependencies]
-weirdnet-agent = { version = "0.4.2", features = ["testing"] }
+weirdnet-agent = { version = "0.4.4", features = ["testing"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// One task through the agent loop with the `testing` feature's scripted model and approver.
 // A real app implements ModelBackend (for example over weirdnet-model) and Approver (its UI).
@@ -398,7 +398,7 @@ fn main() {
   ),
   'sync': Example(
     r'''[dependencies]
-weirdnet-sync = "0.6.0"''',
+weirdnet-sync = "0.7.0"''',
     r'''// The merge rules underneath linked-device sync: hybrid logical clocks, LWW and an OR-set.
 use weirdnet_sync::{Hlc, Lww, NodeId, OrSet, lww};
 
@@ -507,7 +507,7 @@ fn main() -> weirdnet_schemes::Result<()> {
   ),
   'device-link': Example(
     r'''[dependencies]
-weirdnet-device-link = "0.3.0"
+weirdnet-device-link = "0.4.0"
 weirdnet-keys = "0.1.0"
 weirdnet-net = "0.8.0"''',
     r'''// Both sides of a device link without the network (HostNode and Pairing carry it over

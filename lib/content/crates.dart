@@ -169,7 +169,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'update',
-    version: '0.2.0',
+    version: '0.2.1',
     group: 'Building blocks',
     tagline: 'Signed update metadata: org roots, manifests, freshness, verification, targeting, rollouts, consent, boot health.',
     about: [
@@ -185,6 +185,7 @@ const crates = <Crate>[
     ],
     usedBy: ['Salty Gull', 'weirdnet-relay'],
     origin: 'Salty Gull',
+    notes: 'Version 0.2.1 is on <a href="https://crates.io/crates/weirdnet-update">crates.io</a> (<a href="https://docs.rs/weirdnet-update/0.2.1">docs.rs</a>). 0.2.1 reserves <code>UNSIGNED</code> (<code>"unsigned"</code>) as the signing identity of plain tar.gz and zip file sets and refuses it for other formats; <code>FullPackage::signing_identity_matches</code> keeps an update from stripping or adding a platform signature.',
   ),
   Crate(
     slug: 'accounts',
@@ -225,7 +226,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'agent',
-    version: '0.4.2',
+    version: '0.4.4',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks, plus remote inference across the user’s own devices.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
@@ -248,7 +249,7 @@ const crates = <Crate>[
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: ['net', 'sync'],
-    notes: 'Version 0.4.2 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.2">docs.rs</a>). 0.4.2 is additive: the pool continues an answer from a caller’s <code>assistant_prefix</code> on nodes that can resume (no wire change; before, such a request failed with missing characters), a remote task’s approval card no longer arrives before the events sent ahead of it, and the <code>pool</code> and <code>serve</code> features need weirdnet-sync 0.5.2 (a device linked elsewhere reaches the others in one pass). 0.4.1 is additive: infer/2 raw prompts (<code>Input::Prompt</code>, <code>Request::prompt</code>; 0.4.0 servers close the stream and the pool moves on), early metadata (<code>Request::early_meta</code>, <code>ServerFrame::Meta</code>, <code>PoolEvent::Meta</code>, so a cache hit is known before the answer), embedding usage (<code>EmbedBackend::embed_counted</code>, <code>Embeddings::usage</code>), and a <code>Pool</code> that keeps error kinds: request errors (<code>BadRequest</code>, <code>Cancelled</code>) come back at once, and when every node fails the last node answer wins over a transport error. Weirdnet crates depend on it with caret requirements (<code>"0.4"</code>, or <code>"0.4.1"</code> where they use these APIs), so agent patch releases don’t force re-releases. 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
+    notes: 'Version 0.4.4 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.4">docs.rs</a>). 0.4.4 is additive: device roles in <code>RosterAuth::require_roles</code> (the user-signed grants in the weirdnet-sync 0.7 roster), <code>Authorize::admit</code> and <code>Admitted</code>, <code>TaskHost::session_for</code> and <code>task::serve_for</code>, and <code>Server::start_with</code> with <code>ServingExtras::tasks</code> to serve task/1; the <code>pool</code> and <code>serve</code> features accept weirdnet-sync 0.5.2 to 0.7. 0.4.3 stops offline linked devices from slowing every request (<code>LinkedNodes::with_retry_after</code>) and accepts weirdnet-sync 0.6. 0.4.2 is additive: the pool continues an answer from a caller’s <code>assistant_prefix</code> on nodes that can resume (no wire change; before, such a request failed with missing characters), a remote task’s approval card no longer arrives before the events sent ahead of it, and the <code>pool</code> and <code>serve</code> features need weirdnet-sync 0.5.2 (a device linked elsewhere reaches the others in one pass). 0.4.1 is additive: infer/2 raw prompts (<code>Input::Prompt</code>, <code>Request::prompt</code>; 0.4.0 servers close the stream and the pool moves on), early metadata (<code>Request::early_meta</code>, <code>ServerFrame::Meta</code>, <code>PoolEvent::Meta</code>, so a cache hit is known before the answer), embedding usage (<code>EmbedBackend::embed_counted</code>, <code>Embeddings::usage</code>), and a <code>Pool</code> that keeps error kinds: request errors (<code>BadRequest</code>, <code>Cancelled</code>) come back at once, and when every node fails the last node answer wins over a transport error. Weirdnet crates depend on it with caret requirements (<code>"0.4"</code>, or <code>"0.4.1"</code> where they use these APIs), so agent patch releases don’t force re-releases. 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'model',
@@ -289,7 +290,7 @@ let model = LocalModel::new(spec.id.clone(), worker); // a weirdnet_agent::Model
   ),
   Crate(
     slug: 'backends',
-    version: '0.1.1',
+    version: '0.1.2',
     tagline: 'The model-node wrapper: llama.cpp and vLLM adapters, a supervisor with swap groups, idle unload and crash backoff, raw infer/2 serving, and /weirdnet-backends/node/1 with signed capability records.',
     about: [
       'A model node runs models and takes requests, like a llama.cpp or vLLM server; it can even be one, a stock server it only wraps. weirdnet-backends starts and stops the engines and serves them to inference nodes. It decides nothing beyond the node: what to load, and where, is the caller’s decision. It has no app-specific types.',
@@ -321,7 +322,7 @@ let _server = NodeServer::start(&node, service)?; // node/1 + raw inference on /
 
 // On the inference node: dial model nodes on the new id, falling back to infer/2 for 0.1.0 nodes.
 let dialer = Arc::new(weirdnet_backends::RawInferDialer::new(net_dialer));''',
-    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-backends">crates.io</a> (<a href="https://docs.rs/weirdnet-backends/0.1.1">docs.rs</a>). 0.1.1 serves raw inference on its own protocol id, <code>/weirdnet-backends/infer/1</code> (<code>RAW_INFER_PROTOCOL</code>, the infer/2 framing), so one node can be an inference node and a model node; infer/2 is still served by default for 0.1.0 inference nodes (<code>NodeServerOptions::with_legacy_infer2(false)</code> turns it off), and <code>RawInferDialer</code> tries the new id and falls back to infer/2. It also serves raw prompts and reports embedding tokens (agent 0.4.1) and depends on weirdnet-agent <code>"0.4.1"</code> and weirdnet-model <code>"0.4"</code>. Extracted from Ymir’s <code>ymir-backends</code>. The supervisor runs on Unix and Windows; graceful stop, process groups and dying with the parent are Unix-only (see the platform table below), and vLLM is Linux-only. Ray and <code>rpc-server</code> group workers are not included: <code>GroupUp</code> goes to the application’s <code>GroupWorkers</code>. The API may change while Ymir moves onto it.',
+    notes: 'Version 0.1.2 is on <a href="https://crates.io/crates/weirdnet-backends">crates.io</a> (<a href="https://docs.rs/weirdnet-backends/0.1.2">docs.rs</a>). 0.1.2 is additive: capability records carry the node’s private links (<code>Capability::links</code>, <code>NodeService::set_links</code>, <code>link::local_links</code>; never public or CGNAT addresses), <code>Verifier::with_roster</code> refuses records from revoked or unknown nodes, and it needs weirdnet-agent 0.4.4 and accepts weirdnet-sync 0.5 to 0.7. 0.1.1 serves raw inference on its own protocol id, <code>/weirdnet-backends/infer/1</code> (<code>RAW_INFER_PROTOCOL</code>, the infer/2 framing), so one node can be an inference node and a model node; infer/2 is still served by default for 0.1.0 inference nodes (<code>NodeServerOptions::with_legacy_infer2(false)</code> turns it off), and <code>RawInferDialer</code> tries the new id and falls back to infer/2. It also serves raw prompts and reports embedding tokens (agent 0.4.1) and depends on weirdnet-agent <code>"0.4.1"</code> and weirdnet-model <code>"0.4"</code>. Extracted from Ymir’s <code>ymir-backends</code>. The supervisor runs on Unix and Windows; graceful stop, process groups and dying with the parent are Unix-only (see the platform table below), and vLLM is Linux-only. Ray and <code>rpc-server</code> group workers are not included: <code>GroupUp</code> goes to the application’s <code>GroupWorkers</code>. The API may change while Ymir moves onto it.',
     origin: 'Ymir',
   ),
   Crate(
@@ -523,10 +524,10 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'sync',
-    version: '0.6.0',
+    version: '0.7.0',
     group: 'Network',
     status: Status.fresh,
-    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke.',
+    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke, signed device grants and seedless service devices.',
     about: [
       'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, the <code>/weirdnet/sync/2</code> pull protocol, and (0.4.0) records too big for one page, split into hash-checked chunks, and sealed records that a device revoked before a write cannot open.',
       'Record types (bookmarks, history, settings, notes) and persistence stay in the application; <code>OpLog</code> is the in-memory log it snapshots.',
@@ -542,10 +543,11 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>SyncState::configure</code>, <code>write</code>, <code>read</code>, <code>reseal_stale</code>, <code>pull_chunks</code>; <code>Limits</code>, <code>RecordOptions</code>, <code>RecordValue</code>: large and sealed records (0.4.0).',
       '<code>Roster::check_caller</code>, <code>CallerCheck</code>: is the authenticated caller of an app call one of the user’s linked devices (0.4.0).',
       '<code>Identity</code>, <code>LinkSettings</code>, <code>Tick</code> (0.6.0): the on-disk identity store every app with linked devices needs (seed, node key and certificate, epoch keys, roster), parameterised on the app’s sync type, with <code>create</code>, <code>adopt</code> after a device link, <code>approve</code>, <code>revoke</code> and a <code>tick</code> that syncs with every linked device.',
+      '<code>DeviceGrant</code>, <code>DeviceClass</code>, <code>Roster::roles_of</code>, <code>SyncState::new_service</code>, <code>LinkBundle</code>, <code>Identity::service_bundle</code> / <code>adopt_service</code>, <code>SecretStore</code> (0.7.0): device roles and seedless service devices.',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>. 0.5.2 fixes a device linked on one device not reaching the others in one pass (wire-compatible). 0.6.0 adds <code>Identity</code>, extracted from Ymir’s <code>membership</code> and Bragi’s <code>identity</code> modules (same files on disk), and makes <code>SyncError</code> non-exhaustive with <code>Io</code> and <code>Identity</code> variants: breaking only for code that matches it exhaustively.',
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>. 0.5.2 fixes a device linked on one device not reaching the others in one pass (wire-compatible). 0.6.0 adds <code>Identity</code>, extracted from Ymir’s <code>membership</code> and Bragi’s <code>identity</code> modules (same files on disk), and makes <code>SyncError</code> non-exhaustive with <code>Io</code> and <code>Identity</code> variants: breaking only for code that matches it exhaustively. 0.7.0 adds service devices linked without the seed and user-signed device grants (roles, class, sync types) in the roster; it is breaking (<code>SyncState::seed</code> is an <code>Option</code>, <code>Roster</code>, <code>KeyStatus</code>, <code>Envelope</code> and <code>SyncError</code> grow). Full 0.6 and 0.7 devices interoperate; a service device needs 0.7 peers. See Moving to 0.7.0 in the guide.',
   ),
   Crate(
     slug: 'push',
@@ -567,7 +569,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'device-link',
-    version: '0.3.0',
+    version: '0.4.0',
     group: 'Identity and access',
     tagline: 'Move a Weirdnet identity to another device over a QR offer, a 6-digit code check and a sealed transfer.',
     about: [
@@ -581,7 +583,8 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>net</code>: <code>HostNode</code> and <code>Pairing</code> over weirdnet-net on <code>/weirdnet/link/2</code> (and invites on <code>/weirdnet/link-invite/2</code>).',
       '<code>reach</code>: <code>with_link_limits</code> and <code>relay_groups</code>.',
       '<code>relays</code>: <code>RelayProbe</code>, <code>RelayState</code>, <code>relay_states</code>: real relay state for a settings page.',
-      '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code> (CBOR).',
+      '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code>, <code>Credential</code> (CBOR).',
+      '<code>Pairing::send_credential</code>, <code>take_any</code>, <code>Received</code> (0.4.0): service links that carry a certificate and a sync bundle, never the seed.',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph'],

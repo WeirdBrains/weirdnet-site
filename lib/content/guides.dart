@@ -370,6 +370,12 @@ arch, format, signing identity), store notices, and a reserved Dart patch kind c
 about updates. A <code>Carrier</code> keeps the latest per org, app and channel for the orgs it trusts (weirdnet-relay is one),
 and <code>Client::verify_announcement</code> checks one on the device; the full bundle is still fetched and verified.
 Transport, installers and UI are not here: those are weirdnet-net and Salty Gull's <code>salty-client</code>.</p>
+<h3>Unsigned file sets (0.2.1)</h3>
+<p>A plain tar.gz or zip with no platform signature names <code>UNSIGNED</code> (<code>"unsigned"</code>) as its signing
+identity: its integrity rests on the root chain, the release key and the per-file BLAKE3 hashes. Validation refuses it for any
+other format (an <code>.app</code>, <code>.exe</code> or anything with a platform installer must name its real identity).
+<code>FullPackage::signing_identity_matches(running)</code> needs equal identities, so an update can't strip a platform signature
+from a signed install or add one silently; <code>platform_signed()</code> tells the two apart.</p>
 ''',
     features: ['<code>wire</code>: the announcement stream protocol <code>/weirdnet/updates/1</code> (subscribe, publish), carried by weirdnet-relay.'],
   ),
@@ -599,6 +605,15 @@ With the <code>serve</code> feature, <code>serve::RosterAuth</code> does this wi
 infer/1, infer/2 and catalog/1 streams and announces the node as an inference node. With the <code>pool</code> feature,
 <code>pool::connect(node, roster, Some(&amp;my_cert))</code> builds a pool over <code>LinkedNodes</code>: the roster's active devices
 that announce inference, direct connections first.</p>
+<h3>Device roles and tasks (0.4.4)</h3>
+<p><code>RosterAuth::require_roles(&amp;["ymir.inference"], roles)</code> admits only linked devices the user granted one of the
+roles (the signed grants in the <a href="/crates/sync">weirdnet-sync</a> 0.7 roster: <code>roles</code> is
+<code>|peer| roster.roles_of(peer)</code>); others are refused with <code>role</code>. Never authorize on a certificate label,
+which is not signed. <code>Authorize::admit</code> returns <code>Admitted { peer, roles }</code>, and
+<code>Server::start_with(node, serving, ServingExtras::default().tasks(host, auth))</code> serves task/1 next to inference: each
+task is admitted first and built by <code>TaskHost::session_for(&amp;admitted, ..)</code>, so a host can scope tools per device
+or role, and the <code>INFERENCE_APP</code> announcement then lists task/1. All of it is additive; the <code>pool</code> and
+<code>serve</code> features accept weirdnet-sync 0.5.2 to 0.7. 0.4.3 stopped offline devices from slowing every request.</p>
 <h3>Moving to 0.4.0</h3>
 <ul>
 <li><b>Serving inference</b>: implement <code>InferHost::authorize(&amp;self, caller: &amp;Caller)</code> (for Weirdnet,
@@ -749,6 +764,13 @@ sequence that goes backwards. Withdrawal ends subscriptions.</p>
 <p>Commands are one per stream: <code>Load</code> (waits until ready), <code>Unload</code>, <code>Drain</code> (stops new requests and
 waits for those under way), <code>GroupUp</code>/<code>GroupDown</code> and <code>Health</code>. Who may send them is an
 <code>Authorize</code> hook; <code>RosterAuth</code> admits the user's linked devices.</p>
+<h3>Link info and the roster (0.1.2)</h3>
+<p>Capability records carry the node's private links (<code>Capability::links</code>: address, <code>AddrClass</code>, interface,
+the NIC's nominal speed and an operator-declared one), set with <code>NodeService::set_links</code>;
+<code>link::local_links()</code> lists this machine's interfaces. Only loopback, link-local and private addresses are ever
+advertised, never public or CGNAT ones. Older verifiers ignore the field. <code>Verifier::with_roster(roster)</code> also checks
+the record's node against the roster, so a revoked model node is refused even when it presents its old certificate. Model nodes
+should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent 0.4.4). 0.1.2 accepts weirdnet-sync 0.5 to 0.7.</p>
 <h3>Platforms</h3>
 <table>
 <tr><th></th><th>Linux</th><th>macOS</th><th>Windows</th></tr>
@@ -1137,6 +1159,29 @@ arrive even when the type has no records. <code>state()</code> is the shared sta
 <p>The file layout is the one Ymir's <code>membership</code> and Bragi's <code>identity</code> modules used, so their stores open
 unchanged. 0.6.0 also makes <code>SyncError</code> non-exhaustive, with <code>Io</code> and <code>Identity</code> variants: add a
 catch-all arm where you match it.</p>
+<h3>Service devices and grants (0.7.0)</h3>
+<p>A server (an inference or model node) can now be linked without the seed. The user signs a <code>DeviceGrant</code> for it:
+a class (<code>Full</code> or <code>Service</code>), roles such as <code>ymir.inference</code>, and the sync types it may hold.
+Grants live in the roster, sync like certificates and revocations, and are how apps decide what a device may do
+(<code>Roster::roles_of</code>, <code>has_role</code>); people's roles stay in <a href="/crates/access">weirdnet-access</a>.</p>
+<ul>
+<li>The existing device makes the bundle with <code>Identity::service_bundle(peer, roles, types)</code> (it grants and, for a
+device with types, rotates first, so the bundle carries the epoch keys), sends it over a
+<a href="/crates/device-link">weirdnet-device-link</a> 0.4 credential, and the server calls
+<code>Identity::adopt_service</code>. Its <code>SyncState::seed</code> is <code>None</code>.</li>
+<li>A service device with types syncs them under the epoch key and is sealed into every later rotation, so revoking it cuts
+it off. One with no types (a model node) is roster-only: it holds no keys and follows certificates, revocations and grants
+over an unsealed roster exchange (only a roster or a refusal ever goes unsealed).</li>
+<li>It can't admit, revoke, grant or rotate (<code>SyncError::NotPermitted</code>), and rotations or admissions it signs are
+ignored.</li>
+<li><code>SecretStore</code> lets an app keep the identity's secrets in its own store (<code>FileSecrets</code> is the
+default).</li>
+</ul>
+<h3>Moving to 0.7.0</h3>
+<p>Breaking: <code>SyncState::seed</code> is an <code>Option&lt;Vec&lt;u8&gt;&gt;</code>; <code>Roster</code> has a
+<code>grants</code> field, <code>KeyStatus</code> a <code>RosterOnly</code> variant, <code>Envelope</code> a <code>clear</code> flag
+and <code>SyncError</code> a <code>NotPermitted</code> variant. Full devices on 0.6 and 0.7 keep syncing with each other (0.6
+ignores grants), but a service device needs 0.7 peers.</p>
 <h3>Checking callers on a serving node</h3>
 <p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
 transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's
@@ -1294,8 +1339,15 @@ authentication string from the X25519 agreement and a transcript hash, and show 
 <li><b>Transfer</b>: only after the user confirms the codes match on the existing device does it send the seed, the profile
 name, the sync types the user opted in to (<code>Pairing::send_with</code>) and a node certificate for the new device, sealed
 with that key.</li>
+<li><b>Service link</b> (0.4.0): a server that must never hold the seed (a model or inference node) gets a
+<code>Credential</code> instead: the user's <em>public</em> key, a node certificate the existing device signs with the user key
+(which never leaves it), the sync types and an opaque sync bundle (weirdnet-sync's <code>Identity::service_bundle</code>: the
+device's grant, the roster and, if it syncs types, epoch keys), sealed the same way
+(<code>Pairing::send_credential</code>). The new device takes it with <code>take_any()</code> and adopts it with
+<code>Identity::adopt_service</code>. <code>take()</code> still returns only a full transfer, and a 0.3 device refuses a
+credential.</li>
 <li><b>Relays</b>: link nodes start with the relays in their <code>NodeConfig</code> and link-sized limits
-(<code>with_link_limits</code>: 256 KiB requests, 16 KiB responses, a 30-second timeout). <code>RelayProbe</code> reserves on
+(<code>with_link_limits</code>: 1 MiB requests since 0.4.0, 16 KiB responses, a 30-second timeout). <code>RelayProbe</code> reserves on
 the configured relays and measures each one's round trip, and <code>relay_states</code> turns node statuses into connected,
 reserved and round-trip state per relay, for a settings page.</li>
 <li>An offer is single use and dies after three pairing attempts, a cancel, a transfer or its expiry. Nothing logs
@@ -1304,6 +1356,10 @@ secrets.</li>
 <p>Modules: <code>offer</code> (offers and links), <code>invite</code>, <code>session</code> (both sides without the network:
 <code>Host</code>, <code>Sender</code>), <code>net</code> (<code>HostNode</code>, <code>Pairing</code> over weirdnet-net),
 <code>compact</code>, <code>reach</code>, <code>relays</code> and <code>wire</code> (CBOR messages).</p>
+<h3>0.3.1 and 0.4.0</h3>
+<p>0.3.1 depends on <code>weirdnet-net = "0.8"</code> and <code>weirdnet-keys = "0.1"</code> with caret ranges, so it shares a tree
+with weirdnet-keys 0.1.1 and net 0.8.1. 0.4.0 adds service links (above) and raises link requests to 1 MiB; the rest of the API
+and the full transfer are unchanged.</p>
 <h3>Moving to 0.3.0</h3>
 <p>Codes changed: offers and invites are compact CBOR arrays (protocol version 2). A 0.2 code read by a 0.3 device, or the
 other way round, says to update rather than that the code is damaged, so put both devices on apps with the same version.
@@ -1319,9 +1375,6 @@ Everything else is added: <code>compact</code>, <code>reach</code>, <code>relays
 misread each other: put both devices on apps with the same version. Offers, links, codes and the sealed transfer are
 unchanged, and so is the API.</p>
 ''',
-    comingSoon: [
-      '0.3.0 still pins <code>weirdnet-keys = "=0.1.0"</code>, so it can’t share a dependency tree with weirdnet-keys 0.1.1 yet. This page will be updated when a release moves it.',
-    ],
   ),
   'ext': Guide(
     brings: r'''

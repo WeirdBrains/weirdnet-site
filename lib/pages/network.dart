@@ -178,12 +178,12 @@ Each links to its crate guide.</p>
 <ul>
 <li><b>Discovery toggle and manual peers</b> <span class="tag shipped">shipped</span> (<a href="/crates/net">weirdnet-net 0.6.0</a>): run
 without mDNS and the DHT and dial peers from an app-kept address book; see <a href="#discovery">Peer discovery</a>.</li>
-<li><b>Device sync with key rotation</b> <span class="tag shipped">shipped</span> (<a href="/crates/sync">weirdnet-sync 0.6.0</a>):
+<li><b>Device sync with key rotation</b> <span class="tag shipped">shipped</span> (<a href="/crates/sync">weirdnet-sync 0.7.0</a>):
 revoking a device rotates to a random epoch key sealed to each remaining device, so a revoked device that holds the seed
-cannot read later ops. 0.4.0 adds records over a page size (hash-checked chunks) and sealed records a revoked device cannot read. 0.5.0 moves to weirdnet-net 0.8 (protocol <code>/weirdnet/sync/2</code>, larger pages) and does not talk to 0.4 nodes. 0.5.1 adds snapshots and merge-back, so a node pulls without holding its shared state, and reports the entries a partial pull applied (<code>PullOutcome</code>). 0.5.2 makes a device linked on one device reach the others in one pass. 0.6.0 adds the shared on-disk identity store (<code>Identity</code>).</li>
-<li><b>Agent runtime</b> <span class="tag shipped">shipped</span> (<a href="/crates/agent">weirdnet-agent 0.4.2</a>): the shared
+cannot read later ops. 0.4.0 adds records over a page size (hash-checked chunks) and sealed records a revoked device cannot read. 0.5.0 moves to weirdnet-net 0.8 (protocol <code>/weirdnet/sync/2</code>, larger pages) and does not talk to 0.4 nodes. 0.5.1 adds snapshots and merge-back, so a node pulls without holding its shared state, and reports the entries a partial pull applied (<code>PullOutcome</code>). 0.5.2 makes a device linked on one device reach the others in one pass. 0.6.0 adds the shared on-disk identity store (<code>Identity</code>). 0.7.0 adds user-signed device grants (roles) and service devices linked without the seed.</li>
+<li><b>Agent runtime</b> <span class="tag shipped">shipped</span> (<a href="/crates/agent">weirdnet-agent 0.4.4</a>): the shared
 agent loop with streaming events and cancellation, tool sources, tiered approval policy, research budgets and traces with
-citation checks; since 0.2.0, model turns and whole tasks can run on another of the user’s nodes. Since 0.4.0, inference runs over <code>/weirdnet-agent/infer/2</code> (CBOR, resumable) through a pool of the user’s inference nodes; 0.4.1 adds raw prompts; 0.4.2 continues a stopped answer from its text. Morph’s Companions and Ymir use it.</li>
+citation checks; since 0.2.0, model turns and whole tasks can run on another of the user’s nodes. Since 0.4.0, inference runs over <code>/weirdnet-agent/infer/2</code> (CBOR, resumable) through a pool of the user’s inference nodes; 0.4.1 adds raw prompts; 0.4.2 continues a stopped answer from its text; 0.4.4 admits callers by device role and serves whole tasks next to inference. Morph’s Companions and Ymir use it.</li>
 <li><b>Data-carrying relays</b> <span class="tag shipped">shipped</span>: relay limits are configurable in <code>weirdnet-net</code>
 (<code>NodeConfig::relay_limits</code>, <code>RelayLimits::unlimited()</code>; the library default stays libp2p’s), and
 weirdnet-relay runs with no circuit time or data caps and no rate limiters by default.</li>
@@ -235,12 +235,12 @@ every request is checked in. A private resource is seen only by its owner and tr
 payloads through APNs and FCM that carry no content, and a self-hostable push server.</li>
 <li><b>URL schemes</b> <span class="tag shipped">shipped</span> (<a href="/crates/schemes">weirdnet-schemes 0.1.0</a> and <a href="/crates/weirdnetctl">weirdnetctl 0.1.0</a>): signed scheme records, reserved <code>weirdnet…</code> prefixes on a signed canonical list, and a resolver that
 never hands a link to an unknown app without asking.</li>
-<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="/crates/device-link">weirdnet-device-link 0.3.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer.</li>
+<li><b>Device linking</b> <span class="tag shipped">shipped</span> (<a href="/crates/device-link">weirdnet-device-link 0.4.0</a>): moving a user identity to another device over a QR offer, a 6-digit code check and a sealed transfer; since 0.4.0, linking a server with a certificate only, never the seed.</li>
 <li><b>Sandboxed extensions</b> <span class="tag shipped">shipped</span> (<a href="/crates/ext">weirdnet-ext 0.1.0</a>, with weirdnet-ext-proto and weirdnet-ext-sdk): extensions
 run out of process with no network or files beyond what the user grants (Landlock and seccomp on Linux, the sandbox on
 macOS).</li>
 <li><b>Relay wake-up path</b> <span class="tag shipped">shipped</span> (<a href="/crates/relay">weirdnet-relay 0.3.0</a>): phones without APNs or FCM keep a stream open to their home relay, and trusted peers or a push service wake them with sealed, fixed-size payloads the relay can't read.</li>
-<li><b>Update announcements</b> <span class="tag shipped">shipped</span> (<a href="/crates/update">weirdnet-update 0.2.0</a>, carried by weirdnet-relay 0.4.0): signed news of an update, carried by relays for the orgs they trust and checked by every device against its own root before it fetches anything.</li>
+<li><b>Update announcements</b> <span class="tag shipped">shipped</span> (<a href="/crates/update">weirdnet-update 0.2.1</a>, carried by weirdnet-relay 0.4.0): signed news of an update, carried by relays for the orgs they trust and checked by every device against its own root before it fetches anything.</li>
 <li><b>Dynamic DNS for your own relay</b> <span class="tag shipped">shipped</span> (<a href="/crates/relay">weirdnet-relay 0.5.0</a>): through Grindvakt, a self-hosted relay keeps its name and <code>_dnsaddr</code> records pointed at its public address on DigitalOcean or DNSimple, never deleting a record and changing nothing when the zone is ambiguous.</li>
 </ul>
 
