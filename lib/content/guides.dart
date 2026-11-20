@@ -518,7 +518,7 @@ remote task still stops at its page budget.</p>
 <p>The <code>remote</code> module has two protocols between one user's own nodes. The app supplies the transport: a
 <code>Dialer</code> opens a <code>Channel</code> (a <code>FrameTx</code> and a <code>FrameRx</code>) to a node for a protocol id, and
 the serving app must check that the caller is one of the user's linked devices before it calls <code>serve</code>. Messages are
-JSON; <code>remote::codec</code> frames them on byte streams (a big-endian <code>u32</code> length, messages up to 8 MiB), and
+JSON; <code>remote::codec</code> frames them on byte streams (a big-endian <code>u32</code> length, messages up to 32 MiB since 0.5.0, 8 MiB before), and
 <code>MemoryDialer</code> and <code>memory_pair</code> are in-process channels for tests. Failures are a <code>RemoteError</code>:
 unreachable, busy, refused, unavailable, failed, protocol, closed or timed out.</p>
 <ul>
@@ -594,6 +594,21 @@ is what was given and <code>Answer::continuation()</code> the text after it. Eve
 <li>Failover keeps the prefix, whether or not resume is on; if a node dies part-way, the next one resumes from everything shown,
 and that resume is recorded in <code>Meta::resumes</code> as usual.</li>
 </ul>
+<h3>Images and audio (0.5.0)</h3>
+<p><code>Message::content</code> is a <code>Content</code>: text, or OpenAI-style parts. <code>ContentPart::text</code>,
+<code>ContentPart::image</code> (an <code>image_url</code> with a <code>data:image/...</code> URL) and <code>ContentPart::audio</code>
+(<code>input_audio</code> with base64 data and a format) build them; <code>Message::user</code> takes a string or a list of parts.
+Text still goes on the wire as a plain string, so text-only messages reach 0.4 peers as before; parts need 0.5 on both ends.
+<code>Message::text()</code> gives the text alone, and <code>Message::needs()</code> / <code>Request::needs()</code> the
+<code>Modalities</code> (vision, audio) a model must take.</p>
+<h3>Routing by input (0.5.0)</h3>
+<p>Catalog entries say which inputs beyond text a model takes (<code>CatalogModel::inputs</code>, set with
+<code>with_inputs</code>; entries without it are text-only). <code>Catalog::route(model, needed)</code> picks the model for a
+request: a named model must take the request's inputs, and with no model it picks one that does. The pool routes with it, so an
+image or audio request never lands on a text-only model: a named model that can't read it, or a pool with no model that can, is a
+<code>BadRequest</code> before any node runs it. Requests with parts skip infer/1 nodes, and a model node refuses parts its model
+can't take, so a pool moves on. Model nodes from <a href="/crates/backends">weirdnet-backends</a> 0.2 report these inputs
+(<code>Capabilities::inputs</code>).</p>
 <h3>Serving inference to linked devices (0.4.0)</h3>
 <p>The serving side gets a <code>Caller</code>: the transport-authenticated peer plus any certificate the request presented.
 <code>InferHost::authorize</code> and <code>CatalogHost::authorize</code> run before anything else; a refusal is sent with its reason.
@@ -611,6 +626,17 @@ which is not signed. <code>Authorize::admit</code> returns <code>Admitted { peer
 task is admitted first and built by <code>TaskHost::session_for(&amp;admitted, ..)</code>, so a host can scope tools per device
 or role, and the <code>INFERENCE_APP</code> announcement then lists task/1. All of it is additive; the <code>pool</code> and
 <code>serve</code> features accept weirdnet-sync 0.5.2 to 0.7. 0.4.3 stopped offline devices from slowing every request.</p>
+<h3>Moving to 0.5.0</h3>
+<ul>
+<li><b>Message content</b>: <code>Message::content</code> is a <code>Content</code>, not a <code>String</code>. Constructors take
+<code>impl Into&lt;Content&gt;</code>, so <code>Message::user("hi")</code> is unchanged; where code reads <code>m.content</code> as
+text, use <code>m.text()</code> (or <code>m.content.text()</code>). <code>AgentSession::run</code> takes <code>impl Into&lt;Content&gt;</code>.</li>
+<li><b>Inference nodes</b>: put each model's inputs in its catalog entry (<code>CatalogModel::with_inputs</code>, from
+weirdnet-backends' <code>Capabilities::inputs()</code>), or image and audio requests will find no model to route to.</li>
+<li><b>Dependents</b>: move together with <a href="/crates/backends">weirdnet-backends</a> 0.2.0,
+<a href="/crates/openai">weirdnet-openai</a> 0.2.0 and <a href="/crates/model">weirdnet-model</a> 0.5.0;
+<a href="/crates/mcp">weirdnet-mcp</a> 0.5.3 takes agent 0.4 or 0.5.</li>
+</ul>
 <h3>Moving to 0.4.0</h3>
 <ul>
 <li><b>Serving inference</b>: implement <code>InferHost::authorize(&amp;self, caller: &amp;Caller)</code> (for Weirdnet,
@@ -663,7 +689,7 @@ and sizes for a model picker.</p>
 that streams <code>Chunk</code>s and can be cancelled from any thread. <code>prompt</code> renders chat turns through the model's
 own chat template and parses <code>&lt;tool_call&gt;</code> tags into tool calls as they stream. With the <code>agent</code> feature,
 <code>agent::LocalModel</code> implements <code>weirdnet_agent::ModelBackend</code>, so the <a href="/crates/agent">agent loop</a> can
-run on a local model. Tests use a mock <code>Engine</code> and never download a model.</p>
+run on a local model. Since 0.5.0 (weirdnet-agent 0.5) it reads text parts and refuses messages with images or audio. Tests use a mock <code>Engine</code> and never download a model.</p>
 <h3>Hardware and sizing (0.4.0)</h3>
 <p><code>hw::detect()</code> reports the OS, CPU threads, system memory and GPUs: NVIDIA through <code>nvidia-smi</code> (name, memory,
 compute capability, driver), AMD through sysfs, and Apple silicon. Devices that share system memory (Apple, GB10, AMD APUs) are
@@ -738,6 +764,14 @@ request becomes an OpenAI streaming body for the engine (an assistant prefix bec
 <code>continue_final_message</code> on vLLM), and the engine's server-sent events become infer/2 text, reasoning and tool-call
 frames. Cancelling the request drops the engine stream. Model nodes serve raw infer/2 only: the inference node has already
 assembled the messages. Since 0.1.1 raw prompts go to the engine's <code>/v1/completions</code>.</p>
+<h3>Images and audio (0.2.0)</h3>
+<p>weirdnet-agent 0.5 content parts (<code>image_url</code> with a <code>data:</code> URL, <code>input_audio</code>) go to llama.cpp
+unchanged, in the OpenAI shape. <code>ModelLaunch::capabilities</code> derives what a model takes: llama.cpp models launched
+with a multimodal projector (<code>--mmproj</code>) take images and audio, vLLM and MLX-LM models are text only, and embedding
+models only embed. <code>ModelHost</code> refuses parts the model's <code>Capabilities</code> lack (<code>Unsupported</code>,
+so a pool tries another node) and remote image URLs (<code>BadRequest</code>). An inference node puts
+<code>Capabilities::inputs()</code> in the model's catalog entry (<code>CatalogModel::with_inputs</code>), so the pool routes
+image and audio requests to it.</p>
 <h3>Its own protocol id (0.1.1)</h3>
 <p>An inference node serves <code>/weirdnet-agent/infer/2</code> to apps, so a machine that is both an inference node and a model node
 could not also take raw infer/2 for its models on the same id. 0.1.1 gives raw inference its own id,
@@ -791,7 +825,8 @@ tool at <code>http://127.0.0.1:&lt;port&gt;/v1</code> with the bridge token as t
 <code>localhost:&lt;port&gt;</code> (so a web page can't reach it by DNS rebinding) and the bearer token (at least 16 characters,
 compared in constant time). It sends no CORS headers, so browsers block pages from reading its answers.</p>
 <h3>Requests</h3>
-<p>Chat bodies become infer/2 requests: messages (string content or text parts), sampling, <code>seed</code>,
+<p>Chat bodies become infer/2 requests: messages (string content or parts: <code>text</code>, <code>image_url</code> with a
+<code>data:image/...</code> URL and <code>input_audio</code>; remote image URLs and other part types get 400), sampling, <code>seed</code>,
 <code>response_format</code> and function tools; other parameters are ignored. <code>x-wait: 1</code> sets <code>wait_for_model</code>.
 <code>continue_final_message: true</code> (0.1.2, as in vLLM) moves the last assistant message into the request's prefix, so the
 model continues it (weirdnet-agent's <code>Request::continuing</code>); the answer, whole or streamed, holds only the new text. It
@@ -800,6 +835,9 @@ and a node that can continue (else 501). Without the flag a trailing assistant m
 A streamed answer starts when a node accepts the request, so an error before that is a plain HTTP error; after that, an error
 arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-model</code>, <code>x-weirdnet-cache</code> and
 <code>x-weirdnet-standin</code>, and the same under <code>weirdnet</code> in the body (on the last chunk when streaming).</p>
+<p>Images and audio (0.2.0) go to the pool unchanged, which sends them only to a model whose catalog entry takes them
+(<code>vision</code>, <code>audio</code> under <code>weirdnet</code> in <code>/v1/models</code>): with no <code>model</code> it
+picks one; a named text-only model, or a pool with no such model, is a 400 that says so. Request bodies may be up to 32 MiB.</p>
 <p>Errors map to OpenAI-style bodies: unknown model 404, bad request 400, busy 503 with <code>Retry-After</code>, unavailable 503,
 refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
 ''',

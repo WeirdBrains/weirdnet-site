@@ -179,7 +179,7 @@ fn main() -> weirdnet_accounts::Result<()> {
   ),
   'mcp': Example(
     r'''[dependencies]
-weirdnet-mcp = "0.5.2"
+weirdnet-mcp = "0.5.3"
 serde_json = "1"''',
     r'''// One read-only tool behind an MCP server; the app's HTTP route or stdio loop calls handle().
 use serde_json::{Value, json};
@@ -216,7 +216,7 @@ fn main() {
   ),
   'agent': Example(
     r'''[dependencies]
-weirdnet-agent = { version = "0.4.5", features = ["testing"] }
+weirdnet-agent = { version = "0.5.0", features = ["testing"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// One task through the agent loop with the `testing` feature's scripted model and approver.
 // A real app implements ModelBackend (for example over weirdnet-model) and Approver (its UI).
