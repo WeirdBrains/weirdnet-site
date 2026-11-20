@@ -712,8 +712,8 @@ target directory can fail with "File exists" on the library symlinks; deleting t
   ),
   'backends': Guide(
     brings: r'''
-<p>Use weirdnet-backends on a machine that runs models for the user's other devices. It wraps llama.cpp's <code>llama-server</code>
-and <code>vllm serve</code> (or a stock OpenAI-compatible server already running on loopback) and keeps them healthy, so
+<p>Use weirdnet-backends on a machine that runs models for the user's other devices. It wraps llama.cpp's <code>llama-server</code>,
+<code>vllm serve</code> and, on Apple silicon, MLX-LM's <code>mlx_lm.server</code> (or a stock OpenAI-compatible server already running on loopback) and keeps them healthy, so
 inference nodes only have to say what should be loaded and send requests.</p>
 <ul>
 <li><b>Engines handled</b>: loopback-only ports, a per-process API key in the environment, readiness probes, logs.</li>
