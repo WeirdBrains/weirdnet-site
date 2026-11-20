@@ -48,7 +48,7 @@ look them up by user id. Records are checked and kept in the relay’s encrypted
 $relayDiagram
 
 <h2 id="public">The WeirdBrains public relay</h2>
-<p>WeirdBrains runs public relays. The first is <code>relay.net.weirdbrains.com</code>
+<p><a href="https://weirdbrains.com">WeirdBrains</a> runs public relays. The first is <code>relay.net.weirdbrains.com</code>
 <span class="tag shipped">live</span>. Its info page is <a href="https://relay.net.weirdbrains.com/">relay.net.weirdbrains.com</a>
 (JSON at <a href="https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json"><code>/.well-known/weirdnet-relay.json</code></a>).
 Use it as a bootstrap node and relay:</p>
@@ -133,6 +133,6 @@ no capabilities.</p>
 
 <h2 id="apps">Adding a relay to an app</h2>
 <p>Give the full address, with <code>/p2p/&lt;peer id&gt;</code>, to the node’s <code>relays</code> and <code>bootstrap</code>
-settings (the WeirdBrains relay’s, above, once it is online). Morph and other Weirdnet apps can read the JSON above to fill them in; nodes behind NAT also find relays by
+settings (the <a href="https://weirdbrains.com">WeirdBrains</a> relay’s, above, once it is online). Morph and other Weirdnet apps can read the JSON above to fill them in; nodes behind NAT also find relays by
 themselves through the DHT.</p>
 ''';

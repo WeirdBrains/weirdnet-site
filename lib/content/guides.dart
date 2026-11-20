@@ -3,8 +3,8 @@
 /// CHANGELOG, Cargo.toml and source (see the crate's repository). Usage examples live in
 /// `tool/examples/` and are generated into `examples.dart`.
 ///
-/// `comingSoon` entries render as "Details coming soon" callouts for public readers: what the
-/// page will add once the sources cover it. Write them for readers, not as asks to a team.
+/// Don't list gaps, planned work or "coming soon" items here: public pages describe what has
+/// shipped (WeirdBrains public-content rules, 2026-11-20).
 library;
 
 class Guide {
@@ -13,7 +13,6 @@ class Guide {
     required this.works,
     this.features = const [],
     this.install = '',
-    this.comingSoon = const [],
   });
 
   /// What problems it solves, when to use it (HTML).
@@ -27,9 +26,6 @@ class Guide {
 
   /// Shell commands for crates that are programs (escaped by the page).
   final String install;
-
-  /// Details coming soon (HTML).
-  final List<String> comingSoon;
 }
 
 const guides = <String, Guide>{
@@ -161,19 +157,16 @@ same release.</p>
 <p>Types that already use <code>serde_bytes</code> or a bytes visitor keep working. A <code>PeerId</code> (or another type that only
 accepts <code>visit_bytes</code>) inside an internally tagged, adjacently tagged or untagged enum, or a <code>flatten</code>ed
 struct, cannot be read: carry it as a string there. Nothing under a signature changes: certificates, records and tokens are
-signed over JSON. weirdnet-sync 0.5.0, weirdnet-relay 0.6.0 and weirdnet-device-link 0.2.0 are on net 0.8, and the WeirdBrains public
+signed over JSON. weirdnet-sync 0.5.0, weirdnet-relay 0.6.0 and weirdnet-device-link 0.2.0 are on net 0.8, and the <a href="https://weirdbrains.com">WeirdBrains</a> public
 relay runs weirdnet-relay 0.6.0, so its names server answers 0.8 nodes only.</p>
 ''',
-    comingSoon: [
-      'How an app uses the discovery toggle and manual peers, with Morph as the example. In Morph 0.2.0, Settings &gt; Relays turns discovery off and adds peers by hand, and an admin policy can lock discovery off.',
-    ],
   ),
   'relay': Guide(
     brings: r'''
-<p>weirdnet-relay is the program WeirdBrains runs at <code>relay.net.weirdbrains.com</code>, and the one you run if you want
+<p>weirdnet-relay is the program <a href="https://weirdbrains.com">WeirdBrains</a> runs at <code>relay.net.weirdbrains.com</code>, and the one you run if you want
 your own. It gives phones and machines behind NAT a slot to be reached at, gives new nodes a DHT to bootstrap from, and
 carries the small things a sleeping phone needs: names, wake-ups and update news.</p>
-<p>Running your own relay is optional; Weirdnet apps start with the WeirdBrains relays. See <a href="/relay">Run a relay</a>
+<p>Running your own relay is optional; Weirdnet apps start with the <a href="https://weirdbrains.com">WeirdBrains</a> relays. See <a href="/relay">Run a relay</a>
 for the packages and the step-by-step setup.</p>
 ''',
     works: r'''
@@ -401,9 +394,6 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
 </ul>
 <p>Roles and permissions are not here: they are <a href="/crates/access">weirdnet-access</a>.</p>
 ''',
-    comingSoon: [
-      'Planned, not released yet: sessions, email tokens, orgs, audit and moderation behind a storage interface, with each app keeping its own schema. This page will cover them when they ship.',
-    ],
   ),
   'mcp': Guide(
     brings: r'''
@@ -478,7 +468,7 @@ needed in this crate.</li>
   ),
   'agent': Guide(
     brings: r'''
-<p>The agent loop for WeirdBrains apps, with the safety rules built in rather than left to each app. Morph's Companions are
+<p>The agent loop for <a href="https://weirdbrains.com">WeirdBrains</a> apps, with the safety rules built in rather than left to each app. Morph's Companions are
 its first user. The app brings a model, its tools and an approval UI; the crate runs each task, decides when to ask the user,
 enforces research budgets and records a trace that every citation has to match.</p>
 ''',
@@ -647,13 +637,10 @@ before those still pin <code>=0.2.0</code> and can't be mixed with agent 0.3.</l
       '<code>serve</code> (0.4.0): <code>Server</code> serves infer/1, infer/2 and catalog/1 on a weirdnet-net node and announces it; <code>RosterAuth</code> admits only linked devices.',
       '<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).',
     ],
-    comingSoon: [
-      'How Morph’s Companions use the agent runtime: the approval tiers and tools they use and the approval screen. Local inference plugs in through <a href="/crates/model">weirdnet-model</a>.',
-    ],
   ),
   'model': Guide(
     brings: r'''
-<p>Run a small language model on the user's own machine, for any WeirdBrains app, without each app writing its own download,
+<p>Run a small language model on the user's own machine, for any <a href="https://weirdbrains.com">WeirdBrains</a> app, without each app writing its own download,
 checksum and inference plumbing. Nothing downloads until the user has agreed to that exact model, and llama.cpp and the agent
 backend are optional features, so a build that only needs the catalog and downloads has no native dependencies.</p>
 ''',
@@ -950,7 +937,6 @@ re-enters itself, chains stop at <code>MAX_DEPTH</code>, and an outermost event 
 <code>due</code> and <code>next_run</code> drive the app's scheduler tick.</li>
 </ul>
 ''',
-    comingSoon: ['A full <code>engine::Host</code> example: a small in-memory app with one rule.'],
   ),
   'render': Guide(
     brings: r'''
@@ -1020,9 +1006,6 @@ which count UTF-16 units.</li>
 <code>TextField::multiline()</code> keeps them and normalises <code>\r\n</code> and <code>\r</code> to <code>\n</code>.</li>
 </ul>
 ''',
-    comingSoon: [
-      'A shared GPUI text input widget built on these rules. Morph and Bragi each draw their own for now, because GPUI is not published on crates.io at the revision they use.',
-    ],
   ),
   'sync': Guide(
     brings: r'''
@@ -1110,7 +1093,7 @@ about 225 KiB on the wire, under the 256 KiB <code>PAGE_MAX</code>, and <code>CH
 <li><b>Stored data is unchanged</b>: op logs, records, chunks, sealed values and key chains read exactly as in 0.4. Only the
 network protocol moved.</li>
 </ul>
-<p>The WeirdBrains relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
+<p>The <a href="https://weirdbrains.com">WeirdBrains</a> relay must not store sealed pages; only a user-run node may keep them for catch-up, as an app choice.
 weirdnet-storage's row change log is a separate, local mechanism.</p>
 <h3>Snapshots, merge-back and partial pulls (0.5.1)</h3>
 <p>A node's <code>SyncHandler</code> answers from the same <code>Arc&lt;Mutex&lt;SyncState&gt;&gt;</code> the app pulls into. Holding that
@@ -1201,9 +1184,6 @@ key chain's head).</li>
 next call. <a href="/crates/agent">weirdnet-agent</a>'s <code>serve</code> feature does exactly this for inference
 (<code>serve::RosterAuth</code>).</p>
 ''',
-    comingSoon: [
-      'A closer look at sync in Morph. Morph 0.2.0 syncs bookmarks, folders and tags, history, and the search engine, home page and theme between linked devices, and Settings &gt; Linked devices lists linked devices and revokes one. See <a href="/morph">Morph</a>.',
-    ],
   ),
   'access': Guide(
     brings: r'''
@@ -1288,7 +1268,7 @@ weirdnet-push serve -c /etc/weirdnet-push/config.toml''',
     brings: r'''
 <p>Make a <code>weirdnet-&lt;app&gt;://</code> link mean the same thing on every device: which app owns a scheme, who
 published it, how to install it if it's missing, and how to register it with the OS. Every app registers a signed prefix;
-prefixes beginning with <code>weirdnet</code> are reserved for WeirdBrains, and the resolver never hands a link to a
+prefixes beginning with <code>weirdnet</code> are reserved for <a href="https://weirdbrains.com">WeirdBrains</a>, and the resolver never hands a link to a
 stranger's app without asking.</p>
 ''',
     works: r'''
@@ -1299,7 +1279,7 @@ stranger's app without asking.</p>
 never registered with the OS and never resolved to an app.</li>
 <li><b>Records</b>: a <code>PrefixRecord</code> and a <code>SchemeRecord</code> (scheme, prefix, app id, publisher key, display
 name, capabilities, install hints, <code>seq</code>, expiry, withdrawal), each signed by the publisher's Ed25519 key over its
-exact JSON. Reserved prefixes also carry the WeirdBrains root signature and appear only on the canonical list, which the root
+exact JSON. Reserved prefixes also carry the <a href="https://weirdbrains.com">WeirdBrains</a> root signature and appear only on the canonical list, which the root
 key signs as a whole. A prefix moves to a new publisher only with a transfer signature from the old one; the root key rotates
 by a record both keys sign.</li>
 <li><b>Resolver</b> (<code>Registry</code>): loads the canonical list, records from relays (later the DHT) and installed apps;
@@ -1315,7 +1295,7 @@ never acted on without the user.</li>
 per-user Windows registry keys (or a <code>.reg</code> file), <code>CFBundleURLTypes</code> for macOS and iOS, and the Android
 intent filter. All refuse <code>weirdnet://</code>.</li>
 </ul>
-<p>The WeirdBrains root key is used through <a href="/crates/weirdnetctl">weirdnetctl</a>; apps ship its public key as their
+<p>The <a href="https://weirdbrains.com">WeirdBrains</a> root key is used through <a href="/crates/weirdnetctl">weirdnetctl</a>; apps ship its public key as their
 trust anchor (<code>TrustAnchors</code>).</p>
 ''',
   ),
@@ -1331,7 +1311,7 @@ over the rest of Morph's copy, so apps use this crate instead of their own.</p>
 (up to three direct ones, one per host first, and a circuit for each of up to two relays, so devices on other networks
 connect) and a 120-second expiry, signed by its node key. Nothing secret is in it. Or the other way round: the existing
 device shows an <code>Invite</code> and the new one scans it. Codes are compact CBOR arrays: addresses are binary, and a
-circuit through the WeirdBrains public relay (<code>KNOWN_RELAYS</code>) is one byte, so the QR stays easy to scan off a
+circuit through the <a href="https://weirdbrains.com">WeirdBrains</a> public relay (<code>KNOWN_RELAYS</code>) is one byte, so the QR stays easy to scan off a
 laptop screen.</li>
 <li><b>Pairing</b>: the existing device connects on <code>/weirdnet/link/2</code> (invites arrive on
 <code>/weirdnet/link-invite/2</code>). Both derive a key and a 6-digit short
@@ -1415,9 +1395,6 @@ kills stuck ones after a grace period. App services come in through the <code>Se
 <code>/etc/passwd</code>, write outside its data directory, open sockets, <code>ptrace</code>, <code>unshare</code> and use
 <code>io_uring</code>. It also covers crash restarts, idle stops, grant revocation and a tampered install.</p>
 ''',
-    comingSoon: [
-      'Not done yet: the WASM (WIT) bridge for platforms without native support, and Windows AppContainer. Also coming: which capabilities Morph grants extensions.',
-    ],
   ),
   'ext-proto': Guide(
     brings: r'''
@@ -1457,11 +1434,10 @@ says stop.</li>
 <p>The sandbox leaves you no network, no files outside your package and data directory, and no <code>socket()</code> call:
 everything goes through the host.</p>
 ''',
-    comingSoon: ['The <code>morph.ext.v1</code> services and events extensions can use, once published.'],
   ),
   'weirdnetctl': Guide(
     brings: r'''
-<p>The maintainer's tool for Weirdnet signing keys. It holds and rotates the WeirdBrains root key, signs prefix and scheme
+<p>The maintainer's tool for Weirdnet signing keys. It holds and rotates the <a href="https://weirdbrains.com">WeirdBrains</a> root key, signs prefix and scheme
 records for <a href="/crates/schemes">weirdnet-schemes</a>, countersigns reserved <code>weirdnet…</code> records, builds the
 canonical list, and verifies all of them. App publishers use it to sign their own prefix and scheme.</p>
 ''',

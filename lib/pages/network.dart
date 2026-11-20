@@ -166,9 +166,9 @@ A node that is not reserves a slot on a relay (libp2p circuit relay v2) and beco
 connection. That works most of the time, not always; when it fails, the relayed connection stays. Relays are the fallback
 that always works, as long as the device can make one outbound connection.</p>
 $relayDiagram
-<p>Anyone can run a relay with <a href="/relay">weirdnet-relay</a>. WeirdBrains runs public relays and bootstrap nodes;
+<p>Anyone can run a relay with <a href="/relay">weirdnet-relay</a>. <a href="https://weirdbrains.com">WeirdBrains</a> runs public relays and bootstrap nodes;
 running your own is optional and needs a domain tied to the machine through Grindvakt dynamic DNS.</p>
-<div class="callout">The WeirdBrains public relay is <code>relay.net.weirdbrains.com</code>
+<div class="callout">The <a href="https://weirdbrains.com">WeirdBrains</a> public relay is <code>relay.net.weirdbrains.com</code>
 <span class="tag shipped">live</span>: <a href="https://relay.net.weirdbrains.com/">its info page</a>. See
 <a href="/relay#public">Run a relay</a> for its addresses.</div>
 

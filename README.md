@@ -24,7 +24,7 @@ python3 -m http.server 8080 --directory build/jaspr
 
 Content lives in `lib/pages/` (page prose), `lib/content/crates.dart` (one entry per crate,
 from each crate's README), `lib/content/guides.dart` (each crate page's guide: what it brings,
-how it works, feature flags, details coming soon), `lib/content/examples.dart` and
+how it works, feature flags), `lib/content/examples.dart` and
 `lib/components/diagrams.dart` (inline SVG diagrams). Theme:
 `web/styles.css`, after www.weirdbrains.com. The Weirdnet logo is `web/images/weirdnet-logo.svg`
 (mark: `weirdnet-mark.svg`). Inter is self-hosted under the SIL Open Font License

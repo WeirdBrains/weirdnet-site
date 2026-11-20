@@ -106,7 +106,7 @@ const crates = <Crate>[
       'A TOML config file, flags and environment variables; structured logs; a hardened systemd unit.',
     ],
     dependsOn: ['net', 'storage', 'push', 'update'],
-    usedBy: ['WeirdBrains public relays', 'self-hosters'],
+    usedBy: ['<a href="https://weirdbrains.com">WeirdBrains</a> public relays', 'self-hosters'],
   ),
   Crate(
     slug: 'tls',
@@ -173,7 +173,7 @@ const crates = <Crate>[
     group: 'Building blocks',
     tagline: 'Signed update metadata: org roots, manifests, freshness, verification, targeting, rollouts, consent, boot health.',
     about: [
-      'Signed update metadata and client-side checks for Weirdnet apps. Salty Gull, the WeirdBrains over-the-air update service, builds on it; nothing here is Flutter-specific.',
+      'Signed update metadata and client-side checks for Weirdnet apps. Salty Gull, the <a href="https://weirdbrains.com">WeirdBrains</a> over-the-air update service, builds on it; nothing here is Flutter-specific.',
       'Updates are never forced: the consent policy asks for each update by default, and new capabilities always ask.',
     ],
     parts: [
@@ -193,7 +193,7 @@ const crates = <Crate>[
     group: 'Identity and access',
     tagline: 'Argon2id passwords, hashed tokens, name rules, per-client rate limits, org-scoped API keys.',
     about: [
-      'Account building blocks for WeirdBrains services, extracted from TAUR and shared with Salty Gull. Storage stays with the application; the crate holds the rules and the cryptography and never opens a database.',
+      'Account building blocks for <a href="https://weirdbrains.com">WeirdBrains</a> services, extracted from TAUR and shared with Salty Gull. Storage stays with the application; the crate holds the rules and the cryptography and never opens a database.',
     ],
     parts: [
       '<code>password</code>: Argon2id hashes (PHC strings), verification and a minimum-length rule.',
@@ -229,7 +229,7 @@ const crates = <Crate>[
     version: '0.4.4',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks, plus remote inference across the user’s own devices.',
     about: [
-      'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
+      'The shared agent loop for <a href="https://weirdbrains.com">WeirdBrains</a> apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
       'Tool results reach the model wrapped as untrusted data, and nothing inside them can widen a permission. Local inference (<code>weirdnet-model</code>, with its <code>agent</code> feature) plugs in through its <code>ModelBackend</code> trait, and any MCP server’s tools through <a href="/crates/mcp">weirdnet-mcp</a> 0.5.0 (feature <code>agent</code>, <code>McpSource</code>, a <code>ToolSource</code>). Since 0.2.0 the <code>remote</code> module runs model turns and whole tasks on another of the user’s own nodes; the core supplies only protocols over an app-supplied <code>Dialer</code>, so it does not depend on <code>weirdnet-net</code>.',
       '0.4.0 adds <code>/weirdnet-agent/infer/2</code> (CBOR, with priorities and a queue, reasoning and tool-call frames, embeddings and resume), a model catalog protocol, and a <code>Pool</code> that fails over and resumes an answer on another node without repeating text. The <code>pool</code> and <code>serve</code> features wire these to <a href="/crates/net">weirdnet-net</a> 0.8 and <a href="/crates/sync">weirdnet-sync</a> 0.5: finding inference nodes among the user’s linked devices, and serving them only to those devices.',
     ],
@@ -256,7 +256,7 @@ const crates = <Crate>[
     version: '0.4.2',
     tagline: 'Local models: consent-gated Hugging Face GGUF downloads with resume and checksum, a Gemma 4 catalog, hardware detection and model sizing, and streaming llama.cpp inference on a worker thread with cancel.',
     about: [
-      'The shared local-model layer for WeirdBrains apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
+      'The shared local-model layer for <a href="https://weirdbrains.com">WeirdBrains</a> apps. It downloads a GGUF only after the user agrees to that exact model, loads it with llama.cpp and streams tokens from one worker thread that any thread can cancel. It was extracted from Mouser’s <code>mouser-llm</code> and has no app-specific types; switching Mouser over to it is a follow-up for Mouser’s owner <span class="tag wip">in progress</span>.',
       'llama.cpp and the agent backend are optional features, so a build that only needs downloads and the catalog has no native dependencies.',
     ],
     parts: [
@@ -633,7 +633,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
     binary: true,
     tagline: 'Holds and rotates Weirdnet signing keys, signs scheme records, and builds the signed canonical list.',
     about: [
-      'The maintainer’s CLI for Weirdnet signing keys and the records they sign: the WeirdBrains root key, prefix and scheme records for weirdnet-schemes, countersignatures for reserved prefixes, and the canonical list.',
+      'The maintainer’s CLI for Weirdnet signing keys and the records they sign: the <a href="https://weirdbrains.com">WeirdBrains</a> root key, prefix and scheme records for weirdnet-schemes, countersignatures for reserved prefixes, and the canonical list.',
     ],
     parts: [
       '<code>key new|show|check|rotate</code>: passphrase-sealed Ed25519 key files.',
@@ -641,7 +641,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>countersign --as root|transfer</code>, <code>list</code>, <code>verify</code>.',
     ],
     dependsOn: ['schemes'],
-    usedBy: ['WeirdBrains (the root key)', 'app publishers'],
+    usedBy: ['<a href="https://weirdbrains.com">WeirdBrains</a> (the root key)', 'app publishers'],
   ),
   Crate(
     slug: 'ext',

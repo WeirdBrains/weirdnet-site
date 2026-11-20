@@ -52,7 +52,7 @@ can turn Weirdnet discovery off and add peers by hand, and an admin policy can l
 with a clear page for each failure.</li>
 <li><b>One network</b>: Morph joins Weirdnet as <code>weirdnet-morph</code>. It uses the default Weirdnet profile and its own <code>/morph/...</code> protocols, and links on
 <code>weirdnet-morph://</code>, such as <code>weirdnet-morph://join/</code> for invitations.</li>
-<li><b>Relays</b>: Morph nodes start with WeirdBrains relays and bootstrap nodes; desktops with a domain can run their own.
+<li><b>Relays</b>: Morph nodes start with <a href="https://weirdbrains.com">WeirdBrains</a> relays and bootstrap nodes; desktops with a domain can run their own.
 Phones dial out and keep a slot on a home relay.</li>
 <li><b>Companions</b>: Morph’s local AI agents run on <a href="/crates/agent">weirdnet-agent</a> (0.3.0 on crates.io): the agent loop,
 approvals with per-site grants, research budgets and traces with footnotes. <span class="tag wip">in progress</span></li>

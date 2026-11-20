@@ -9,7 +9,7 @@ const siteDescription =
     'signed key exchanges and invitations, sealed messaging, identities, relays, and the '
     'building blocks Morph, Muninn, TAUR and Salty Gull share.';
 const orgUrl = 'https://github.com/WeirdBrains';
-const mainSiteUrl = 'https://www.weirdbrains.com';
+const mainSiteUrl = 'https://weirdbrains.com';
 const morphSiteUrl = 'https://morph.weirdbrains.com';
 const relayRepoUrl = 'https://github.com/WeirdBrains/weirdnet-relay';
 

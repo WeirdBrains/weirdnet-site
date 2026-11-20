@@ -164,7 +164,7 @@ figure.diagram figcaption { color: var(--text-muted); font-size: 0.88rem; margin
   pre { padding: 0.9rem 1rem; }
 }
 
-/* Crate guides: version tags, grouped cards, the all-crates table, details coming soon. */
+/* Crate guides: version tags, grouped cards, the all-crates table. */
 .tag.version { color: var(--purple-soft); border-color: rgba(192, 132, 252, 0.5); text-transform: none; font-family: var(--mono); margin-left: 0; }
 .card .crate-version { font-family: var(--mono); font-size: 0.82rem; color: var(--purple-soft); margin: 0 0 0.45rem; }
 .group-head { margin: 2rem 0 0.9rem; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); text-align: left; }
@@ -174,5 +174,3 @@ figure.diagram figcaption { color: var(--text-muted); font-size: 0.88rem; margin
 .crate-table th { color: var(--yellow); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .crate-table td { color: var(--text-muted); }
 .crate-table td.links { white-space: nowrap; }
-.callout.coming-soon { border-color: rgba(236, 72, 153, 0.55); }
-.callout.coming-soon b { color: var(--pink); }

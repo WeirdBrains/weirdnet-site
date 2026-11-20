@@ -73,12 +73,6 @@ class CratePage extends StatelessComponent {
     fits.write('<li>License: BSD-3-Clause.</li></ul>');
     add('where', 'Where it fits', fits.toString());
     if (k.notes.isNotEmpty) body.write('<div class="callout warn">${k.notes}</div>');
-    if (g != null && g.comingSoon.isNotEmpty) {
-      toc.add(('coming-soon', 'Details coming soon'));
-      body.write('<div class="callout coming-soon" id="coming-soon"><b>Details coming soon</b><ul>');
-      body.writeAll([for (final t in g.comingSoon) '<li>$t</li>']);
-      body.write('</ul></div>');
-    }
 
     return Component.fragment([
       _hero(k),
