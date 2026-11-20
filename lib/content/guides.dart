@@ -227,19 +227,26 @@ service like TAUR. HTTP servers and port forwarding stay in the app. Muninn orde
 <ol>
 <li><b>Order</b>: <code>Acme</code> keeps an account per directory in the store (Let's Encrypt production or staging, or any
 RFC 8555 directory), with several names per certificate, wildcards and ACME profiles. From 0.2.0,
-<code>AcmeConfig::profile_optional</code> orders with the CA's default when the profile is refused.</li>
+<code>AcmeConfig::profile_optional</code> orders with the CA's default when the profile is refused. From 0.3.0, names a
+public CA refuses (<code>localhost</code>, IP addresses, all-digit top labels) fail validation unless
+<code>AcmeConfig::private_names</code> is set for a private CA.</li>
 <li><b>Challenge</b>: TLS-ALPN-01 is answered by the resolver on your port 443; HTTP-01 from an <code>Http01Board</code>
 (served by <code>serve_http01</code> or your router); DNS-01 through the <code>DnsChallenge</code> trait: a hook command
 (it gets <code>WEIRDNET_TLS_ACTION</code>, <code>WEIRDNET_TLS_DOMAIN</code>, <code>WEIRDNET_TLS_NAME</code> and
-<code>WEIRDNET_TLS_TXT</code>), a manual prompt, or a grindvakt-core provider.</li>
+<code>WEIRDNET_TLS_TXT</code>, and from 0.3.0 the same under an app's own prefix with <code>HookDns::with_prefix</code>), a
+manual prompt, or a grindvakt-core provider. While the app's own listener isn't running, <code>Acme::serve_challenge</code>
+answers TLS-ALPN-01 or HTTP-01 on a listener of its own.</li>
 <li><b>Store</b>: the <code>CertStore</code> trait with <code>FileStore</code> (files 0600 in directories 0700, atomic
-writes), <code>MemoryStore</code>, or <code>SqlStore</code> in an encrypted weirdnet-storage database.</li>
+writes), <code>MemoryStore</code>, or <code>SqlStore</code> in an encrypted weirdnet-storage database.
+<code>Acme::import</code> copies an app's earlier account, certificate and state in, never overwriting.</li>
 <li><b>Serve</b>: the <code>Resolver</code> picks a certificate per name, in the order pinned (internal names, a private
-CA), the user's own, ACME, then self-signed, skipping expired ones, with a default for handshakes without SNI. It swaps
+CA), the user's own, ACME, then self-signed, skipping expired ones, with a default for handshakes without SNI (the ACME certificate with <code>Acme::with_default_cert</code>). It swaps
 certificates without a restart; <code>server_config</code> hands a rustls config to tokio-rustls or hyper.</li>
 <li><b>Renew</b>: at a point in the CA's ACME Renewal Information window (RFC 9773) with <code>replaces</code>, else two
 thirds into the lifetime, so shorter certificate lifetimes need no change. Failures back off from an hour to a day; a forced
-renewal within a day of the last issue is refused. <code>Acme::watch</code> gives a typed <code>Status</code>.</li>
+renewal within a day of the last issue is refused (<code>Acme::trigger_renewal</code> asks the running renewer for one).
+<code>Acme::watch</code> gives a typed <code>Status</code>, and <code>acme::schedule</code> reads the next renewal from the
+store alone, for status commands.</li>
 </ol>
 <p>Linux, macOS and Windows are tested in CI; Android (aarch64, API 26) and iOS (aarch64) build.</p>
 ''',

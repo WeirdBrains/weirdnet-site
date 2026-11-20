@@ -38,7 +38,7 @@ fn main() {
   ),
   'tls': Example(
     r'''[dependencies]
-weirdnet-tls = "0.2.0"
+weirdnet-tls = "0.3.0"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// Serve TLS now (self-signed), then let ACME replace the certificate in the background.
 use std::sync::Arc;

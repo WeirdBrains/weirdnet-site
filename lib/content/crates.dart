@@ -110,7 +110,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'tls',
-    version: '0.2.0',
+    version: '0.3.0',
     group: 'Network',
     tagline: 'TLS certificates: ACME issuance and renewal, certificate stores and an SNI resolver for rustls.',
     about: [
@@ -127,6 +127,7 @@ const crates = <Crate>[
     ],
     dependsOn: ['storage'],
     origin: 'Mouser',
+    notes: 'Version 0.3.0 is on <a href="https://crates.io/crates/weirdnet-tls">crates.io</a> (<a href="https://docs.rs/weirdnet-tls/0.3.0">docs.rs</a>). It adds app prefixes and extra variables for DNS hooks (<code>HookDns::with_prefix</code>, <code>with_env</code>), an offline renewal schedule read from the store (<code>acme::schedule</code>), the ACME certificate as the default for handshakes without SNI (<code>Acme::with_default_cert</code>), forced renewals from the running renewer behind the repeat-certificate guard (<code>Acme::trigger_renewal</code>), challenge-only TLS-ALPN-01 and HTTP-01 listeners (<code>Acme::serve_challenge</code>), and importing an app’s earlier account, certificate and state (<code>Acme::import</code>). 0.3.0 is breaking: <code>valid_name</code> and <code>AcmeConfig::validate</code> refuse <code>localhost</code>, IP addresses and all-digit top labels unless <code>AcmeConfig::private_names</code> is set for a private CA, <code>AcmeConfig</code> is <code>#[non_exhaustive]</code> (build it with <code>AcmeConfig::new</code>), and <code>HookDns</code> is built with <code>HookDns::new</code>.',
   ),
   Crate(
     slug: 'keys',

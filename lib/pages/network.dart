@@ -221,7 +221,7 @@ sending node; signed requests to join with approvals, denials, rate limits and a
 <li><b>Tested on real networks</b> <span class="tag shipped">shipped</span>: CI runs nodes in network namespaces behind NAT
 routers: relay reservations, hole punching from a relayed stream to a direct one, a symmetric NAT staying on the relay,
 QUIC, mDNS and AutoNAT.</li>
-<li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.2.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
+<li><b>TLS certificates</b> <span class="tag shipped">shipped</span> (<a href="/crates/tls">weirdnet-tls 0.3.0</a>): ACME with TLS-ALPN-01, HTTP-01 and DNS-01, certificate stores, an SNI resolver that swaps certificates
 without a restart, and renewal by the CA's renewal window with backoff. Muninn orders its certificates through it.</li>
 <li><b>Sealed streams</b> <span class="tag shipped">shipped</span> (<a href="/crates/net">weirdnet-net 0.4.0</a>): byte
 streams encrypted per direction and bound to the exchange and both peers, for private and members-only content.</li>
