@@ -128,6 +128,24 @@ stream (<code>check_presented</code> ties it to the node speaking), and signed <
 <code>names_server</code>, <code>dns_servers</code>, <code>app_header_max</code>, <code>app_body_max</code>,
 <code>app_idle_timeout</code>. CI runs nodes in Linux network namespaces behind NAT routers (<code>harness/netns.sh</code>).</p>
 
+<h3>Android (0.8.1)</h3>
+<p>On Android, hickory-resolver (libp2p's DNS transport inside the node) reads the system DNS servers from the ConnectivityManager
+through <code>ndk-context</code>, and panics if nothing initialized it, which takes down any node that dials a real network.
+The app initializes it once at startup, before any node starts, from a Kotlin <code>external fun</code> that the
+<code>android_context_init!</code> macro exports:</p>
+<pre><code>// Rust, in the app's bridge crate (expands to nothing off Android):
+weirdnet_net::android_context_init!(Java_org_example_myapp_RustContext_nativeInit);
+
+// Kotlin, org.example.myapp.RustContext, called before anything touches Rust:
+object RustContext {
+    init { System.loadLibrary("myapp_bridge") }
+    @JvmStatic external fun nativeInit(context: Context)
+}</code></pre>
+<p>The macro takes the full JNI name (<code>Java_</code>, the package with <code>_</code> for <code>.</code>, the class, the method).
+<code>android::init_context(env, context)</code> does the work: it keeps a global reference to the application Context for the
+life of the process, acts only on the first call, and returns whether the context is set. Other crates that reach Android
+services through <code>ndk-context</code> (a keystore, say) rely on the same call.</p>
+
 <h3>Moving to 0.8.0</h3>
 <p>0.8.0 changes the wire. Requests and responses (<code>Node&lt;Q, R&gt;</code> and the names protocol) are written by a codec
 of the crate's own, <code>wire</code> (<code>to_vec</code>, <code>from_slice</code>, <code>Codec</code>). Every byte field,
@@ -560,6 +578,19 @@ per answer by default; if nothing can take over, the partial answer comes back w
 catalog queries and subscriptions (<code>/weirdnet-agent/catalog/1</code>: each model's purpose, state, replicas, speed and
 context) that move to another node when one goes away. <code>RemoteModel</code> is a thin <code>ModelBackend</code> over a pool;
 resume is opt-in there (<code>with_resume(true)</code>).</p>
+<h3>Continuing an answer (0.4.2)</h3>
+<p>When the user stops an answer or it is cut off, a Continue button can send the same conversation with the partial answer as
+the request's <code>assistant_prefix</code>: the model carries on from that text (assistant prefill: llama.cpp continues a trailing
+assistant message, vLLM gets <code>continue_final_message</code>). <code>Request::continuing()</code> builds such a request from
+messages that end in an assistant message without tool calls. The wire is unchanged: it is the same prefix a resume uses.</p>
+<ul>
+<li>Only nodes whose <code>Accepted</code> says <code>resume: true</code> take it; others, and infer/1 nodes, are skipped as
+<code>Unsupported</code>. With none left, the error comes back with the prefix as the partial answer.</li>
+<li>The <code>Answer</code> starts from the prefix: <code>text</code> and <code>reasoning</code> include it, <code>Answer::prefix</code>
+is what was given and <code>Answer::continuation()</code> the text after it. Events carry only the new text.</li>
+<li>Failover keeps the prefix, whether or not resume is on; if a node dies part-way, the next one resumes from everything shown,
+and that resume is recorded in <code>Meta::resumes</code> as usual.</li>
+</ul>
 <h3>Serving inference to linked devices (0.4.0)</h3>
 <p>The serving side gets a <code>Caller</code>: the transport-authenticated peer plus any certificate the request presented.
 <code>InferHost::authorize</code> and <code>CatalogHost::authorize</code> run before anything else; a refusal is sent with its reason.
@@ -746,6 +777,10 @@ compared in constant time). It sends no CORS headers, so browsers block pages fr
 <h3>Requests</h3>
 <p>Chat bodies become infer/2 requests: messages (string content or text parts), sampling, <code>seed</code>,
 <code>response_format</code> and function tools; other parameters are ignored. <code>x-wait: 1</code> sets <code>wait_for_model</code>.
+<code>continue_final_message: true</code> (0.1.2, as in vLLM) moves the last assistant message into the request's prefix, so the
+model continues it (weirdnet-agent's <code>Request::continuing</code>); the answer, whole or streamed, holds only the new text. It
+needs the last message to be an assistant message without tool calls and <code>add_generation_prompt</code> not true (else 400),
+and a node that can continue (else 501). Without the flag a trailing assistant message is passed on as a message.
 A streamed answer starts when a node accepts the request, so an error before that is a plain HTTP error; after that, an error
 arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-model</code>, <code>x-weirdnet-cache</code> and
 <code>x-weirdnet-standin</code>, and the same under <code>weirdnet</code> in the body (on the last chunk when streaming).</p>
@@ -937,6 +972,36 @@ ends; errors are <code>ThemeError</code>.</li>
       '<code>ratatui</code>: <code>Theme::from_variant</code> and <code>to_color</code> give ratatui colours by <code>ColorDepth</code>.',
     ],
   ),
+  'text': Guide(
+    brings: r'''
+<p>Use weirdnet-text for the rules behind a text field (an address bar, a prompt box, a chat input) when you draw the field
+yourself in a toolkit with no text widget of its own, such as GPUI. The rules live outside the toolkit, so they are tested
+headless and every app's inputs behave the same.</p>
+''',
+    works: r'''
+<p><code>TextField</code> holds the text, the selection (and which end of it moves) and any text an input method has marked
+while composing. Offsets are UTF-8 byte offsets, always on grapheme cluster boundaries, so the caret never lands inside an
+accented letter or an emoji with a skin tone.</p>
+<ul>
+<li><b>Editing</b>: <code>replace(None, text)</code> types or pastes over the selection (or marked text) and puts the caret after
+it; <code>backspace</code> and <code>delete</code> remove one grapheme cluster or the selection.</li>
+<li><b>Moving and selecting</b>: <code>left</code>, <code>right</code>, <code>home</code>, <code>end</code>, <code>move_to</code>;
+<code>select_left</code>, <code>select_right</code>, <code>select_to</code> (the selection can reverse), <code>select_all</code>,
+<code>selected_text</code>, <code>cursor</code>.</li>
+<li><b>Completions</b>: <code>append_selected(suffix)</code> adds a suggestion selected, so typing replaces it, Backspace removes it
+and Right accepts it. <code>set_text_selected</code> replaces the text and selects it, as an address bar does on focus.</li>
+<li><b>Input methods</b>: <code>replace_and_mark</code> inserts composing text as marked, with a selection inside it;
+<code>unmark</code> commits it. <code>len_utf16</code>, <code>offset_to_utf16</code>, <code>offset_from_utf16</code>,
+<code>range_to_utf16</code>, <code>range_from_utf16</code> and <code>set_selection_utf16</code> convert for platform input APIs,
+which count UTF-16 units.</li>
+<li><b>Line breaks</b>: <code>TextField::new()</code> is one line and turns line breaks into spaces;
+<code>TextField::multiline()</code> keeps them and normalises <code>\r\n</code> and <code>\r</code> to <code>\n</code>.</li>
+</ul>
+''',
+    comingSoon: [
+      'A shared GPUI text input widget built on these rules. Morph and Bragi each draw their own for now, because GPUI is not published on crates.io at the revision they use.',
+    ],
+  ),
   'sync': Guide(
     brings: r'''
 <p>Keep one person's devices in step (bookmarks, history, settings, notes) peer to peer, with nothing readable by a relay or
@@ -1046,6 +1111,32 @@ cursors move to the further of the two, and the clock moves past both;</li>
 earlier pages stay applied and their cursors moved. <code>pull_from</code> keeps its signature and returns only the error;
 <code>pull_from_outcome</code> and <code>pull_from_shared</code> return a <code>PullOutcome { applied, error }</code> (non-exhaustive)
 with the count either way, so an app can show progress and retry from where it stopped.</p>
+<h3>A device linked elsewhere (0.5.2)</h3>
+<p>Before 0.5.2 a node answering a pull listed only revoked certificates, so a device linked on another device (no revocation and
+no rotation, so no epoch change) reached the rest only by luck, and a pass could finish without error while the new device stayed
+unknown. Since 0.5.2 the answer lists every certificate, and a puller whose peer lacks one of its certificates sends it the roster.
+Old and new nodes still talk both ways: older nodes merge the extra certificates as before, and a 0.5.2 puller hands an older peer
+its roster on each pass (one small request).</p>
+<h3>The identity store (0.6.0)</h3>
+<p>Every app with linked devices keeps the same things: the user key seed, its own node key and certificate, the epoch keys and the
+roster. <code>Identity</code> stores them in one directory (0700 on Unix; <code>seed</code>, <code>node.key</code>, <code>keys</code>
+and <code>roster.json</code> in 0600 files, not sealed, so apps that keep secrets in the OS keystore hold <code>SyncState</code>
+themselves for now). Each identity announces one sync type, such as <code>ymir.pool</code> or <code>bragi.app</code>.</p>
+<ul>
+<li><code>Identity::open(dir, typ)</code> loads it (<code>None</code> if there is none); <code>create(dir, label, typ)</code> makes a
+new user with this device as its first node and never overwrites one.</li>
+<li><code>adopt(dir, node_key, seed, cert, settings, typ)</code> takes what a device link delivered: the seed, the certificate the
+existing device made for this node (checked against this node and user) and that device's <code>LinkSettings</code> JSON with its
+roster. <code>link_settings()</code> and <code>seed()</code> are the sending side; <code>approve(cert)</code> adds the new device.</li>
+<li><code>revoke(peer)</code> revokes and rotates the keys, but never this node's own certificate.</li>
+<li><code>tick(&amp;node, &amp;addrs)</code> runs <code>pull_from_shared</code> against every other active device and saves. It
+returns a <code>Tick</code> with the devices reached, entries applied and each failure, so devices linked or revoked elsewhere
+arrive even when the type has no records. <code>state()</code> is the shared state for the node's <code>SyncHandler</code>, and
+<code>roster_view()</code> a live roster for checks such as weirdnet-agent's <code>RosterAuth</code>.</li>
+</ul>
+<p>The file layout is the one Ymir's <code>membership</code> and Bragi's <code>identity</code> modules used, so their stores open
+unchanged. 0.6.0 also makes <code>SyncError</code> non-exhaustive, with <code>Io</code> and <code>Identity</code> variants: add a
+catch-all arm where you match it.</p>
 <h3>Checking callers on a serving node</h3>
 <p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
 transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's

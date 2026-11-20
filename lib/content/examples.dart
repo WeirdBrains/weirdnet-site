@@ -11,7 +11,7 @@ class Example {
 const examples = <String, Example>{
   'net': Example(
     r'''[dependencies]
-weirdnet-net = "0.8.0"''',
+weirdnet-net = "0.8.1"''',
     r'''// Anna invites Ben: a signed offer as a link, Ben's answer, and one shared short code.
 use weirdnet_net::{Keypair, Profile, WEIRDNET, exchange::Token, profile::invite_scope};
 
@@ -216,7 +216,7 @@ fn main() {
   ),
   'agent': Example(
     r'''[dependencies]
-weirdnet-agent = { version = "0.4.0", features = ["testing"] }
+weirdnet-agent = { version = "0.4.2", features = ["testing"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// One task through the agent loop with the `testing` feature's scripted model and approver.
 // A real app implements ModelBackend (for example over weirdnet-model) and Approver (its UI).
@@ -398,7 +398,7 @@ fn main() {
   ),
   'sync': Example(
     r'''[dependencies]
-weirdnet-sync = "0.5.0"''',
+weirdnet-sync = "0.6.0"''',
     r'''// The merge rules underneath linked-device sync: hybrid logical clocks, LWW and an OR-set.
 use weirdnet_sync::{Hlc, Lww, NodeId, OrSet, lww};
 
@@ -416,6 +416,34 @@ fn main() {
     on_phone.add("p2p", t2.clone());
     on_laptop.merge(&on_phone); // concurrent adds of different tags keep both
     assert!(on_laptop.contains(&"rust") && on_laptop.contains(&"p2p"));
+}
+''',
+  ),
+  'text': Example(
+    r'''[dependencies]
+weirdnet-text = "0.1.0"''',
+    r'''// Editing rules for a text field, tested without any UI toolkit.
+use weirdnet_text::TextField;
+
+fn main() {
+    let mut field = TextField::new();
+    for ch in "git".chars() {
+        field.replace(None, &ch.to_string()); // typing inserts at the caret
+    }
+    field.append_selected("hub.com"); // an inline completion, selected
+    field.right(); // Right accepts it
+    assert_eq!((field.text(), field.cursor()), ("github.com", 10));
+
+    // Backspace removes a whole grapheme cluster, not one byte or code point.
+    let mut emoji = TextField::new();
+    emoji.replace(None, "hi 👋🏽");
+    emoji.backspace();
+    assert_eq!(emoji.text(), "hi ");
+
+    // One-line fields turn pasted line breaks into spaces; multiline ones keep them.
+    let mut chat = TextField::multiline();
+    chat.replace(None, "line one\r\nline two");
+    assert_eq!(chat.text(), "line one\nline two");
 }
 ''',
   ),

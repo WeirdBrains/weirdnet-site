@@ -64,7 +64,7 @@ class Crate {
 const crates = <Crate>[
   Crate(
     slug: 'net',
-    version: '0.8.0',
+    version: '0.8.1',
     group: 'Network',
     tagline: 'The libp2p node, streams, app calls, key exchanges, invitations, sealed messaging, identities and certificates.',
     about: [
@@ -80,11 +80,12 @@ const crates = <Crate>[
       '<code>sealed</code>: send a sealed request through the application’s envelope and open the answer (<code>call</code>), and answer one only for the exchange’s own, Noise-authenticated peer (<code>serve</code>).',
       '<code>invite</code>: invitation automation: connect, offers answered on the spot or kept for the owner, poll and settle, crossing offers settled on one exchange, trust on first use and impostor warnings.',
       '<code>identity</code>, <code>user</code>, <code>sync</code>, <code>shard</code>, <code>addr</code>: node identities, user certificates, revocations, cards and link grants, the linked-node sync key, dark-shard blobs and address helpers.',
+      '<code>android_context_init!</code> and <code>android::init_context</code> (0.8.1, Android builds): export the JNI method an app calls once at startup so <code>ndk-context</code> is set before a node resolves DNS.',
     ],
     dependsOn: ['keys'],
     usedBy: ['Morph', 'Muninn', 'weirdnet-relay', 'weirdnet-sync', 'weirdnet-device-link'],
     origin: 'Muninn',
-    notes: 'Not audited. Tested over libp2p’s in-memory transport with real Noise, Yamux and request-response. See <code>SECURITY.md</code> in the repository for what the crate enforces and what it leaves to the application.',
+    notes: 'Not audited. Tested over libp2p’s in-memory transport with real Noise, Yamux and request-response. See <code>SECURITY.md</code> in the repository for what the crate enforces and what it leaves to the application. 0.8.1 is additive: the Android <code>ndk-context</code> init that Morph and Bragi each carried a copy of.',
   ),
   Crate(
     slug: 'relay',
@@ -224,7 +225,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'agent',
-    version: '0.4.1',
+    version: '0.4.2',
     tagline: 'The agent runtime: a model-agnostic loop with streaming and cancel, tool sources, tiered approvals, research budgets and traces with citation checks, plus remote inference across the user’s own devices.',
     about: [
       'The shared agent loop for WeirdBrains apps; Morph’s Companions are its first user. The app brings the model, the tools and the approval UI; the crate runs each task, enforces the policy and budget, and records what happened. It has no app-specific types.',
@@ -240,13 +241,14 @@ const crates = <Crate>[
       '<code>remote::infer</code>, <code>RemoteModel</code>: one model turn on another node, streamed, cancellable, with fallback to the next node or a local model (0.2.0). Since 0.4.0 <code>RemoteModel</code> speaks infer/2 and falls back to infer/1 for 0.3 nodes.',
       '<code>remote::infer::v2</code> (0.4.0): <code>/weirdnet-agent/infer/2</code> in CBOR. Priorities (<code>Interactive</code>, <code>Batch</code>, <code>Background</code>) behind <code>Queued{position}</code>, sampling, seed, response format, tools and raw mode; <code>Delta</code>, <code>Reasoning</code> and <code>ToolCall</code> frames with character offsets, <code>Usage</code>, and <code>Done</code> with metadata; f32 embeddings as byte strings. Hosts implement <code>InferBackend</code> and <code>EmbedBackend</code>, or keep a plain <code>ModelBackend</code>.',
       '<code>remote::pool::Pool</code> (0.4.0): tries nodes in order, cancels a stalled stream and resumes it elsewhere from the text already shown, runs embeddings and background jobs, and queries or subscribes to the catalog with failover. <code>remote::catalog</code>: <code>/weirdnet-agent/catalog/1</code>, the models nodes have and their state.',
+      'Continuing an answer (0.4.2): a request that carries an <code>assistant_prefix</code> continues that text (assistant prefill). <code>Request::continuing</code> makes one from a trailing assistant message; <code>Answer::prefix</code> and <code>Answer::continuation</code> separate the given text from the new.',
       '<code>pool</code> and <code>serve</code> features (0.4.0): <code>LinkedNodes</code>, <code>NetDialer</code> and <code>connect</code> on the app side; <code>Server</code> and <code>RosterAuth</code> on inference nodes, admitting only linked devices.',
       '<code>remote::task</code>: a whole agent task on another node, events streamed back, approvals answered on the asking device (0.2.0).',
       'Serde on everything that is stored or synced. The <code>testing</code> feature has a scripted model, approver and closure tools.',
     ],
     usedBy: ['Morph (Companions, in progress)'],
     dependsOn: ['net', 'sync'],
-    notes: 'Version 0.4.1 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.1">docs.rs</a>). 0.4.1 is additive: infer/2 raw prompts (<code>Input::Prompt</code>, <code>Request::prompt</code>; 0.4.0 servers close the stream and the pool moves on), early metadata (<code>Request::early_meta</code>, <code>ServerFrame::Meta</code>, <code>PoolEvent::Meta</code>, so a cache hit is known before the answer), embedding usage (<code>EmbedBackend::embed_counted</code>, <code>Embeddings::usage</code>), and a <code>Pool</code> that keeps error kinds: request errors (<code>BadRequest</code>, <code>Cancelled</code>) come back at once, and when every node fails the last node answer wins over a transport error. Weirdnet crates depend on it with caret requirements (<code>"0.4"</code>, or <code>"0.4.1"</code> where they use these APIs), so agent patch releases don’t force re-releases. 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
+    notes: 'Version 0.4.2 is on <a href="https://crates.io/crates/weirdnet-agent">crates.io</a> (<a href="https://docs.rs/weirdnet-agent/0.4.2">docs.rs</a>). 0.4.2 is additive: the pool continues an answer from a caller’s <code>assistant_prefix</code> on nodes that can resume (no wire change; before, such a request failed with missing characters), a remote task’s approval card no longer arrives before the events sent ahead of it, and the <code>pool</code> and <code>serve</code> features need weirdnet-sync 0.5.2 (a device linked elsewhere reaches the others in one pass). 0.4.1 is additive: infer/2 raw prompts (<code>Input::Prompt</code>, <code>Request::prompt</code>; 0.4.0 servers close the stream and the pool moves on), early metadata (<code>Request::early_meta</code>, <code>ServerFrame::Meta</code>, <code>PoolEvent::Meta</code>, so a cache hit is known before the answer), embedding usage (<code>EmbedBackend::embed_counted</code>, <code>Embeddings::usage</code>), and a <code>Pool</code> that keeps error kinds: request errors (<code>BadRequest</code>, <code>Cancelled</code>) come back at once, and when every node fails the last node answer wins over a transport error. Weirdnet crates depend on it with caret requirements (<code>"0.4"</code>, or <code>"0.4.1"</code> where they use these APIs), so agent patch releases don’t force re-releases. 0.4.0 is breaking for hosts that serve inference (<code>InferHost</code> now authorizes a <code>Caller</code>) and for code that matches the crate’s enums, which are now <code>#[non_exhaustive]</code>; see Moving to 0.4.0 below. weirdnet-net and weirdnet-sync are only pulled in by the <code>pool</code> and <code>serve</code> features. The API may change while Morph’s Companions are built on it.',
   ),
   Crate(
     slug: 'model',
@@ -324,14 +326,14 @@ let dialer = Arc::new(weirdnet_backends::RawInferDialer::new(net_dialer));''',
   ),
   Crate(
     slug: 'openai',
-    version: '0.1.1',
+    version: '0.1.2',
     tagline: 'A loopback-only OpenAI-compatible bridge over a weirdnet-agent inference pool, with a token, a Host check and no CORS.',
     about: [
       'Local tools that speak the OpenAI API (editors, notebooks, <code>curl</code>) reach the user’s inference nodes through it: chat completions, streaming or not, the model list and embeddings, all through a <a href="/crates/agent">weirdnet-agent</a> 0.4 <code>Pool</code>, so failover, resume and stand-ins come with it.',
       'It binds <code>127.0.0.1</code> only, checks the <code>Host</code> header against its own address, requires a bearer token and sends no CORS headers, so web pages can’t call it.',
     ],
     parts: [
-      '<code>POST /v1/chat/completions</code>: SSE streaming with <code>data: [DONE]</code>, or one JSON answer; reasoning as <code>reasoning_content</code>, tool calls, usage with cached and reasoning tokens. Dropping the response cancels the pool request.',
+      '<code>POST /v1/chat/completions</code>: SSE streaming with <code>data: [DONE]</code>, or one JSON answer; reasoning as <code>reasoning_content</code>, tool calls, usage with cached and reasoning tokens. Dropping the response cancels the pool request. <code>continue_final_message: true</code> (0.1.2, vLLM’s parameter) continues the last assistant message and answers with only the new text.',
       '<code>POST /v1/completions</code> (0.1.1): a raw prompt, whole or streamed as <code>text_completion</code> chunks; <code>n</code>/<code>best_of</code> above 1, <code>echo</code>, <code>suffix</code> and <code>logprobs</code> are refused with 400.',
       '<code>GET /v1/models</code>: the pool catalog, with state, purpose, replicas, context and revision under <code>weirdnet</code>. <code>POST /v1/embeddings</code>: float vectors.',
       '<code>x-weirdnet-model</code>, <code>x-weirdnet-cache: hit</code> and <code>x-weirdnet-standin</code> headers; <code>x-wait: 1</code> waits for the requested model instead of a stand-in.',
@@ -349,7 +351,7 @@ use weirdnet_openai::{Bridge, BridgeOptions, new_token};
 let token = new_token(); // show it to the user once; keep it in their keychain
 let bridge = Bridge::bind(BridgeOptions::new(11435, token)).await?;
 bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::pool::Pool''',
-    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-openai">crates.io</a> (<a href="https://docs.rs/weirdnet-openai/0.1.1">docs.rs</a>). Extracted from Ymir’s <code>ymir-openai</code>. 0.1.1 (on weirdnet-agent <code>"0.4.1"</code>) makes <code>/v1/completions</code> work as an infer/2 raw prompt, whole or streamed (a node that can’t take raw prompts answers 501); streamed answers carry <code>x-weirdnet-cache: hit</code> from early metadata; <code>/v1/embeddings</code> reports real <code>usage.prompt_tokens</code> and keeps a node’s bad request a 400. Content parts other than text are still refused, and unknown parameters ignored (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/1">#1</a>); <code>Retry-After</code> is 1 s until busy nodes report a delay (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/2">#2</a>).',
+    notes: 'Version 0.1.2 is on <a href="https://crates.io/crates/weirdnet-openai">crates.io</a> (<a href="https://docs.rs/weirdnet-openai/0.1.2">docs.rs</a>). Extracted from Ymir’s <code>ymir-openai</code>. 0.1.2 (on weirdnet-agent <code>"0.4.2"</code>) adds <code>continue_final_message</code>: with no node that can continue it is a 501, and with <code>add_generation_prompt: true</code> or a last message that is not a plain assistant message, a 400. 0.1.1 (on weirdnet-agent <code>"0.4.1"</code>) makes <code>/v1/completions</code> work as an infer/2 raw prompt, whole or streamed (a node that can’t take raw prompts answers 501); streamed answers carry <code>x-weirdnet-cache: hit</code> from early metadata; <code>/v1/embeddings</code> reports real <code>usage.prompt_tokens</code> and keeps a node’s bad request a 400. Content parts other than text are still refused, and unknown parameters ignored (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/1">#1</a>); <code>Retry-After</code> is 1 s until busy nodes report a delay (<a href="https://github.com/WeirdBrains/weirdnet-openai/issues/2">#2</a>).',
     origin: 'Ymir',
   ),
   Crate(
@@ -502,8 +504,26 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
     origin: 'Muninn',
   ),
   Crate(
+    slug: 'text',
+    version: '0.1.0',
+    status: Status.fresh,
+    tagline: 'Toolkit-independent editing rules for text fields: grapheme-aware caret and selection, inline completions, input-method composition, UTF-16 offsets.',
+    about: [
+      'The behaviour behind a text field, kept out of the UI toolkit so it can be tested headless and shared by every app’s inputs. The app’s widget draws the field and feeds it keys and input-method events; <code>TextField</code> decides what they do.',
+    ],
+    parts: [
+      '<code>TextField::new</code> (one line: pasted line breaks become spaces) and <code>TextField::multiline</code> (line breaks kept, <code>\\r\\n</code> normalised).',
+      'Typing and pasting at the caret (<code>replace</code>), Backspace and Delete by whole grapheme clusters, Left, Right, Home and End with and without Shift, select-all and <code>selected_text</code>.',
+      '<code>append_selected</code>: an inline completion that typing replaces, Backspace removes and Right accepts. <code>set_text_selected</code>: replace the text and select it, as an address bar does on focus.',
+      '<code>replace_and_mark</code>, <code>marked</code>, <code>unmark</code>: input-method composition; <code>offset_to_utf16</code>, <code>range_from_utf16</code> and friends for platform input APIs.',
+    ],
+    usedBy: ['Morph and Bragi (moving onto it)'],
+    origin: 'Morph',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-text">crates.io</a> (<a href="https://docs.rs/weirdnet-text/0.1.0">docs.rs</a>), extracted unchanged from Morph’s <code>morph-ui</code> text module. Offsets are UTF-8 byte offsets on grapheme boundaries. The GPUI widget that uses it stays in each app: GPUI is not on crates.io at the revision the apps use, so a shared widget crate can’t be published yet.',
+  ),
+  Crate(
     slug: 'sync',
-    version: '0.5.1',
+    version: '0.6.0',
     group: 'Network',
     status: Status.fresh,
     tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke.',
@@ -521,10 +541,11 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>sync_key</code>, <code>seal_page</code>, <code>open_page</code>: typed keys and sealed pages.',
       '<code>SyncState::configure</code>, <code>write</code>, <code>read</code>, <code>reseal_stale</code>, <code>pull_chunks</code>; <code>Limits</code>, <code>RecordOptions</code>, <code>RecordValue</code>: large and sealed records (0.4.0).',
       '<code>Roster::check_caller</code>, <code>CallerCheck</code>: is the authenticated caller of an app call one of the user’s linked devices (0.4.0).',
+      '<code>Identity</code>, <code>LinkSettings</code>, <code>Tick</code> (0.6.0): the on-disk identity store every app with linked devices needs (seed, node key and certificate, epoch keys, roster), parameterised on the app’s sync type, with <code>create</code>, <code>adopt</code> after a device link, <code>approve</code>, <code>revoke</code> and a <code>tick</code> that syncs with every linked device.',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>.',
+    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>. 0.5.2 fixes a device linked on one device not reaching the others in one pass (wire-compatible). 0.6.0 adds <code>Identity</code>, extracted from Ymir’s <code>membership</code> and Bragi’s <code>identity</code> modules (same files on disk), and makes <code>SyncError</code> non-exhaustive with <code>Io</code> and <code>Identity</code> variants: breaking only for code that matches it exhaustively.',
   ),
   Crate(
     slug: 'push',
