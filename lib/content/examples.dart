@@ -244,7 +244,7 @@ async fn main() {
   ),
   'plugin': Example(
     r'''[dependencies]
-weirdnet-plugin = "0.1.0"''',
+weirdnet-plugin = "0.1.1"''',
     r'''// A code space plugin (crate-type = ["cdylib"]): a chart of the close column.
 use weirdnet_plugin::prelude::*;
 
@@ -259,7 +259,7 @@ weirdnet_plugin::plugin!(run);
   ),
   'code-spaces': Example(
     r'''[dependencies]
-weirdnet-code-spaces = "0.1.1"''',
+weirdnet-code-spaces = "0.1.2"''',
     r'''// The trust hash an owner approves, and (with a Rust toolchain) building and loading.
 use weirdnet_code_spaces::{self as cs, Lang, WEIRDNET};
 

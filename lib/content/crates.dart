@@ -425,7 +425,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'plugin',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Extensions and plugins',
     tagline: 'The plugin SDK: the stable C ABI (v2), host API, frames and result views.',
     about: [
@@ -442,7 +442,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'code-spaces',
-    version: '0.1.1',
+    version: '0.1.2',
     group: 'Extensions and plugins',
     tagline: 'Math, Polars, Rust and typed Python sources compiled into plugins against the plugin SDK.',
     about: [
