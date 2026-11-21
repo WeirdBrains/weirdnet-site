@@ -684,6 +684,18 @@ checksum, and <code>catalog::default_for(Device)</code> picks one. <code>ModelSt
 (<code>WEIRDNET_MODELS_DIR</code> overrides it). <code>download</code> needs a <code>Consent</code> for exactly that model, reports
 <code>Progress</code>, resumes from a <code>.part</code> file and verifies the SHA-256. <code>hf</code> lists a repo's GGUF files
 and sizes for a model picker.</p>
+<h3>Find a model that fits (0.5.1)</h3>
+<p><code>hf::Hub</code> searches the Hugging Face Hub for GGUF repos (<code>Search</code>, <code>SearchHit</code>) and groups a repo's
+files into models: split GGUFs (<code>-00001-of-00003.gguf</code>) become one model with their parts, and the quantization is read
+from the file name (<code>RepoModel</code>, <code>group_files</code>, <code>quant_of</code>). <code>gguf_info</code> reads a file's
+header with a <code>Range</code> request, and <code>gguf::read_info</code> gives the fields that size the KV cache.
+<code>fit::choose</code> picks the largest file whose weights and KV cache fit a <code>hw::Budget</code> for the context and slots
+asked for, and <code>fit::rank</code> measures every file against it; without a header the KV cache is estimated from the file size.
+<code>download_parts</code> fetches every part of a split model under one consent, and <code>ModelStore::list</code> and
+<code>remove_local</code> show and delete what is on disk.</p>
+<p>A Hugging Face token (<code>HfToken</code>) is read on the machine that downloads, from <code>HF_TOKEN</code>,
+<code>HUGGING_FACE_HUB_TOKEN</code> or a token file. <code>ModelStore::from_env</code> sends it to the public Hub only, never to another
+host; <code>ModelStore::with_token</code> sets one for any Hub.</p>
 <h3>Run it</h3>
 <p><code>Worker</code>: one thread owns the <code>Engine</code>; <code>Worker::generate</code> returns a <code>Generation</code>
 that streams <code>Chunk</code>s and can be cancelled from any thread. <code>prompt</code> renders chat turns through the model's
@@ -733,7 +745,7 @@ target directory can fail with "File exists" on the library symlinks; deleting t
       '<code>llama</code>: <code>LlamaEngine</code> on llama.cpp, CPU. Needs cmake and a C++ compiler to build.',
       '<code>cpu-dispatch</code> (implies <code>llama</code>): llama.cpp for every CPU level, chosen at run time; the app ships the shared libraries.',
       '<code>vulkan</code>, <code>metal</code> (imply <code>llama</code>): GPU offload.',
-      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>=0.4.0</code> since 0.4.0; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
+      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>"0.5"</code> since 0.5.0; <code>"0.4"</code> in 0.4.2 and 0.4.3; <code>=0.4.0</code> in 0.4.0 and 0.4.1; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
     ],
   ),
   'backends': Guide(
@@ -792,6 +804,16 @@ sequence that goes backwards. Withdrawal ends subscriptions.</p>
 <p>Commands are one per stream: <code>Load</code> (waits until ready), <code>Unload</code>, <code>Drain</code> (stops new requests and
 waits for those under way), <code>GroupUp</code>/<code>GroupDown</code> and <code>Health</code>. Who may send them is an
 <code>Authorize</code> hook; <code>RosterAuth</code> admits the user's linked devices.</p>
+<h3>Managing models (0.3.0)</h3>
+<p><code>Supervisor::add_model</code> and <code>remove_model</code> serve a new model, or stop serving one, without restarting the node
+(<code>SupervisorEvent::Added</code>, <code>Removed</code>). With the <code>node</code> feature, <code>models::ModelsService</code> serves
+<code>/weirdnet-backends/models/1</code> to the node's owner only: it takes an <code>Authorize</code> such as <code>RosterAuth</code>
+(the owner's linked devices, narrowed with <code>require_roles</code>). Commands are <code>Search</code> (GGUF repos on the Hugging
+Face Hub), <code>Files</code> (a repo's models, each measured against the node's memory budget), <code>Pull</code> (download with
+progress, resuming a partial file, split GGUFs too; with no file named, the largest that fits), which can hand the model to the
+supervisor to serve or load, <code>List</code> and <code>Remove</code>. Closing a pull's stream cancels it. The Hugging Face token is
+the node's own (<a href="/crates/model">weirdnet-model</a> <code>HfToken</code>) and never crosses the wire.
+<code>ModelsServer::start</code> serves it on a <code>weirdnet-net</code> node; <code>ModelsClient</code> is the owner's side.</p>
 <h3>Link info and the roster (0.1.2)</h3>
 <p>Capability records carry the node's private links (<code>Capability::links</code>: address, <code>AddrClass</code>, interface,
 the NIC's nominal speed and an operator-declared one), set with <code>NodeService::set_links</code>;
@@ -810,7 +832,7 @@ should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent
 </table>
 ''',
     features: [
-      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <code>weirdnet-model</code> 0.4 hardware in the records and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
+      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> 0.5.1 hardware in the records (0.4 before 0.3.0), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
     ],
   ),
   'openai': Guide(
@@ -881,7 +903,7 @@ values are refused.</li>
 ''',
     features: [
       '<code>push</code>: <code>PushSink</code>, wakes through weirdnet-push 0.1 (pulls in aws-lc through reqwest).',
-      '<code>backends</code>: <code>engine::observation</code>, <code>engine::probes</code> and <code>engine::monitor</code> for weirdnet-backends 0.1.',
+      '<code>backends</code>: <code>engine::observation</code>, <code>engine::probes</code> and <code>engine::monitor</code> for <a href="/crates/backends">weirdnet-backends</a> 0.2 or 0.3 (0.1 before 0.2.0).',
     ],
   ),
   'plugin': Guide(
