@@ -365,10 +365,10 @@ bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::
   ),
   Crate(
     slug: 'semcache',
-    version: '0.1.1',
+    version: '0.2.0',
     tagline: 'The answer cache for inference nodes: the AnswerCache seam, a store trait, and an exact-match cache for deterministic requests.',
     about: [
-      'Before an inference node routes a prompt it asks the cache; afterwards it offers the finished answer. Requests and answers are <a href="/crates/agent">weirdnet-agent</a> 0.4 infer/2 types, and the store is a trait, so answers can live in memory, on disk or be shared between nodes.',
+      'Before an inference node routes a prompt it asks the cache; afterwards it offers the finished answer. Requests and answers are <a href="/crates/agent">weirdnet-agent</a> 0.5 infer/2 types, and the store is a trait, so answers can live in memory, on disk or be shared between nodes.',
     ],
     parts: [
       '<code>AnswerCache</code>: <code>get(model, request)</code> and <code>put(model, request, answer)</code>; <code>NoCache</code> caches nothing.',
@@ -378,7 +378,7 @@ bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::
     ],
     dependsOn: ['agent'],
     example: r'''# Cargo.toml
-weirdnet-semcache = "0.1"
+weirdnet-semcache = "0.2"
 
 // main.rs
 use weirdnet_semcache::{AnswerCache, CachedAnswer, ExactCache};
@@ -388,7 +388,7 @@ if let Some(hit) = cache.get("qwen3-8b", &request) {
     // replay hit.text and mark the answer as a cache hit (infer/2 Meta::cache_hit)
 }
 cache.put("qwen3-8b", &request, &CachedAnswer::from(&answer));''',
-    notes: 'Version 0.1.1 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.1.1">docs.rs</a>). 0.1.1 depends on weirdnet-agent <code>"0.4"</code> instead of <code>=0.4.0</code>, so it builds with agent 0.4.1; raw prompts (agent 0.4.1 <code>Input::Prompt</code>) are not cached. Extracted from Ymir’s <code>ymir-semcache</code>. Semantic matching (nearest stored prompt by embedding) and shared or persistent stores are not in 0.1.0.',
+    notes: 'Version 0.2.0 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.2.0">docs.rs</a>). 0.2.0 needs weirdnet-agent 0.5 (content parts), which is breaking because <code>AnswerCache</code> takes agent <code>Request</code>s: move to agent 0.5 with it. Requests with image or audio parts are keyed like text ones, so a different image is a different request. 0.1.1 depends on weirdnet-agent <code>"0.4"</code> instead of <code>=0.4.0</code>, so it builds with agent 0.4.1; raw prompts (agent 0.4.1 <code>Input::Prompt</code>) are not cached. Extracted from Ymir’s <code>ymir-semcache</code>.',
     origin: 'Ymir',
   ),
   Crate(
@@ -532,10 +532,10 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'sync',
-    version: '0.7.0',
+    version: '0.8.0',
     group: 'Network',
     status: Status.fresh,
-    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke, signed device grants and seedless service devices.',
+    tagline: 'Linked-device sync: hybrid logical clocks, an op log, LWW and OR-set merge, sealed pages, large and sealed records, a device roster with key rotation on revoke, signed device grants, seedless service devices, and majority-vote leases, plans and jobs.',
     about: [
       'Sync between one person’s devices over <code>weirdnet-net</code>: a hybrid logical clock, an append-only per-node op log, last-writer-wins registers, OR-set merge, tombstone garbage collection, pages sealed under a typed <code>SyncKey</code>, a device roster with self-issued node certificates and revocation, the <code>/weirdnet/sync/2</code> pull protocol, and (0.4.0) records too big for one page, split into hash-checked chunks, and sealed records that a device revoked before a write cannot open.',
       'Record types (bookmarks, history, settings, notes) and persistence stay in the application; <code>OpLog</code> is the in-memory log it snapshots.',
@@ -552,10 +552,12 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>Roster::check_caller</code>, <code>CallerCheck</code>: is the authenticated caller of an app call one of the user’s linked devices (0.4.0).',
       '<code>Identity</code>, <code>LinkSettings</code>, <code>Tick</code> (0.6.0): the on-disk identity store every app with linked devices needs (seed, node key and certificate, epoch keys, roster), parameterised on the app’s sync type, with <code>create</code>, <code>adopt</code> after a device link, <code>approve</code>, <code>revoke</code> and a <code>tick</code> that syncs with every linked device.',
       '<code>DeviceGrant</code>, <code>DeviceClass</code>, <code>Roster::roles_of</code>, <code>SyncState::new_service</code>, <code>LinkBundle</code>, <code>Identity::service_bundle</code> / <code>adopt_service</code>, <code>SecretStore</code> (0.7.0): device roles and seedless service devices.',
+      '<code>Voters</code>, <code>Voter</code>, <code>Leases</code>, <code>Elector</code>, <code>Term</code>, <code>FenceGuard</code>, <code>Identity::enable_voter</code> / <code>disable_voter</code> (0.8.0): majority-vote leases with fencing terms, for one device that decides.',
+      '<code>SyncState::publish_plan</code>, <code>current_plan</code>; <code>Jobs</code>, <code>JobSpec</code>, <code>Leases::claim_job</code> (0.8.0): signed plans ordered by term, and a job log with per-job claims.',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph (bookmarks and linked devices)'],
-    notes: 'Not audited. See <code>SECURITY.md</code> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>. 0.5.2 fixes a device linked on one device not reaching the others in one pass (wire-compatible). 0.6.0 adds <code>Identity</code>, extracted from Ymir’s <code>membership</code> and Bragi’s <code>identity</code> modules (same files on disk), and makes <code>SyncError</code> non-exhaustive with <code>Io</code> and <code>Identity</code> variants: breaking only for code that matches it exhaustively. 0.7.0 adds service devices linked without the seed and user-signed device grants (roles, class, sync types) in the roster; it is breaking (<code>SyncState::seed</code> is an <code>Option</code>, <code>Roster</code>, <code>KeyStatus</code>, <code>Envelope</code> and <code>SyncError</code> grow). Full 0.6 and 0.7 devices interoperate; a service device needs 0.7 peers. See Moving to 0.7.0 in the guide.',
+    notes: 'Not audited. See <a href="https://github.com/WeirdBrains/weirdnet-sync/blob/main/SECURITY.md">SECURITY.md</a> in the repository. 0.5.0 moves to <a href="/crates/net">weirdnet-net</a> 0.8 and protocol <code>/weirdnet/sync/2</code>, and does not talk to 0.4 nodes: upgrade every device together. Stored data is unchanged. 0.5.1 is additive: <code>SyncState</code> snapshots and <code>merge_back</code>, <code>pull_from_shared</code>, and <code>PullOutcome</code>; <code>take_keys_from</code> is deprecated in favour of <code>merge_back</code>. 0.5.2 fixes a device linked on one device not reaching the others in one pass (wire-compatible). 0.6.0 adds <code>Identity</code>, extracted from Ymir’s <code>membership</code> and Bragi’s <code>identity</code> modules (same files on disk), and makes <code>SyncError</code> non-exhaustive with <code>Io</code> and <code>Identity</code> variants: breaking only for code that matches it exhaustively. 0.7.0 adds service devices linked without the seed and user-signed device grants (roles, class, sync types) in the roster; it is breaking (<code>SyncState::seed</code> is an <code>Option</code>, <code>Roster</code>, <code>KeyStatus</code>, <code>Envelope</code> and <code>SyncError</code> grow). Full 0.6 and 0.7 devices interoperate; a service device needs 0.7 peers. 0.8.0 adds majority-vote leases with fencing terms, signed plans and a job log with per-job claims; it is breaking (<code>SyncState</code> has a <code>voter</code> field and <code>Message</code> has lease variants). Pulls between 0.7 and 0.8 devices are unchanged; every voter needs 0.8. Version 0.8.0 is on <a href="https://crates.io/crates/weirdnet-sync">crates.io</a> (<a href="https://docs.rs/weirdnet-sync/0.8.0">docs.rs</a>). See Moving to 0.7.0 and Moving to 0.8.0 in the guide.',
   ),
   Crate(
     slug: 'push',

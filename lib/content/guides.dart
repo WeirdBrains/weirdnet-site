@@ -850,7 +850,8 @@ refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
 <h3>Exact matches</h3>
 <p>Only deterministic requests are cached: temperature exactly 0, no tools, messages inline (not a context reference). The key is
 SHA-256 over the CBOR of a version, the model, the input, sampling, seed, response format and the raw flag, so two requests share
-an answer only when everything that could change it is equal. Only answers that finished with <code>stop</code> or
+an answer only when everything that could change it is equal. Image and audio parts (weirdnet-agent 0.5) are part of the
+input, so a different image is a different request. Only answers that finished with <code>stop</code> or
 <code>length</code> are kept; an unreadable stored entry is dropped. A hit should be marked with infer/2
 <code>Meta::cache_hit</code>, which <a href="/crates/openai">weirdnet-openai</a> shows as <code>x-weirdnet-cache: hit</code>.</p>
 <h3>Stores</h3>
@@ -1073,7 +1074,7 @@ be kept 30 days for the app's UI. <code>folder_cycle</code> catches moves that w
 </ul>
 <h3>The protocol</h3>
 <p><code>/weirdnet/sync/2</code> (<code>/1</code> before 0.5.0), length-prefixed CBOR, one request and reply at a time: <code>Hello</code> /
-<code>HelloOk</code> or <code>Refuse</code>, <code>Pull</code>, <code>Page</code>, <code>Ack</code>, <code>Roster</code>. A session is
+<code>HelloOk</code> or <code>Refuse</code>, <code>Pull</code>, <code>Page</code>, <code>Ack</code>, <code>Roster</code>, and (0.8.0) the lease messages. A session is
 accepted only from a node with an unrevoked <code>NodeCert</code> for the same user. Pulls ask for one type, and positions are
 kept per (node, type), so pulling one type never skips another. A server answers only up to what it holds completely, and
 after a pull the puller's clock moves past the newest op it holds. Payloads with records, cursors or certificates are
@@ -1210,6 +1211,34 @@ default).</li>
 <code>grants</code> field, <code>KeyStatus</code> a <code>RosterOnly</code> variant, <code>Envelope</code> a <code>clear</code> flag
 and <code>SyncError</code> a <code>NotPermitted</code> variant. Full devices on 0.6 and 0.7 keep syncing with each other (0.6
 ignores grants), but a service device needs 0.7 peers.</p>
+<h3>Leases, plans and jobs (0.8.0)</h3>
+<p>The op log is eventually consistent, so it can't give mutual exclusion. For "one device decides" (a scheduler) and "one
+device works on this job", 0.8.0 adds a majority-vote lease with fencing terms, and two kinds of records ordered by term
+instead of clock.</p>
+<ul>
+<li><b>Voters</b> are the devices the user granted a role (<code>Voters::Role("ymir.inference")</code>, or
+<code>Voters::Peers</code> for a fixed set) with an active certificate. A device votes once it has a <code>Voter</code>
+(<code>SyncState::set_voter</code>, or <code>Identity::enable_voter</code>, which keeps its terms on disk and writes each new
+term before granting it).</li>
+<li><b>Leases</b> (<code>Leases::acquire</code>, <code>renew</code>, <code>release</code>, or an <code>Elector</code> that keeps
+one in the background): a candidate asks every voter at once and holds the lease once a majority granted it, and stops before
+any voter's promise ends. A voter never grants a term twice and refuses takeovers for one lease duration after a restart. A
+live holder keeps the lease. Defaults: 15 s leases, renewed every 5 s, 1 % clock drift.</li>
+<li><b>Fencing</b>: every command that matters carries the lease's <code>Term</code>; resources keep a
+<code>FenceGuard</code> and refuse a term older than one they have seen, so a paused or partitioned ex-holder does no harm.</li>
+<li><b>Plans</b> (<code>publish_plan</code>, <code>current_plan</code>): one signed document per name; the newest by
+<code>(term, version)</code> from an active signer wins, whatever the clock says.</li>
+<li><b>Jobs</b> (<code>Jobs</code>, <code>JobSpec</code>, <code>Leases::claim_job</code>): claiming a job is acquiring its own
+lease, and that term fences the attempt. When a worker dies its claim lapses and another voter resumes from the last
+checkpoint.</li>
+<li>Lease messages travel on <code>/weirdnet/sync/2</code>, sealed under the head key, so only the user's admitted, unrevoked
+devices take part. Change the voter set one device at a time.</li>
+</ul>
+<h3>Moving to 0.8.0</h3>
+<p>Breaking: <code>SyncState</code> has a public <code>voter</code> field (struct literals add <code>voter: None</code>) and
+<code>Message</code> has <code>LeaseAsk</code>, <code>LeaseGrant</code>, <code>LeaseDeny</code> and <code>LeaseFree</code>
+variants (exhaustive matches need arms for them). Pulls between 0.7 and 0.8 devices are unchanged; every voting device needs
+0.8.</p>
 <h3>Checking callers on a serving node</h3>
 <p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
 transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's

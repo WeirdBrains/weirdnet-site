@@ -49,7 +49,7 @@ deps = { weirdnet-render = "0.1.0" }
 deps = { weirdnet-themes = "0.1.0" }
 
 [sync]
-deps = { weirdnet-sync = "0.7.0" }
+deps = { weirdnet-sync = "0.8.0" }
 
 [text]
 deps = { weirdnet-text = "0.1.0" }
