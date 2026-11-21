@@ -404,28 +404,67 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
   ),
   'mcp': Guide(
     brings: r'''
-<p>A Model Context Protocol tools server an app can mount on its own HTTP route, so AI clients can call the app's tools,
-plus the stdio bridge behind <code>&lt;app&gt;ctl mcp</code>. It is stateless and transport-agnostic: the app decodes the request,
-the crate speaks MCP. TAUR uses it from v1.10.0, and Salty Gull for its server and <code>saltyctl mcp</code>.</p>
+<p>A Model Context Protocol server for an app's tools and resources, so AI clients can call them, plus the stdio bridge behind
+<code>&lt;app&gt;ctl mcp</code>. It is stateless: the app decodes the request (or lets the crate's stdio or HTTP server do it),
+the crate speaks MCP. TAUR uses it from v1.10.0, Salty Gull for its server and <code>saltyctl mcp</code>, and Ymir and Bragi
+for their MCP servers.</p>
+<p>Since 0.6.0 tools can be async and return images and audio, input schemas can nest objects, enums, arrays and
+<code>anyOf</code>, apps can serve resources, and the crate brings the stdio loop and a streamable HTTP endpoint with bearer
+auth and DNS-rebinding protection. It answers both the <code>initialize</code>-based protocol versions (2024-11-05 to
+2025-11-25) and <a href="https://modelcontextprotocol.io/specification/2026-07-28">MCP 2026-07-28</a>, where every request
+carries its version in <code>_meta</code>.</p>
 <p>From 0.2.0 it also works the other way round: with the <code>client</code> feature an app talks to any MCP server, and with
 <code>agent</code> that server's tools become a tool source for <a href="/crates/agent">weirdnet-agent</a>, under the
 agent's approval policy.</p>
 ''',
     works: r'''
 <ol>
-<li>The app declares a static table of <code>ToolSpec</code>s: name, description, <code>Param</code>s (string, integer, number,
-boolean), whether a bearer token is needed, and the <code>readOnlyHint</code>, <code>destructiveHint</code> and
-<code>openWorldHint</code> annotations. Tools that need auth say "Requires a bearer token." in their description.</li>
-<li>Its HTTP route (stateless streamable HTTP, JSON responses) passes each decoded JSON-RPC 2.0 message or batch, and the
-caller's token, to <code>Server::handle</code>.</li>
-<li>The server answers <code>initialize</code> (negotiating 2025-06-18, 2025-03-26 or 2024-11-05), <code>ping</code>,
-<code>tools/list</code> and <code>tools/call</code>, and returns nothing for notifications.</li>
-<li><code>tools/call</code> reaches the app's <code>Tools::call</code>. Auth, permissions and hiding internal errors are the
-app's; a <code>ToolError</code> becomes an <code>isError</code> result. <code>args</code> has getters with uniform
+<li>The app declares a <code>const</code> table of <code>ToolSpec</code>s: name, description, <code>Param</code>s, whether a
+bearer token is needed, and the <code>readOnlyHint</code>, <code>destructiveHint</code> and <code>openWorldHint</code>
+annotations. Tools that need auth say "Requires a bearer token." in their description. A <code>ParamType</code> is a string,
+integer, number, boolean or string array, or since 0.6.0 <code>Any</code>, <code>Enum(&amp;[..])</code>,
+<code>Array(&amp;type)</code>, <code>Object(&amp;[params])</code>, <code>AnyOf(&amp;[types])</code> or a raw
+<code>Json</code> schema. <code>ToolSpec::check</code> reports empty or duplicate names, empty enums and bad raw schemas in a
+unit test.</li>
+<li>Each decoded JSON-RPC 2.0 message or batch, with the caller's token, goes to <code>Server::handle</code> (sync) or
+<code>Server::handle_async</code>.</li>
+<li>The server answers <code>initialize</code> (negotiating 2025-11-25, 2025-06-18, 2025-03-26 or 2024-11-05),
+<code>server/discover</code>, <code>ping</code>, <code>tools/list</code> and <code>tools/call</code>, and with resources
+<code>resources/list</code>, <code>resources/templates/list</code> and <code>resources/read</code>. It returns nothing for
+notifications.</li>
+<li>A request whose <code>_meta</code> carries <code>io.modelcontextprotocol/protocolVersion</code> is served as 2026-07-28: an
+unsupported version gets <code>-32022</code> with the supported list, missing client capabilities <code>-32602</code>, and
+results carry <code>resultType</code>, the server's identity and, for discovery, lists and reads, <code>ttlMs</code> and
+<code>cacheScope</code> from <code>Tools::cache_hint</code>.</li>
+<li><code>tools/call</code> reaches the app's <code>Tools::call</code> (sync, returns JSON shown as pretty text plus
+<code>structuredContent</code>) or <code>Tools::call_async</code> (returns a <code>CallToolResult</code> of
+<code>Content</code>: text, image, audio, resource links, embedded resources). Auth, permissions and hiding internal errors
+are the app's; a <code>ToolError</code> becomes an <code>isError</code> result. <code>args</code> has getters with uniform
 messages.</li>
+<li>Resources come from optional <code>Tools</code> methods: <code>has_resources</code>, <code>list_resources</code>,
+<code>resource_templates</code> and <code>read_resource</code>, which returns <code>ResourceError::NotFound</code> for an
+unknown URI.</li>
 </ol>
-<p><code>stdio::bridge</code> is the loop for a CLI: read JSON-RPC lines on stdin, forward them to the remote
-<code>/mcp</code>, write the replies.</p>
+<h3>Serving it (0.6.0)</h3>
+<ul>
+<li><b>stdio</b>: <code>stdio::serve_blocking(&amp;server, stdin, stdout)</code> for sync tools, or
+<code>stdio::serve(Arc::new(server), tokio::io::stdin(), tokio::io::stdout())</code> (feature <code>stdio-server</code>), which
+runs requests concurrently, stops a request on <code>notifications/cancelled</code>, and answers lines over 32 MiB with a parse
+error without buffering them.</li>
+<li><b>Streamable HTTP</b> (feature <code>http-server</code>): <code>Guard</code> checks, before the body is read, the
+<code>Host</code> and any <code>Origin</code> (<code>403</code>; <code>Guard::loopback</code> allows <code>localhost</code>,
+<code>127.0.0.1</code> and <code>[::1]</code>, and <code>allow_host</code> / <code>allow_origin</code> add public names), that
+the method is POST (<code>405</code>), and the bearer token (<code>401</code> with <code>WWW-Authenticate: Bearer</code>):
+<code>Auth::Token</code> compared in constant time, <code>Auth::Check</code>, or <code>Auth::PassThrough</code> for per-tool
+auth. 2026-07-28 requests must also send <code>MCP-Protocol-Version</code>, <code>Mcp-Method</code> and, for calls and reads,
+<code>Mcp-Name</code> matching the body (<code>400</code> with <code>-32020</code> otherwise). Notifications get
+<code>202</code>, unknown 2026-07-28 methods <code>404</code>, and no sessions are minted. <code>respond</code> works with any
+framework on the <code>http</code> crate.</li>
+<li><b>axum</b> (feature <code>axum</code>): <code>http::router("/mcp", Arc::new(server), Guard::loopback(Auth::token(secret)))</code>,
+or <code>http::route(..)</code> to mount it on an existing router.</li>
+</ul>
+<p><code>stdio::bridge</code> is the loop for a CLI that talks to a remote server: read JSON-RPC lines on stdin, forward them to
+the remote <code>/mcp</code>, write the replies.</p>
 <h3>The client (0.2.0, feature <code>client</code>)</h3>
 <ol>
 <li><code>Client::connect(transport, ClientOptions)</code> runs <code>initialize</code>; then <code>list_tools</code> follows
@@ -466,11 +505,31 @@ with <code>spawn_limited</code> if a server legitimately sends more.</li>
 (0.4.0 used <code>=0.3.0</code>). Move to <a href="/crates/agent">weirdnet-agent</a> 0.4.0 together with it. No source changes were
 needed in this crate.</li>
 </ul>
+<h3>Moving to 0.6.0</h3>
+<ul>
+<li><b>Sync apps</b>: no code changes. <code>Tools::call</code>, <code>Server::handle</code>, <code>ServerInfo</code> and
+<code>stdio::bridge</code> are unchanged, and the <code>initialize</code>-era output is byte for byte what 0.5 produced, except
+that a client asking for 2025-11-25 (or an unknown version) now gets 2025-11-25.</li>
+<li><b>Breaking</b>: <code>ParamType</code> has new variants and is <code>#[non_exhaustive]</code>, so a <code>match</code> on it
+outside the crate needs a <code>_</code> arm.</li>
+<li><b>Async tools</b>: implement <code>call_async</code> instead of driving async work with <code>block_on</code> inside
+<code>call</code>, and serve with <code>Server::handle_async</code>, <code>stdio::serve</code> or the HTTP route. Return
+<code>CallToolResult::json(&amp;v)</code> for the old output, or <code>CallToolResult::new(vec![..])</code> with
+<code>Content::from_data_url(..)</code> or <code>Content::audio_format(data, "wav")</code> for media.</li>
+<li><b>Hand-patched schemas</b>: replace post-processing of <code>tools/list</code> with <code>ParamType::Array</code>,
+<code>Object</code>, <code>Enum</code> and <code>AnyOf</code>.</li>
+<li><b>Own stdio loop or HTTP route</b>: replace with <code>stdio::serve</code> and <code>http::router</code>; keep refusing
+non-loopback bind addresses in the app, since <code>Guard</code> checks the <code>Host</code> and <code>Origin</code> headers,
+not the listen address. Rejections now carry JSON-RPC error bodies.</li>
+</ul>
 ''',
     features: [
+      '<code>stdio-server</code> (off by default, 0.6.0): <code>stdio::serve</code> and <code>serve_with</code>. Pulls in tokio.',
+      '<code>http-server</code> (off by default, 0.6.0): the <code>http</code> module (<code>Guard</code>, <code>Auth</code>, <code>respond</code>). Pulls in the <code>http</code> crate.',
+      '<code>axum</code> (off by default, 0.6.0, implies <code>http-server</code>): <code>http::route</code> and <code>http::router</code> for axum 0.8.',
       '<code>client</code> (off by default): the MCP client with stdio and streamable HTTP transports, timeouts and cancel, and <code>Secret</code>. Pulls in tokio and reqwest (rustls).',
-      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> (<code>=0.4.0</code> since 0.5.0; <code>=0.3.0</code> in 0.4.0, <code>=0.2.0</code> in 0.3.0).',
-      'Neither is needed for the server API, which is unchanged from 0.1.',
+      '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> 0.4 or 0.5.',
+      'None is needed for <code>Server</code>, <code>Tools</code>, content, resources, <code>stdio::serve_blocking</code> or <code>stdio::bridge</code>.',
     ],
   ),
   'agent': Guide(
