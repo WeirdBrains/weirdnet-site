@@ -11,7 +11,7 @@ class Example {
 const examples = <String, Example>{
   'net': Example(
     r'''[dependencies]
-weirdnet-net = "0.8.1"''',
+weirdnet-net = "0.8.2"''',
     r'''// Anna invites Ben: a signed offer as a link, Ben's answer, and one shared short code.
 use weirdnet_net::{Keypair, Profile, WEIRDNET, exchange::Token, profile::invite_scope};
 
@@ -60,7 +60,7 @@ async fn main() -> weirdnet_tls::Result<()> {
   ),
   'keys': Example(
     r'''[dependencies]
-weirdnet-keys = "0.1.1"''',
+weirdnet-keys = "0.1.2"''',
     r'''// A master key as 24 words, as 2-of-3 Shamir shards, and sealing with associated data.
 use weirdnet_keys::{Key32, Profile, open, seal, shards, words};
 
@@ -83,7 +83,7 @@ fn main() -> weirdnet_keys::Result<()> {
   ),
   'storage': Example(
     r'''[dependencies]
-weirdnet-storage = "0.1.0"''',
+weirdnet-storage = "0.1.1"''',
     r'''// Open an encrypted database with a raw key, migrate it, and write in a savepoint.
 use weirdnet_storage::{StorageError, migrate, open};
 
@@ -103,7 +103,7 @@ fn main() -> Result<(), StorageError> {
   ),
   'update': Example(
     r'''[dependencies]
-weirdnet-update = "0.2.1"
+weirdnet-update = "0.2.2"
 semver = "1"''',
     r'''// An org root (one root key, one release key), a signed manifest, and the client's check.
 use weirdnet_update::{
@@ -159,7 +159,7 @@ fn main() -> weirdnet_update::Result<()> {
   ),
   'accounts': Example(
     r'''[dependencies]
-weirdnet-accounts = "0.1.0"''',
+weirdnet-accounts = "0.1.1"''',
     r'''// Passwords, bearer tokens and user names, with the storage left to the app.
 use weirdnet_accounts::{names::NamePolicy, password, token};
 
@@ -259,7 +259,7 @@ weirdnet_plugin::plugin!(run);
   ),
   'code-spaces': Example(
     r'''[dependencies]
-weirdnet-code-spaces = "0.1.0"''',
+weirdnet-code-spaces = "0.1.1"''',
     r'''// The trust hash an owner approves, and (with a Rust toolchain) building and loading.
 use weirdnet_code_spaces::{self as cs, Lang, WEIRDNET};
 
@@ -280,7 +280,7 @@ fn main() -> cs::Result<()> {
   ),
   'pipelines': Example(
     r'''[dependencies]
-weirdnet-pipelines = "0.1.0"
+weirdnet-pipelines = "0.1.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"''',
     r'''// A three-node pipeline: numbers > double > print, with the meaning of each node in the app.
@@ -353,7 +353,7 @@ fn main() {
   ),
   'rules': Example(
     r'''[dependencies]
-weirdnet-rules = "0.1.0"''',
+weirdnet-rules = "0.1.1"''',
     r'''// The pieces a rule is made of: an `if` condition and a schedule. The engine runs them
 // through the app's `engine::Host` (rules, events, actions, run records).
 use weirdnet_rules::{schedule, syntax};
@@ -373,7 +373,7 @@ fn main() -> weirdnet_rules::Result<()> {
   ),
   'render': Example(
     r'''[dependencies]
-weirdnet-render = "0.1.0"''',
+weirdnet-render = "0.1.1"''',
     r'''// A table and a chart (described in JSON) drawn to PNG bytes.
 use weirdnet_render::{Limits, Table, json_png, table_png};
 
@@ -388,7 +388,7 @@ fn main() {
   ),
   'themes': Example(
     r'''[dependencies]
-weirdnet-themes = "0.1.0"''',
+weirdnet-themes = "0.1.1"''',
     r'''// A built-in theme's dark background as #rrggbb.
 fn main() {
     let t = weirdnet_themes::builtin("nord").unwrap();
@@ -421,7 +421,7 @@ fn main() {
   ),
   'text': Example(
     r'''[dependencies]
-weirdnet-text = "0.1.0"''',
+weirdnet-text = "0.1.1"''',
     r'''// Editing rules for a text field, tested without any UI toolkit.
 use weirdnet_text::TextField;
 
@@ -449,7 +449,7 @@ fn main() {
   ),
   'access': Example(
     r'''[dependencies]
-weirdnet-access = "0.1.1"''',
+weirdnet-access = "0.1.2"''',
     r'''// A public, members-only resource: a member may write (sealed), a stranger must join first.
 use weirdnet_access::*;
 
@@ -472,7 +472,7 @@ fn main() -> Result<()> {
   ),
   'push': Example(
     r'''[dependencies]
-weirdnet-push = "0.1.0"''',
+weirdnet-push = "0.1.1"''',
     r'''// A sender seals a 96-byte wake for a device; only the device can open it, once.
 use std::time::Duration;
 use weirdnet_push::{PushKey, Reason, ReplayGuard, WakeHandle, wake};
@@ -492,7 +492,7 @@ fn main() -> weirdnet_push::Result<()> {
   ),
   'schemes': Example(
     r'''[dependencies]
-weirdnet-schemes = "0.1.0"''',
+weirdnet-schemes = "0.1.1"''',
     r'''// First-party scheme names, the reserved prefix, and parsing an invite link.
 use weirdnet_schemes::{Action, Link, names};
 
@@ -507,9 +507,9 @@ fn main() -> weirdnet_schemes::Result<()> {
   ),
   'device-link': Example(
     r'''[dependencies]
-weirdnet-device-link = "0.4.0"
-weirdnet-keys = "0.1.0"
-weirdnet-net = "0.8.0"''',
+weirdnet-device-link = "0.4.1"
+weirdnet-keys = "0.1.2"
+weirdnet-net = "0.8.2"''',
     r'''// Both sides of a device link without the network (HostNode and Pairing carry it over
 // weirdnet-net): offer, matching 6-digit codes, confirm, then the sealed transfer.
 use weirdnet_device_link::{Host, HostStatus, LinkReply, Sender, decode_link};
@@ -544,7 +544,7 @@ fn main() {
   ),
   'ext': Example(
     r'''[dependencies]
-weirdnet-ext = "0.1.0"''',
+weirdnet-ext = "0.1.1"''',
     r'''// What the user granted an extension, checked the way the host's broker checks each call.
 use weirdnet_ext::{Capability, Grants};
 
@@ -559,7 +559,7 @@ fn main() {
   ),
   'ext-sdk': Example(
     r'''[dependencies]
-weirdnet-ext-sdk = "0.1.0"
+weirdnet-ext-sdk = "0.1.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// An extension: connect to the host that started it, log, and handle the app's events.
 use weirdnet_ext_sdk::{Event, Extension, Level};
@@ -585,7 +585,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   ),
   'ext-proto': Example(
     r'''[dependencies]
-weirdnet-ext-proto = "0.1.0"''',
+weirdnet-ext-proto = "0.1.1"''',
     r'''// The contract's constants: how a host hands an extension its socket and one-time token.
 use weirdnet_ext_proto::{API_VERSION, ENV_SOCKET, ENV_TOKEN, v1};
 

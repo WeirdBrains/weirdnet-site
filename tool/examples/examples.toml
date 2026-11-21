@@ -4,23 +4,23 @@
 # Regenerate the Dart and the check workspace: python3 tool/gen_examples.py --harness DIR
 
 [net]
-deps = { weirdnet-net = "0.8.1" }
+deps = { weirdnet-net = "0.8.2" }
 
 [tls]
 deps = { weirdnet-tls = "0.3.0", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
 run = false
 
 [keys]
-deps = { weirdnet-keys = "0.1.1" }
+deps = { weirdnet-keys = "0.1.2" }
 
 [storage]
-deps = { weirdnet-storage = "0.1.0" }
+deps = { weirdnet-storage = "0.1.1" }
 
 [update]
-deps = { weirdnet-update = "0.2.1", semver = "1" }
+deps = { weirdnet-update = "0.2.2", semver = "1" }
 
 [accounts]
-deps = { weirdnet-accounts = "0.1.0" }
+deps = { weirdnet-accounts = "0.1.1" }
 
 [mcp]
 deps = { weirdnet-mcp = "0.5.3", serde_json = "1" }
@@ -34,44 +34,44 @@ lib = true
 run = false
 
 [code-spaces]
-deps = { weirdnet-code-spaces = "0.1.0" }
+deps = { weirdnet-code-spaces = "0.1.1" }
 
 [pipelines]
-deps = { weirdnet-pipelines = "0.1.0", serde = { version = "1", features = ["derive"] }, serde_json = "1" }
+deps = { weirdnet-pipelines = "0.1.1", serde = { version = "1", features = ["derive"] }, serde_json = "1" }
 
 [rules]
-deps = { weirdnet-rules = "0.1.0" }
+deps = { weirdnet-rules = "0.1.1" }
 
 [render]
-deps = { weirdnet-render = "0.1.0" }
+deps = { weirdnet-render = "0.1.1" }
 
 [themes]
-deps = { weirdnet-themes = "0.1.0" }
+deps = { weirdnet-themes = "0.1.1" }
 
 [sync]
 deps = { weirdnet-sync = "0.8.0" }
 
 [text]
-deps = { weirdnet-text = "0.1.0" }
+deps = { weirdnet-text = "0.1.1" }
 
 [access]
-deps = { weirdnet-access = "0.1.1" }
+deps = { weirdnet-access = "0.1.2" }
 
 [push]
-deps = { weirdnet-push = "0.1.0" }
+deps = { weirdnet-push = "0.1.1" }
 
 [schemes]
-deps = { weirdnet-schemes = "0.1.0" }
+deps = { weirdnet-schemes = "0.1.1" }
 
 [device-link]
-deps = { weirdnet-device-link = "0.4.0", weirdnet-keys = "0.1.0", weirdnet-net = "0.8.0" }
+deps = { weirdnet-device-link = "0.4.1", weirdnet-keys = "0.1.2", weirdnet-net = "0.8.2" }
 
 [ext]
-deps = { weirdnet-ext = "0.1.0" }
+deps = { weirdnet-ext = "0.1.1" }
 
 [ext-sdk]
-deps = { weirdnet-ext-sdk = "0.1.0", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
+deps = { weirdnet-ext-sdk = "0.1.1", tokio = { version = "1", features = ["macros", "rt-multi-thread"] } }
 run = false
 
 [ext-proto]
-deps = { weirdnet-ext-proto = "0.1.0" }
+deps = { weirdnet-ext-proto = "0.1.1" }

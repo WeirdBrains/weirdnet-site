@@ -64,7 +64,7 @@ class Crate {
 const crates = <Crate>[
   Crate(
     slug: 'net',
-    version: '0.8.1',
+    version: '0.8.2',
     group: 'Network',
     tagline: 'The libp2p node, streams, app calls, key exchanges, invitations, sealed messaging, identities and certificates.',
     about: [
@@ -89,7 +89,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'relay',
-    version: '0.6.0',
+    version: '0.6.1',
     binary: true,
     group: 'Network',
     tagline: 'A relay and bootstrap node you can run: circuit relay v2, Kademlia server, an info page.',
@@ -131,7 +131,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'keys',
-    version: '0.1.1',
+    version: '0.1.2',
     group: 'Keys and storage',
     tagline: '256-bit keys, BIP39 words, Shamir shards, KDFs, sealing, X25519 and an envelope keyring.',
     about: [
@@ -151,7 +151,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'storage',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Keys and storage',
     tagline: 'SQLCipher databases opened with a caller-supplied raw key, migrations, savepoints, sync change log.',
     about: [
@@ -170,7 +170,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'update',
-    version: '0.2.1',
+    version: '0.2.2',
     group: 'Building blocks',
     tagline: 'Signed update metadata: org roots, manifests, freshness, verification, targeting, rollouts, consent, boot health.',
     about: [
@@ -190,7 +190,7 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'accounts',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Identity and access',
     tagline: 'Argon2id passwords, hashed tokens, name rules, per-client rate limits, org-scoped API keys.',
     about: [
@@ -397,7 +397,7 @@ cache.put("qwen3-8b", &request, &CachedAnswer::from(&answer));''',
   ),
   Crate(
     slug: 'alerts',
-    version: '0.2.0',
+    version: '0.2.1',
     tagline: 'Host alerts for nodes: weirdnet-rules over observations, a default rule pack, probes, and SMTP, webhook and push-wake sinks.',
     about: [
       'An application feeds the alerter observations (an engine crashed, the default route moved to Wi-Fi, a disk is nearly full, a GPU is hot); <a href="/crates/rules">weirdnet-rules</a> specs turn them into failing, recovered and one-off alerts, deduped per key, and sinks deliver them.',
@@ -442,7 +442,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'code-spaces',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Extensions and plugins',
     tagline: 'Math, Polars, Rust and typed Python sources compiled into plugins against the plugin SDK.',
     about: [
@@ -460,7 +460,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'pipelines',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'DAGs of application-defined sources, steps and sinks with validation, ordering and a runner.',
     about: [
       'Pipelines as graphs of nodes whose meaning belongs to the application. The runner reaches the application only through <code>Host</code>; lookups, permissions, approvals and storage stay in the application.',
@@ -475,7 +475,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'rules',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'If-this-then-that rule specs, conditions, schedules and a loop-protected engine.',
     about: [
       'If-this-then-that over an event history, without knowing what the events or the actions are. The crate does no I/O and decides no permissions.',
@@ -490,7 +490,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'render',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'Tables and line charts (or JSON describing them) drawn to PNG with input checks and size limits.',
     about: [
       'Structured data drawn to PNG. Inputs are plain data, not any application’s types, and every entry point checks its input against <code>Limits</code> instead of drawing something unbounded.',
@@ -504,7 +504,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'themes',
-    version: '0.1.0',
+    version: '0.1.1',
     tagline: 'A TOML theme format: dark and light variants, semantic colour roles, contrast checks.',
     about: [
       'A theme format for terminal and GUI front ends: one TOML file per theme with <code>[meta]</code>, <code>[dark]</code> and <code>[light]</code> tables, 21 semantic colour roles, seven built-in palettes, WCAG contrast checks and lightness-inverted variants.',
@@ -518,7 +518,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'text',
-    version: '0.1.0',
+    version: '0.1.1',
     status: Status.fresh,
     tagline: 'Toolkit-independent editing rules for text fields: grapheme-aware caret and selection, inline completions, input-method composition, UTF-16 offsets.',
     about: [
@@ -565,7 +565,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'push',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Network',
     tagline: 'Push wake-up: 96-byte sealed wake payloads, rotating wake handles, and a self-hostable server for APNs, FCM and relays.',
     about: [
@@ -583,7 +583,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'device-link',
-    version: '0.4.0',
+    version: '0.4.1',
     group: 'Identity and access',
     tagline: 'Move a Weirdnet identity to another device over a QR offer, a 6-digit code check and a sealed transfer.',
     about: [
@@ -606,7 +606,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'access',
-    version: '0.1.1',
+    version: '0.1.2',
     group: 'Identity and access',
     tagline: 'Access policy: Private/Public and Open/Gated, a shared permission core apps extend, ranked roles, and the enforcement order.',
     about: [
@@ -623,7 +623,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'schemes',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Identity and access',
     tagline: 'The URL scheme registry: signed prefixes and schemes, the canonical list, a resolver, and OS handler registration.',
     about: [
@@ -642,7 +642,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
     slug: 'weirdnetctl',
     crateName: 'weirdnetctl',
     docsRs: false,
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Identity and access',
     binary: true,
     tagline: 'Holds and rotates Weirdnet signing keys, signs scheme records, and builds the signed canonical list.',
@@ -659,7 +659,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   ),
   Crate(
     slug: 'ext',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Extensions and plugins',
     tagline: 'The extension host: signed packages, install and update rules, capability grants, a per-OS sandbox and a supervisor.',
     about: [
@@ -679,7 +679,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   Crate(
     slug: 'ext-proto',
     repo: 'weirdnet-ext',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Extensions and plugins',
     tagline: 'weirdnet.ext.v1: the protobuf contract between an extension host and its extensions, with tonic stubs.',
     about: [
@@ -694,7 +694,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
   Crate(
     slug: 'ext-sdk',
     repo: 'weirdnet-ext',
-    version: '0.1.0',
+    version: '0.1.1',
     group: 'Extensions and plugins',
     tagline: 'Write Weirdnet extensions: connect to the host, call app services, log, report health, handle events.',
     about: [
