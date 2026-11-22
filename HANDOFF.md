@@ -2,6 +2,16 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-22: per-request answer cache pages merged
+
+What changed: merged `cache-mode` into main ([`d19eb0e`](https://github.com/WeirdBrains/weirdnet-site/commit/d19eb0ea87b0918a84df990cff3aa5db789cb798)) after [weirdnet-agent 0.5.1](https://crates.io/crates/weirdnet-agent/0.5.1), [weirdnet-semcache 0.2.1](https://crates.io/crates/weirdnet-semcache/0.2.1) and [weirdnet-openai 0.2.1](https://crates.io/crates/weirdnet-openai/0.2.1) were published and built on docs.rs ([agent](https://docs.rs/weirdnet-agent/0.5.1), [semcache](https://docs.rs/weirdnet-semcache/0.2.1), [openai](https://docs.rs/weirdnet-openai/0.2.1)).
+
+Checks run: `python3 tool/check_crates.py --strict` (30 of 30), `dart analyze` (clean), `jaspr build` (ok).
+
+Not tested: no example was rebuilt; the guide's snippets are prose only.
+
+What's left and next: confirm the Pages deploy and the live pages; nothing else for these releases.
+
 ## 2026-11-22: per-request answer cache (branch `cache-mode`, not merged)
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`3fcf007`](https://github.com/WeirdBrains/weirdnet-site/commit/3fcf007678bf131c2c328f1d4cdac3f46c9edbc9)): the [weirdnet-agent](https://net.weirdbrains.com/crates/agent) page shows 0.5.1 with `CacheMode`, `Request::cache`, `Request::with_cache` and `Request::with_wait_for_model`, and its guide has an "Answer cache per request (0.5.1)" section. The [weirdnet-semcache](https://net.weirdbrains.com/crates/semcache) page shows 0.2.1 (`may_read`, `may_store`, `get_rev` / `put_rev`, `exact_key_rev`; the example uses the revision methods) with a "Bypass, refresh and revisions (0.2.1)" guide section. The [weirdnet-openai](https://net.weirdbrains.com/crates/openai) page shows 0.2.1 with the `cache` parameter and the `x-weirdnet-cache` request header.
