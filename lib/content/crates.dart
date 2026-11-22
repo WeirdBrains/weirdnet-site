@@ -609,6 +609,7 @@ alerter.observe(&Observation::new("disk", serde_json::json!({"path": "/", "free_
       '<code>relays</code>: <code>RelayProbe</code>, <code>RelayState</code>, <code>relay_states</code>: real relay state for a settings page.',
       '<code>wire</code>: <code>LinkRequest</code>, <code>LinkReply</code>, <code>Transfer</code>, <code>Credential</code> (CBOR).',
       '<code>Pairing::send_credential</code>, <code>take_any</code>, <code>Received</code> (0.4.0): service links that carry a certificate and a sync bundle, never the seed.',
+      '<code>offer_scheme</code>, <code>is_offer</code>, <code>known_relays</code>, <code>parse_relays</code>, <code>relays_from_env</code>, <code>link_node_config</code> (0.3.3): pair with several apps’ codes, and set up a link node’s relays and configuration.',
     ],
     dependsOn: ['net', 'keys'],
     usedBy: ['Morph'],
