@@ -2,6 +2,16 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-22: weirdnet-themes 0.2.0, weirdnet-mcp 0.6.1
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/themes.rs`, `tool/examples/mcp.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`): the [weirdnet-themes](https://net.weirdbrains.com/crates/themes) page shows 0.2.0 ([docs.rs](https://docs.rs/weirdnet-themes/0.2.0), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-themes/blob/main/CHANGELOG.md)): the Bragi built-in, optional roles and their derived colours, NO_COLOR and `ColorDepth::None`, the terminal's own background in 16 colours, `UserDir` and the editor/switcher helpers, opt-in light/dark probes, and a "Moving to 0.2.0" section. The [weirdnet-mcp](https://net.weirdbrains.com/crates/mcp) page shows 0.6.1 ([docs.rs](https://docs.rs/weirdnet-mcp/0.6.1), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-mcp/blob/main/CHANGELOG.md)) with prompts and a "Moving to 0.6.1" section. Both examples were rewritten for the new APIs.
+
+Checks run: `python3 tool/check_crates.py --strict`, `dart analyze`, `jaspr build`; the themes and mcp examples were built and run against the published crates.
+
+Not tested: the other examples were not rebuilt.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-21: weirdnet-mcp 0.6.0
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/mcp.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`): the [weirdnet-mcp](https://net.weirdbrains.com/crates/mcp) page shows 0.6.0 ([docs.rs](https://docs.rs/weirdnet-mcp/0.6.0), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-mcp/blob/main/CHANGELOG.md)) with [MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) support alongside the older protocol versions: `Tools::call_async`, object, enum, array and anyOf parameter schemas, resources, image and audio tool results, the `stdio-server` serve loop, and the `http-server`/`axum` route helper with bearer auth and Host/Origin checks. The guide has a "Serving it (0.6.0)" section and a "Moving to 0.6.0" migration section (`ParamType` is `#[non_exhaustive]`; `match` arms need a wildcard). The notes say 0.1.0 and 0.2.0 to 0.5.1 are yanked; 0.1.1 is live. The weirdnet-agent page no longer pins a weirdnet-mcp version in prose. The example now uses an enum parameter and a `call_async` image tool.

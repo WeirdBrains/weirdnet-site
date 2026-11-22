@@ -408,6 +408,7 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
 <code>&lt;app&gt;ctl mcp</code>. It is stateless: the app decodes the request (or lets the crate's stdio or HTTP server do it),
 the crate speaks MCP. TAUR uses it from v1.10.0, Salty Gull for its server and <code>saltyctl mcp</code>, and Ymir and Bragi
 for their MCP servers.</p>
+<p>Since 0.6.1 apps can also offer prompts: templates the user picks, such as slash commands.</p>
 <p>Since 0.6.0 tools can be async and return images and audio, input schemas can nest objects, enums, arrays and
 <code>anyOf</code>, apps can serve resources, and the crate brings the stdio loop and a streamable HTTP endpoint with bearer
 auth and DNS-rebinding protection. It answers both the <code>initialize</code>-based protocol versions (2024-11-05 to
@@ -444,6 +445,15 @@ messages.</li>
 <li>Resources come from optional <code>Tools</code> methods: <code>has_resources</code>, <code>list_resources</code>,
 <code>resource_templates</code> and <code>read_resource</code>, which returns <code>ResourceError::NotFound</code> for an
 unknown URI.</li>
+<li><a href="https://modelcontextprotocol.io/specification/2026-07-28/server/prompts">Prompts</a> (0.6.1) come from
+<code>Tools::prompts</code>, a <code>const</code> table of <code>PromptSpec</code>s (name, optional title and description,
+<code>PromptArg::required</code> / <code>optional</code> arguments; <code>PromptSpec::check</code> finds empty or duplicate names),
+and <code>Tools::get_prompt</code>, which returns a <code>GetPromptResult</code>: an optional description and user or assistant
+<code>PromptMessage</code>s holding any <code>Content</code>. The <code>prompts</code> capability appears in
+<code>initialize</code> and <code>server/discover</code> only when the table is not empty. The server answers a missing or
+unknown name and missing or non-string arguments with <code>-32602</code> before the app runs; <code>PromptError::NotFound</code>
+hides a prompt from a caller, <code>InvalidArguments</code> gives <code>-32602</code> and <code>Failed</code>
+<code>-32603</code>. 2026-07-28 <code>prompts/list</code> results carry the caching hints.</li>
 </ol>
 <h3>Serving it (0.6.0)</h3>
 <ul>
@@ -456,7 +466,7 @@ error without buffering them.</li>
 <code>127.0.0.1</code> and <code>[::1]</code>, and <code>allow_host</code> / <code>allow_origin</code> add public names), that
 the method is POST (<code>405</code>), and the bearer token (<code>401</code> with <code>WWW-Authenticate: Bearer</code>):
 <code>Auth::Token</code> compared in constant time, <code>Auth::Check</code>, or <code>Auth::PassThrough</code> for per-tool
-auth. 2026-07-28 requests must also send <code>MCP-Protocol-Version</code>, <code>Mcp-Method</code> and, for calls and reads,
+auth. 2026-07-28 requests must also send <code>MCP-Protocol-Version</code>, <code>Mcp-Method</code> and, for tool calls, resource reads and <code>prompts/get</code>,
 <code>Mcp-Name</code> matching the body (<code>400</code> with <code>-32020</code> otherwise). Notifications get
 <code>202</code>, unknown 2026-07-28 methods <code>404</code>, and no sessions are minted. <code>respond</code> works with any
 framework on the <code>http</code> crate.</li>
@@ -505,6 +515,10 @@ with <code>spawn_limited</code> if a server legitimately sends more.</li>
 (0.4.0 used <code>=0.3.0</code>). Move to <a href="/crates/agent">weirdnet-agent</a> 0.4.0 together with it. No source changes were
 needed in this crate.</li>
 </ul>
+<h3>Moving to 0.6.1</h3>
+<p>Nothing to change: servers without prompts answer exactly as in 0.6.0, and the new <code>Tools</code> methods have defaults.
+To offer prompts, implement <code>prompts</code> and <code>get_prompt</code>. <code>Content</code> now converts from
+<code>&amp;str</code> and <code>String</code>.</p>
 <h3>Moving to 0.6.0</h3>
 <ul>
 <li><b>Sync apps</b>: no code changes. <code>Tools::call</code>, <code>Server::handle</code>, <code>ServerInfo</code> and
@@ -529,7 +543,7 @@ not the listen address. Rejections now carry JSON-RPC error bodies.</li>
       '<code>axum</code> (off by default, 0.6.0, implies <code>http-server</code>): <code>http::route</code> and <code>http::router</code> for axum 0.8.',
       '<code>client</code> (off by default): the MCP client with stdio and streamable HTTP transports, timeouts and cancel, and <code>Secret</code>. Pulls in tokio and reqwest (rustls).',
       '<code>agent</code> (off by default, implies <code>client</code>): <code>agent::McpSource</code> for <a href="/crates/agent">weirdnet-agent</a> 0.4 or 0.5.',
-      'None is needed for <code>Server</code>, <code>Tools</code>, content, resources, <code>stdio::serve_blocking</code> or <code>stdio::bridge</code>.',
+      'None is needed for <code>Server</code>, <code>Tools</code>, content, resources, prompts, <code>stdio::serve_blocking</code> or <code>stdio::bridge</code>.',
     ],
   ),
   'agent': Guide(
@@ -1091,20 +1105,59 @@ dark and light variants, semantic roles instead of raw colours, and contrast che
 ''',
     works: r'''
 <ul>
-<li>A theme file has <code>[meta]</code>, <code>[dark]</code> and <code>[light]</code> tables and 21 semantic colour roles, each a
-palette name or <code>#rrggbb</code>. Seven palettes are built in (<code>builtin("nord")</code> is one).</li>
+<li>A theme file has <code>[meta]</code>, <code>[dark]</code> and <code>[light]</code> tables and 21 required semantic colour
+roles (<code>ROLES</code>), each a palette name or <code>#rrggbb</code>. Eight palettes are built in: <code>tokyo-night</code> (the
+default), <code>catppuccin</code>, <code>gruvbox</code>, <code>dracula</code>, <code>nord</code>, <code>one</code>,
+<code>solarized</code> and, from 0.2.0, <code>bragi</code>.</li>
+<li><b>Optional roles (0.2.0)</b>: <code>surface</code>, <code>code_bg</code>, <code>diff_add_bg</code>,
+<code>diff_remove_bg</code>, <code>link</code> and <code>dim</code> (<code>OPTIONAL_ROLES</code>). <code>VariantDef::color(role)</code>
+derives the ones a theme leaves out: the surface is <code>bg</code> mixed 5% toward <code>fg</code>, code blocks use the surface,
+diff backgrounds mix <code>bg</code> 16% toward <code>up</code> or <code>down</code>, links use <code>info</code>, and dim text is
+<code>muted</code> mixed 35% toward <code>bg</code>. Theme files without them load unchanged; a role that is set must resolve, and
+unknown roles are refused. <code>VariantDef::resolve(role)</code> is the raw value, and <code>mix</code> blends two colours.</li>
 <li>WCAG contrast checks, and lightness-inverted variants generated from one side.</li>
 <li>Storage is the app's: <code>load</code>, <code>save</code>, <code>list</code>, <code>materialize</code> and
-<code>reset</code> work through the <code>ThemeDirs</code> trait.</li>
-<li><code>Mode::{Light, Dark, System}</code>; <code>resolve_variant</code> asks the terminal background (OSC 11), then the OS
-preference, else dark.</li>
-<li><code>VariantDef::resolve(role)</code> gives RGB and <code>to_hex</code> gives <code>#rrggbb</code> for Dart or web front
-ends; errors are <code>ThemeError</code>.</li>
+<code>reset</code> work through the <code>ThemeDirs</code> trait. From 0.2.0, <code>UserDir::for_app("myapp")</code> is the
+per-user folder <code>&lt;config dir&gt;/myapp/themes</code>, with the config dir from <a href="https://crates.io/crates/dirs">dirs</a>
+(<code>$XDG_CONFIG_HOME</code> or <code>~/.config</code> on Linux, <code>~/Library/Application Support</code> on macOS,
+<code>%APPDATA%</code> on Windows). It writes atomically, with private permissions on Unix. Theme names are checked before any
+file is touched.</li>
+<li><b>Editors and switchers (0.2.0)</b>: <code>entries</code> lists every theme with its display name, whether it is built in,
+whether the user has a file for it and any load error; <code>exists</code>, <code>is_builtin</code>, <code>unique_name</code>,
+<code>duplicate</code>, <code>rename</code> (user themes, assets included), <code>delete</code> (a user theme, or the user's edited
+copy of a built-in, which brings the shipped one back), <code>import</code>, <code>export</code>, <code>cycle</code> for a
+next/previous key, and <code>VariantDef::set_role</code> / <code>clear_role</code>. A user file with a built-in's name overrides
+it.</li>
+<li><code>Mode::{Light, Dark, System}</code>. From 0.2.0, <code>resolve_variant</code> probes nothing: <code>System</code> reads
+the <code>COLORFGBG</code> hint, else dark. <code>resolve_variant_with(mode, detect::Probe::ALL)</code> also asks the terminal
+background (OSC 11) and the OS preference (the freedesktop portal, <code>defaults</code> or <code>reg</code>);
+<code>Probe::NONE.os(true)</code> picks one.</li>
+<li><code>ColorDepth::detect</code> honours <a href="https://no-color.org">NO_COLOR</a> and <code>TERM=dumb</code>
+(<code>ColorDepth::None</code>, 0.2.0), then <code>COLORTERM</code> and <code>TERM</code>. <code>ColorDepth::detect_with</code>
+takes the app's own setting (<code>truecolor</code>, <code>256</code>, <code>16</code>, <code>none</code>), which wins over
+NO_COLOR.</li>
+<li><code>to_hex</code> gives <code>#rrggbb</code> for Dart or web front ends; errors are <code>ThemeError</code>.</li>
+</ul>
+<h3>Moving to 0.2.0</h3>
+<ul>
+<li><b><code>Mode::System</code></b>: it no longer asks the terminal or the OS. To keep the old behaviour, call
+<code>resolve_variant_with(mode, detect::Probe::ALL)</code> and enable the <code>terminal-background</code> feature, which is no
+longer on by default. <code>detect::system_variant</code> now takes a <code>Probe</code>.</li>
+<li><b><code>ColorDepth</code></b> has a <code>None</code> variant: a <code>match</code> on it needs an arm, and
+<code>to_color</code> gives <code>Color::Reset</code> for it.</li>
+<li><b>ratatui <code>Theme</code></b>: <code>#[non_exhaustive]</code>, with <code>depth</code>, <code>surface</code>,
+<code>code_bg</code>, <code>diff_add_bg</code>, <code>diff_remove_bg</code>, <code>link</code> and <code>dim</code>; build it with
+<code>Theme::from_variant_depth</code>. In 16 colours <code>bg</code>, <code>fg</code> and the background roles are now
+<code>Color::Reset</code> (the terminal's own) rather than the nearest ANSI colour; <code>to_bg_color</code> does the same for
+your own colours.</li>
+<li><b>Apps with their own workarounds</b> (NO_COLOR, a depth override, derived surfaces, link and diff colours, a themes folder):
+replace them with <code>ColorDepth::detect_with</code>, <code>VariantDef::color</code> and <code>UserDir</code>.</li>
+<li><code>materialize</code> now also writes the <code>bragi</code> theme folder.</li>
 </ul>
 ''',
     features: [
-      '<code>terminal-background</code> (default): <code>Mode::System</code> asks the terminal for its background first.',
-      '<code>ratatui</code>: <code>Theme::from_variant</code> and <code>to_color</code> give ratatui colours by <code>ColorDepth</code>.',
+      '<code>terminal-background</code> (off by default from 0.2.0): lets <code>detect::Probe::terminal</code> ask the terminal for its background (OSC 11).',
+      '<code>ratatui</code>: <code>Theme::from_variant_depth</code>, <code>to_color</code> and <code>to_bg_color</code> give ratatui colours by <code>ColorDepth</code>.',
     ],
   ),
   'text': Guide(
