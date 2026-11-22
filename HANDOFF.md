@@ -2,6 +2,16 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-22: per-request answer cache (branch `cache-mode`, not merged)
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`3fcf007`](https://github.com/WeirdBrains/weirdnet-site/commit/3fcf007678bf131c2c328f1d4cdac3f46c9edbc9)): the [weirdnet-agent](https://net.weirdbrains.com/crates/agent) page shows 0.5.1 with `CacheMode`, `Request::cache`, `Request::with_cache` and `Request::with_wait_for_model`, and its guide has an "Answer cache per request (0.5.1)" section. The [weirdnet-semcache](https://net.weirdbrains.com/crates/semcache) page shows 0.2.1 (`may_read`, `may_store`, `get_rev` / `put_rev`, `exact_key_rev`; the example uses the revision methods) with a "Bypass, refresh and revisions (0.2.1)" guide section. The [weirdnet-openai](https://net.weirdbrains.com/crates/openai) page shows 0.2.1 with the `cache` parameter and the `x-weirdnet-cache` request header.
+
+Checks run: `dart analyze` (clean), `jaspr build` (ok), `python3 tool/check_crates.py` (30 of 30). `--strict` fails only because the three versions aren't on crates.io yet.
+
+Not tested: no example was rebuilt; the guide's snippets are prose only.
+
+What's left and next: merge to main only after weirdnet-agent 0.5.1, weirdnet-semcache 0.2.1 and weirdnet-openai 0.2.1 are on crates.io and docs.rs, then re-run `check_crates.py --strict` and check the live pages.
+
 ## 2026-11-22: weirdnet-device-link 0.3.3 additions
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`4ae6b7c`](https://github.com/WeirdBrains/weirdnet-site/commit/4ae6b7c9e9c437825ee33aee4c8ec0608fe54c41)): the [weirdnet-device-link](https://net.weirdbrains.com/crates/device-link) page lists the 0.3.3 additions and its guide has a "0.3.3" section ([docs.rs](https://docs.rs/weirdnet-device-link/0.3.3)): `offer_scheme`, `is_offer`, `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`. The page version stays 0.4.1, the newest release.
