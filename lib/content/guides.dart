@@ -1548,6 +1548,20 @@ secrets.</li>
 <p>0.3.1 depends on <code>weirdnet-net = "0.8"</code> and <code>weirdnet-keys = "0.1"</code> with caret ranges, so it shares a tree
 with weirdnet-keys 0.1.1 and net 0.8.1. 0.4.0 adds service links (above) and raises link requests to 1 MiB; the rest of the API
 and the full transfer are unchanged.</p>
+<h3>0.3.3</h3>
+<p><a href="https://docs.rs/weirdnet-device-link/0.3.3">0.3.3</a> adds what Morph had built on top of the crate, without
+changing anything already there:</p>
+<ul>
+<li><code>offer_scheme(schemes, text)</code>: which of several schemes a new device's code is on (its
+<code>&lt;scheme&gt;link/</code> prefix in any case) and the code normalized for <code>decode_link</code>. The prefix is not
+signed, so an app can pair with codes another app made with this crate under its own scheme.
+<code>is_offer(scheme, text)</code> is the counterpart of
+<code>is_invite</code>.</li>
+<li><code>link_node_config(label, relays)</code>: a link node's <code>NodeConfig</code>, listening on TCP and QUIC on every
+interface with the link limits. <code>known_relays()</code> is <code>KNOWN_RELAYS</code> as multiaddrs,
+<code>parse_relays</code> reads a comma-separated relay list, and <code>relays_from_env(VAR)</code> reads one from the app's
+own environment variable (set but empty means no relays; unset means the known relays).</li>
+</ul>
 <h3>Moving to 0.3.0</h3>
 <p>Codes changed: offers and invites are compact CBOR arrays (protocol version 2). A 0.2 code read by a 0.3 device, or the
 other way round, says to update rather than that the code is damaged, so put both devices on apps with the same version.
