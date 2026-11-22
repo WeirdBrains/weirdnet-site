@@ -10,7 +10,9 @@ Checks run: `python3 tool/check_crates.py --strict` (30 of 30).
 
 Not tested: no example was rebuilt; the guide's snippets are prose only.
 
-What's left and next: deploy with the 0.3.3 release.
+Deployed: merged to main in `c5e79be` after weirdnet-device-link 0.3.3 was on [crates.io](https://crates.io/crates/weirdnet-device-link/0.3.3) and [docs.rs](https://docs.rs/weirdnet-device-link/0.3.3); the live page shows the 0.3.3 section and the home page still lists 30 crates.
+
+What's left and next: nothing for this release.
 
 ## 2026-11-22: weirdnet-themes 0.2.0, weirdnet-mcp 0.6.1
 
