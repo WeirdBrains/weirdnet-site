@@ -2,6 +2,16 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-22: weirdnet-device-link 0.3.3 additions
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`4ae6b7c`](https://github.com/WeirdBrains/weirdnet-site/commit/4ae6b7c9e9c437825ee33aee4c8ec0608fe54c41)): the [weirdnet-device-link](https://net.weirdbrains.com/crates/device-link) page lists the 0.3.3 additions and its guide has a "0.3.3" section ([docs.rs](https://docs.rs/weirdnet-device-link/0.3.3)): `offer_scheme`, `is_offer`, `known_relays`, `parse_relays`, `relays_from_env` and `link_node_config`. The page version stays 0.4.1, the newest release.
+
+Checks run: `python3 tool/check_crates.py --strict` (30 of 30).
+
+Not tested: no example was rebuilt; the guide's snippets are prose only.
+
+What's left and next: deploy with the 0.3.3 release.
+
 ## 2026-11-22: weirdnet-themes 0.2.0, weirdnet-mcp 0.6.1
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/themes.rs`, `tool/examples/mcp.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`): the [weirdnet-themes](https://net.weirdbrains.com/crates/themes) page shows 0.2.0 ([docs.rs](https://docs.rs/weirdnet-themes/0.2.0), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-themes/blob/main/CHANGELOG.md)): the Bragi built-in, optional roles and their derived colours, NO_COLOR and `ColorDepth::None`, the terminal's own background in 16 colours, `UserDir` and the editor/switcher helpers, opt-in light/dark probes, and a "Moving to 0.2.0" section. The [weirdnet-mcp](https://net.weirdbrains.com/crates/mcp) page shows 0.6.1 ([docs.rs](https://docs.rs/weirdnet-mcp/0.6.1), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-mcp/blob/main/CHANGELOG.md)) with prompts and a "Moving to 0.6.1" section. Both examples were rewritten for the new APIs.
