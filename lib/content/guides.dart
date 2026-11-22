@@ -642,6 +642,14 @@ first-token timings, and any resumes. <code>Cancel</code> can go the other way a
 <p>Hosts implement <code>InferBackend</code> (and <code>EmbedBackend</code>); a plain <code>ModelBackend</code> is adapted.
 <code>DeltaSink::reasoning</code> and <code>AgentEvent::ReasoningDelta</code> carry reasoning text to the app (task/1 does not
 forward it).</p>
+<h3>Answer cache per request (0.5.1)</h3>
+<p><code>Request::cache</code> is a <code>CacheMode</code>: <code>use</code> (the default), <code>bypass</code> (the node neither
+reads nor stores a cached answer, for evals and freshly fine-tuned weights) or <code>refresh</code> (skip the read, run the model
+and store the fresh answer over the old one). Set it with <code>Request::with_cache</code>; <code>CacheMode::may_read</code> and
+<code>may_store</code> say what a cache may do. Unlike <code>raw</code>, it keeps the node's context lookups and stand-ins. The
+field is left off the wire when it is <code>use</code>, so older nodes read every request as before; nodes before 0.5.1 ignore
+it and may still answer from their cache, which <code>Meta::cache_hit</code> reports. <code>Request::with_wait_for_model</code>
+(0.5.1) sets <code>wait_for_model</code>.</p>
 <h3>Pool, failover and resume (0.4.0)</h3>
 <p><code>remote::pool::Pool</code> runs a request across nodes from a <code>NodeSource</code>, best first. It moves to the next
 node when one is unreachable, busy, refuses, lacks the model or does not accept in time, and uses infer/1 with nodes that do not
@@ -923,6 +931,9 @@ compared in constant time). It sends no CORS headers, so browsers block pages fr
 <p>Chat bodies become infer/2 requests: messages (string content or parts: <code>text</code>, <code>image_url</code> with a
 <code>data:image/...</code> URL and <code>input_audio</code>; remote image URLs and other part types get 400), sampling, <code>seed</code>,
 <code>response_format</code> and function tools; other parameters are ignored. <code>x-wait: 1</code> sets <code>wait_for_model</code>.
+<code>"cache": false</code> or <code>x-weirdnet-cache: off</code> (0.2.1) skips the nodes' answer cache, and <code>"cache": "refresh"</code>
+or <code>x-weirdnet-cache: refresh</code> skips the read and stores the fresh answer (weirdnet-agent 0.5.1 <code>Request::cache</code>);
+with both, the stricter wins, and any other value is a 400.
 <code>continue_final_message: true</code> (0.1.2, as in vLLM) moves the last assistant message into the request's prefix, so the
 model continues it (weirdnet-agent's <code>Request::continuing</code>); the answer, whole or streamed, holds only the new text. It
 needs the last message to be an assistant message without tool calls and <code>add_generation_prompt</code> not true (else 400),
@@ -949,6 +960,14 @@ an answer only when everything that could change it is equal. Image and audio pa
 input, so a different image is a different request. Only answers that finished with <code>stop</code> or
 <code>length</code> are kept; an unreadable stored entry is dropped. A hit should be marked with infer/2
 <code>Meta::cache_hit</code>, which <a href="/crates/openai">weirdnet-openai</a> shows as <code>x-weirdnet-cache: hit</code>.</p>
+<h3>Bypass, refresh and revisions (0.2.1)</h3>
+<p><code>may_read(&amp;request)</code> and <code>may_store(&amp;request)</code> follow the request's weirdnet-agent 0.5.1
+<code>CacheMode</code>: <code>ExactCache</code> never reads for <code>bypass</code> or <code>refresh</code> and never stores for
+<code>bypass</code>. The mode is not part of the key, so a <code>refresh</code> overwrites the entry a later <code>use</code> reads.
+<code>AnswerCache::get_rev</code> and <code>put_rev</code> take the model's revision (its weights) as well as its id, so a
+fine-tune served under the same id doesn't replay the old weights' answers; <code>exact_key_rev</code> is the key. With no
+revision the key is the 0.2.0 one, so stored answers still hit. Their default methods miss and keep nothing when a revision is
+given, so a cache that doesn't know revisions never crosses weights.</p>
 <h3>Stores</h3>
 <p><code>AnswerStore</code> keeps opaque bytes under 32-byte keys; <code>MemoryStore::new(max)</code> evicts the least recently used.
 <code>ExactCache::with_store</code> takes any store.</p>
