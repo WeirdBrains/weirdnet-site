@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-vault 0.1.0 page, weirdnet-agent 0.5.5
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/vault.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`, [`e6b50c7`](https://github.com/WeirdBrains/weirdnet-site/commit/e6b50c7), merged into main with `git merge --no-ff`):
+
+- New [weirdnet-vault](https://net.weirdbrains.com/crates/vault) page in "Keys and storage" with 0.1.0 ([crates.io](https://crates.io/crates/weirdnet-vault/0.1.0), [docs.rs](https://docs.rs/weirdnet-vault/0.1.0), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-vault/blob/main/CHANGELOG.md)), a guide (keys and sealing, the checks on every call, using and retrieving, rotation, the audit log, backups, features) and an example: a bot uses a credential without seeing it, a dry-run caller and an unapproved identity are refused, an approved operator retrieves it, and the audit log is verified.
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.5 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.5), [docs.rs](https://docs.rs/weirdnet-agent/0.5.5)): the `pool` and `serve` features accept weirdnet-sync 0.8; no API change.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (31 of 31), `jaspr build` (ok), `python3 tool/check_links.py` (36 pages, 0 errors) and `--external` (146 external URLs, 0 errors). The vault example was built and run from the `tool/gen_examples.py` harness, outside the repository, against weirdnet-vault 0.1.0 from crates.io.
+
+Not tested: the other examples weren't rebuilt.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-25: weirdnet-agent 0.5.4, weirdnet-backends 0.4.5, weirdnet-openai 0.2.3 pages
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`98ba0e1`](https://github.com/WeirdBrains/weirdnet-site/commit/98ba0e1c063e90fe99e3cd53f57f71ebcfb1cd8c), merged into main with `git merge --no-ff`):

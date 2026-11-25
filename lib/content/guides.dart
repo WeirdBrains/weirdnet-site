@@ -329,6 +329,64 @@ x86_64 Linux the vendored build adds about 5.4 MiB, the system-crypto build abou
       '<code>vendored-openssl</code> (default): SQLCipher with OpenSSL built from source and linked statically (Android has no system libcrypto for apps). Without it SQLCipher uses CommonCrypto on Apple targets and the system libcrypto elsewhere. For iOS: <code>default-features = false, features = ["sync"]</code> and set <code>IPHONEOS_DEPLOYMENT_TARGET</code>.',
     ],
   ),
+  'vault': Guide(
+    brings: r'''
+<p>Use weirdnet-vault when a server holds other people's credentials: exchange or provider API keys for many accounts,
+tokens, passwords. It keeps them sealed at rest, lets code use a credential without ever handing it back, lets several
+approved identities retrieve one when they need to, rotates without downtime, keeps dry-run callers away from live
+credentials, and records every attempt in an audit log you can verify.</p>
+<p>The API is generic: scopes, environments, roles and grants are yours to name. Key management comes from
+<a href="/crates/keys">weirdnet-keys</a> and the database from <a href="/crates/storage">weirdnet-storage</a>.</p>
+''',
+    works: r'''
+<h3>Keys and sealing</h3>
+<p>The vault is a SQLCipher database keyed by a data key. Inside it, a random entry key is wrapped by a key derived
+from the data key, and every version of every value is sealed with XChaCha20-Poly1305 under the entry key, with the
+secret id, version, environment and scope as associated data, so a sealed value copied into another row won't open.
+A rekey wraps the entry key again; values aren't resealed. The data key comes from a password keyring
+(<code>Vault::init</code>, then <code>unlock</code> or <code>unlock_with_master</code>, with recovery words and shards),
+a <code>KeyStore</code> (<code>open_with_keystore</code>), or a key you hold (<code>open_with_key</code>).
+<code>open_in_memory</code> is for tests. Plaintext is a zeroizing <code>Plaintext</code> that can't be cloned, printed
+or serialized; <code>SecretMeta</code> (name, kind, labels, scope, versions) is the only secret type that serializes.</p>
+<h3>Checks on every call</h3>
+<ol>
+<li><b>Environment</b>: a caller bound to <code>Environment::Test</code> may only list and read metadata of a live
+secret.</li>
+<li><b>Grant</b>: <code>Use</code> and <code>Reveal</code> need an unexpired grant for that identity on the secret or a
+scope above it.</li>
+<li><b>Authorize</b>: your hook (any <code>Fn(&amp;AccessRequest) -&gt; Decision</code>, or <code>RolePolicy</code>).</li>
+<li><b>Options</b>: <code>VaultOptions</code> can turn <code>Reveal</code> off for the whole vault.</li>
+<li><b>Audit</b>: allowed, denied and failed calls are all recorded.</li>
+</ol>
+<p><code>RolePolicy::with_example_roles()</code> defines viewer (list and metadata), trader (viewer plus
+<code>Use</code>), auditor (viewer plus <code>Audit</code>) and admin (every action), assigned per scope; define your
+own with <code>define_role</code>.</p>
+<h3>Using and retrieving</h3>
+<p><code>use_secret</code> passes the value to a closure inside the process and returns only the closure's result.
+<code>reveal</code> returns it to an approved identity, and <code>reveal_sealed</code> seals it to the recipient's X25519
+key. Admins add and remove grants with <code>grant</code> and <code>revoke</code>; several identities can hold
+<code>Reveal</code> on the same secret, and a revoke takes effect at once.</p>
+<h3>Rotation</h3>
+<p><code>stage_rotation</code> adds a pending version while readers keep the active one. Try it with
+<code>use_version(…, Which::Pending, …)</code>, then <code>promote</code> it (the old value stays as previous) or
+<code>discard_pending</code>; after promoting, <code>revert</code> rolls back and <code>retire_previous</code> removes
+the old value. Every step is audited.</p>
+<h3>Audit log</h3>
+<p>Each record holds the actor, scope, secret id and version, action, outcome and time, and never a value. Records are
+chained with BLAKE3 and the table refuses updates and deletes. <code>audit</code> queries by time range, scope, actor,
+action and outcome; <code>verify_audit</code> checks the whole chain and returns its head.</p>
+<h3>Backups</h3>
+<p><code>snapshot_to</code> writes an online copy keyed with the same or a new key.</p>
+''',
+    features: [
+      '<code>tokio</code> (default): <code>AsyncVault</code>.',
+      '<code>vendored-openssl</code> (default): builds SQLCipher\'s OpenSSL from source (weirdnet-storage).',
+      '<code>keychain</code>: <code>KeychainStore</code> for the macOS Keychain, Windows Credential Manager and Secret Service.',
+      '<code>sync</code>: <code>SyncSecrets</code> over any <a href="/crates/sync">weirdnet-sync</a> <code>SecretStore</code>; the vault\'s key stores implement <code>SecretStore</code>.',
+      '<code>access</code>: <code>access::AccessAuthorizer</code> over <a href="/crates/access">weirdnet-access</a> and its <code>vault.*</code> permissions.',
+      '<code>mcp</code>: <code>mcp::VaultTools</code>, <a href="/crates/mcp">weirdnet-mcp</a> tools for metadata, grants and rotation that never take or return a value.',
+    ],
+  ),
   'update': Guide(
     brings: r'''
 <p>The trust and policy half of over-the-air updates, with no transport and no UI. An app that uses it can take updates from
@@ -731,7 +789,7 @@ which is not signed. <code>Authorize::admit</code> returns <code>Admitted { peer
 <code>Server::start_with(node, serving, ServingExtras::default().tasks(host, auth))</code> serves task/1 next to inference: each
 task is admitted first and built by <code>TaskHost::session_for(&amp;admitted, ..)</code>, so a host can scope tools per device
 or role, and the <code>INFERENCE_APP</code> announcement then lists task/1. All of it is additive; the <code>pool</code> and
-<code>serve</code> features accept weirdnet-sync 0.5.2 to 0.7. 0.4.3 stopped offline devices from slowing every request.</p>
+<code>serve</code> features accept weirdnet-sync 0.5.2 to 0.7 (to 0.8 since 0.5.5). 0.4.3 stopped offline devices from slowing every request.</p>
 <h3>Moving to 0.5.0</h3>
 <ul>
 <li><b>Message content</b>: <code>Message::content</code> is a <code>Content</code>, not a <code>String</code>. Constructors take
