@@ -64,7 +64,7 @@ deps = { weirdnet-push = "0.1.1" }
 deps = { weirdnet-schemes = "0.1.1" }
 
 [device-link]
-deps = { weirdnet-device-link = "0.4.1", weirdnet-keys = "0.1.2", weirdnet-net = "0.8.2" }
+deps = { weirdnet-device-link = "0.4.2", weirdnet-keys = "0.1.2", weirdnet-net = "0.8.2" }
 
 [ext]
 deps = { weirdnet-ext = "0.1.1" }

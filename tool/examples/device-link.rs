@@ -9,7 +9,7 @@ const SCHEME: &str = "weirdnet-morph://";
 fn main() {
     // The new device shows the offer as a QR code.
     let node = Keypair::generate_ed25519();
-    let host = Host::new(SCHEME, &node, vec!["/ip4/192.168.1.5/tcp/4747".into()], "Morph on desk", 0).unwrap();
+    let host = Host::new(SCHEME, &node, vec!["/ip4/192.0.2.5/tcp/4747".into()], "Morph on desk", 0).unwrap();
 
     // The existing device scans it and says hello.
     let phone = Keypair::generate_ed25519().public().to_peer_id();

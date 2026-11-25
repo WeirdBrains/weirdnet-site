@@ -4,7 +4,8 @@ The [WeirdBrains](https://weirdbrains.com) collective `AGENTS.md` applies to thi
 
 - This is the Weirdnet docs site (Jaspr, static mode). Content must come from the crates' own
   READMEs, SECURITY notes and source; mark anything not shipped as in progress.
-- Before every commit: `dart analyze` clean and `jaspr build` succeeds.
+- Before every commit: `dart analyze` clean, `jaspr build` succeeds and `python3 tool/check_links.py`
+  passes (CI runs it; add `--external` to fetch external links too).
 - Every published `weirdnet*` crate has an entry in `lib/content/crates.dart` (CI checks with
   `tool/check_crates.py`). Guides in `lib/content/guides.dart` cover only what the sources
   document; leave out what they don't cover instead of guessing, and don't publish gaps,
