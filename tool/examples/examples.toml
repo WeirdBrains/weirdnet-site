@@ -16,6 +16,9 @@ deps = { weirdnet-keys = "0.1.2" }
 [storage]
 deps = { weirdnet-storage = "0.1.1" }
 
+[vault]
+deps = { weirdnet-vault = "0.1.0" }
+
 [update]
 deps = { weirdnet-update = "0.2.2", semver = "1" }
 
