@@ -650,6 +650,24 @@ and store the fresh answer over the old one). Set it with <code>Request::with_ca
 field is left off the wire when it is <code>use</code>, so older nodes read every request as before; nodes before 0.5.1 ignore
 it and may still answer from their cache, which <code>Meta::cache_hit</code> reports. <code>Request::with_wait_for_model</code>
 (0.5.1) sets <code>wait_for_model</code>.</p>
+<h3>A pool as one model (0.5.3)</h3>
+<p><code>remote::pool_model::PoolModel</code> turns a <code>Pool</code> of inference nodes (for example a
+<a href="https://github.com/WeirdBrains/ymir">Ymir</a> cloud on the user's own devices) into one <code>ModelBackend</code>, so an
+agent app runs its turns there like on a local model. Text and reasoning stream to the <code>DeltaSink</code>, tool calls come
+back in the turn, and cancel stops the node. A node that dies mid-answer is resumed on another one, shown as
+<code>ModelNotice::Continued</code>; when the chosen model can't read a turn's images or audio, the pool picks one that can, shown as
+<code>ModelNotice::Rerouted</code> (on by default; <code>with_reroute(false)</code> refuses the turn instead). When the
+pool can't take a turn before any text has streamed, an optional fallback, usually the local model (<code>with_fallback</code>),
+runs it, shown as <code>ModelNotice::FellBack</code>; without one the error is <code>ModelError::PoolUnreachable</code>. Notices
+reach the app as <code>AgentEvent::ModelNotice</code> through <code>DeltaSink::notice</code>.</p>
+<p><code>PoolWatch</code> follows the pool catalog (catalog/1 subscribe) as a <code>PoolStatus</code> for a model picker: live,
+searching or unreachable, with each model's state and speed. It knows which nodes answered (<code>CatalogNodes</code>, a
+<code>NodeSource</code> through <code>PoolWatch::nodes</code>), so turns go only to real inference nodes, and
+<code>PoolWatch::retry</code> asks the nodes again now instead of after the backoff.</p>
+<h3>Origin and license (0.5.4)</h3>
+<p>Catalog entries can say where a model came from and its license: <code>CatalogModel::origin</code> (<code>ORIGIN_HUB</code>,
+<code>ORIGIN_UPLOAD</code> or <code>ORIGIN_TRAIN</code>, as in a <a href="/crates/model">weirdnet-model</a> provenance record) and
+<code>license</code>, set with <code>with_origin</code> and <code>with_license</code>. Both are left off the wire when unset.</p>
 <h3>LoRA adapters (0.5.2)</h3>
 <p>A model node can serve LoRA adapters on a base model (<a href="/crates/backends">weirdnet-backends</a> 0.4), each under its own
 model id. <code>CatalogModel::base</code> names an adapter's base model (set with <code>with_base</code>; <code>is_adapter</code>
@@ -977,6 +995,17 @@ bytes). <code>List</code> includes safetensors and MLX models and projectors, wi
 Refusals carry stable reasons in <code>refusal</code> (<code>exists</code>, <code>too-big</code>, <code>no-space</code>,
 <code>quota</code>, <code>wrong-engine</code>, <code>wrong-arch</code>, <code>no-base</code>, <code>checksum</code> and others), read
 with <code>refusal_reason</code>. Nodes before 0.4.4 refuse the new commands.</p>
+<h3>Placement hooks, origin and license (0.4.5)</h3>
+<p><code>ModelsService::on_placed</code> runs a callback (<code>OnPlaced</code>) after each upload, peer copy (including
+<code>ModelsClient::replicate</code> targets) or Hub pull is placed. It gets a <code>Placed</code>: the <code>StoredEntry</code> with
+its provenance, the <code>Pulled</code> answer with its revision, how it arrived (<code>PlacedVia</code>: <code>Upload</code>,
+<code>Peer</code> or <code>Hub</code>), and <code>serve_error</code> when the files were placed but serving them failed.
+<code>ModelsService::with_node_info</code> uses it to keep the node's capability record current
+(<code>NodeService::set_model_info</code>). Capability records also carry each model's origin and license
+(<code>ModelEntry::origin</code> and <code>license</code>: <code>hub</code>, <code>upload</code> or <code>train</code>, as in a
+weirdnet-model provenance record, and an SPDX license), set with <code>NodeService::set_model_origin</code> or, through
+<code>with_node_info</code>, from each placed entry's provenance (<code>Placed::origin_and_license</code>). They are left out of the
+record when unset.</p>
 <h3>Projectors (0.4.4)</h3>
 <p><code>ModelLaunch::with_mmproj</code> gives a llama.cpp model a vision projector: the engine starts with <code>--mmproj</code> and
 <code>capabilities()</code> reports image input. <code>Supervisor::set_projector_live</code> sets or clears it; the capabilities change
@@ -1033,7 +1062,9 @@ picks one; a named text-only model, or a pool with no such model, is a 400 that 
 <p>LoRA adapters (0.2.2): <code>"adapter_scale"</code> in a chat or completion body sets how strongly a LoRA adapter model
 applies for that request (<a href="/crates/agent">weirdnet-agent</a> 0.5.2 <code>Request::adapter_scale</code>); a value that is not
 a finite number is a 400. <code>/v1/models</code> reports an adapter's base model as <code>weirdnet.base</code>
-(<code>null</code> for models).</p>
+(<code>null</code> for models). Since 0.2.3 it also reports <code>weirdnet.origin</code> (<code>hub</code>, <code>upload</code> or
+<code>train</code>) and <code>weirdnet.license</code> when the node says (weirdnet-agent 0.5.4 <code>CatalogModel::origin</code> and
+<code>license</code>), and <code>null</code> otherwise.</p>
 <p>Errors map to OpenAI-style bodies: unknown model 404, bad request 400, busy 503 with <code>Retry-After</code>, unavailable 503,
 refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
 ''',
