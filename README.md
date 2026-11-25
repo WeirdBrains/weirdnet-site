@@ -50,6 +50,14 @@ example builds against the published crates.
 has no entry in `lib/content/crates.dart` (a version that differs is a warning; `--strict`
 fails on it). The Pages workflow runs it on every push.
 
+### Links
+
+`tool/check_links.py` reads the built site (`build/jaspr`) and fails on an internal link or
+`#fragment` that doesn't resolve, a URL shown as bare text instead of a link, or a page without
+the link to [weirdbrains.com](https://weirdbrains.com). `--external` also fetches every external
+URL with a browser-like User-Agent (hosts that refuse scripts are warnings). The Pages workflow
+runs it, without `--external`, after the build.
+
 ## Hosting
 
 GitHub Pages with Source: GitHub Actions and the custom domain `net.weirdbrains.com`

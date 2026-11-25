@@ -650,6 +650,13 @@ and store the fresh answer over the old one). Set it with <code>Request::with_ca
 field is left off the wire when it is <code>use</code>, so older nodes read every request as before; nodes before 0.5.1 ignore
 it and may still answer from their cache, which <code>Meta::cache_hit</code> reports. <code>Request::with_wait_for_model</code>
 (0.5.1) sets <code>wait_for_model</code>.</p>
+<h3>LoRA adapters (0.5.2)</h3>
+<p>A model node can serve LoRA adapters on a base model (<a href="/crates/backends">weirdnet-backends</a> 0.4), each under its own
+model id. <code>CatalogModel::base</code> names an adapter's base model (set with <code>with_base</code>; <code>is_adapter</code>
+tests it), so an app can show the adapter as a variant of the base; requests still name the adapter's id.
+<code>Request::adapter_scale</code>, set with <code>with_adapter_scale</code>, is how strongly the requested adapter applies for
+this request on nodes that scale per request (llama.cpp); <code>None</code> keeps the adapter's own scale, and base models ignore
+it. Neither field is sent when unset, and nodes and catalogs from 0.5.1 and earlier ignore or lack them.</p>
 <h3>Pool, failover and resume (0.4.0)</h3>
 <p><code>remote::pool::Pool</code> runs a request across nodes from a <code>NodeSource</code>, best first. It moves to the next
 node when one is unreachable, busy, refuses, lacks the model or does not accept in time, and uses infer/1 with nodes that do not
@@ -985,6 +992,10 @@ arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-mode
 <p>Images and audio (0.2.0) go to the pool unchanged, which sends them only to a model whose catalog entry takes them
 (<code>vision</code>, <code>audio</code> under <code>weirdnet</code> in <code>/v1/models</code>): with no <code>model</code> it
 picks one; a named text-only model, or a pool with no such model, is a 400 that says so. Request bodies may be up to 32 MiB.</p>
+<p>LoRA adapters (0.2.2): <code>"adapter_scale"</code> in a chat or completion body sets how strongly a LoRA adapter model
+applies for that request (<a href="/crates/agent">weirdnet-agent</a> 0.5.2 <code>Request::adapter_scale</code>); a value that is not
+a finite number is a 400. <code>/v1/models</code> reports an adapter's base model as <code>weirdnet.base</code>
+(<code>null</code> for models).</p>
 <p>Errors map to OpenAI-style bodies: unknown model 404, bad request 400, busy 503 with <code>Retry-After</code>, unavailable 503,
 refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
 ''',
@@ -1036,7 +1047,7 @@ values are refused.</li>
 ''',
     features: [
       '<code>push</code>: <code>PushSink</code>, wakes through weirdnet-push 0.1 (pulls in aws-lc through reqwest).',
-      '<code>backends</code>: <code>engine::observation</code>, <code>engine::probes</code> and <code>engine::monitor</code> for <a href="/crates/backends">weirdnet-backends</a> 0.2 or 0.3 (0.1 before 0.2.0).',
+      '<code>backends</code>: <code>engine::observation</code>, <code>engine::probes</code> and <code>engine::monitor</code> for <a href="/crates/backends">weirdnet-backends</a> 0.2 to 0.4 (since 0.2.2; 0.2 or 0.3 in 0.2.0 and 0.2.1, 0.1 before). Adapters added or removed at run time arrive as <code>engine.added</code> and <code>engine.removed</code>, like models.',
     ],
   ),
   'plugin': Guide(
@@ -1608,9 +1619,9 @@ secrets.</li>
 <p>0.3.1 depends on <code>weirdnet-net = "0.8"</code> and <code>weirdnet-keys = "0.1"</code> with caret ranges, so it shares a tree
 with weirdnet-keys 0.1.1 and net 0.8.1. 0.4.0 adds service links (above) and raises link requests to 1 MiB; the rest of the API
 and the full transfer are unchanged.</p>
-<h3>0.3.3</h3>
-<p><a href="https://docs.rs/weirdnet-device-link/0.3.3">0.3.3</a> adds what Morph had built on top of the crate, without
-changing anything already there:</p>
+<h3>0.4.2 and 0.3.3</h3>
+<p><a href="https://docs.rs/weirdnet-device-link/0.4.2">0.4.2</a> (and <a href="https://docs.rs/weirdnet-device-link/0.3.3">0.3.3</a>
+on the 0.3 line) adds what Morph had built on top of the crate, without changing anything already there:</p>
 <ul>
 <li><code>offer_scheme(schemes, text)</code>: which of several schemes a new device's code is on (its
 <code>&lt;scheme&gt;link/</code> prefix in any case) and the code normalized for <code>decode_link</code>. The prefix is not

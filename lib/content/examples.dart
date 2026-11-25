@@ -555,7 +555,7 @@ fn main() -> weirdnet_schemes::Result<()> {
   ),
   'device-link': Example(
     r'''[dependencies]
-weirdnet-device-link = "0.4.1"
+weirdnet-device-link = "0.4.2"
 weirdnet-keys = "0.1.2"
 weirdnet-net = "0.8.2"''',
     r'''// Both sides of a device link without the network (HostNode and Pairing carry it over
@@ -569,7 +569,7 @@ const SCHEME: &str = "weirdnet-morph://";
 fn main() {
     // The new device shows the offer as a QR code.
     let node = Keypair::generate_ed25519();
-    let host = Host::new(SCHEME, &node, vec!["/ip4/192.168.1.5/tcp/4747".into()], "Morph on desk", 0).unwrap();
+    let host = Host::new(SCHEME, &node, vec!["/ip4/192.0.2.5/tcp/4747".into()], "Morph on desk", 0).unwrap();
 
     // The existing device scans it and says hello.
     let phone = Keypair::generate_ed25519().public().to_peer_id();

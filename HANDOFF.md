@@ -2,6 +2,23 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-24: agent 0.5.2, alerts 0.2.2, device-link 0.4.2, openai 0.2.2 pages; link check in CI
+
+What changed ([`0376b80`](https://github.com/WeirdBrains/weirdnet-site/commit/0376b807bf5fe203121587e3778b1e9d90d39f18), merged into main with `git merge --no-ff`):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.2 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.2), [docs.rs](https://docs.rs/weirdnet-agent/0.5.2), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-agent/blob/main/CHANGELOG.md)): `Request::adapter_scale` / `with_adapter_scale` and `CatalogModel::base` / `with_base` / `is_adapter`, with a "LoRA adapters (0.5.2)" guide section.
+- [weirdnet-alerts](https://net.weirdbrains.com/crates/alerts) shows 0.2.2 ([crates.io](https://crates.io/crates/weirdnet-alerts/0.2.2), [docs.rs](https://docs.rs/weirdnet-alerts/0.2.2), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-alerts/blob/main/CHANGELOG.md)): the `backends` feature takes weirdnet-backends 0.2 to 0.4. The notes said 0.2.0 while the page showed 0.2.1; they now cover 0.2.1 and 0.2.2.
+- [weirdnet-device-link](https://net.weirdbrains.com/crates/device-link) shows 0.4.2 ([crates.io](https://crates.io/crates/weirdnet-device-link/0.4.2), [docs.rs](https://docs.rs/weirdnet-device-link/0.4.2), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-device-link/blob/main/CHANGELOG.md)): the 0.3.3 additions on the 0.4 line. The example uses the documentation address `192.0.2.5` instead of a private one and depends on 0.4.2.
+- [weirdnet-openai](https://net.weirdbrains.com/crates/openai) shows 0.2.2 ([crates.io](https://crates.io/crates/weirdnet-openai/0.2.2), [docs.rs](https://docs.rs/weirdnet-openai/0.2.2), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-openai/blob/main/CHANGELOG.md)): `"adapter_scale"` and `weirdnet.base` in `/v1/models`.
+- The [weirdnet-backends](https://net.weirdbrains.com/crates/backends) notes link their weirdnet-agent 0.5.2 mentions to the agent page.
+- New [`tool/check_links.py`](tool/check_links.py): internal links and fragments resolve, no bare-text URLs, every page links to [weirdbrains.com](https://weirdbrains.com); `--external` fetches external URLs with a browser-like User-Agent. The [Pages workflow](.github/workflows/pages.yml) runs it after the build; [README.md](README.md) and [AGENTS.md](AGENTS.md) document it.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (30 of 30, no mismatches), `jaspr build` (ok), `python3 tool/check_links.py` (35 pages, 0 errors) and `--external` (141 external URLs, 0 errors, 0 warnings). The checker was also run on a copy of the build with a broken link, a missing fragment, a bare URL and a missing footer link, and it reported all four. The device-link example was built and run from the `tool/gen_examples.py` harness, outside the repository, against weirdnet-device-link 0.4.2.
+
+Not tested: the other examples weren't rebuilt.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-24: weirdnet-model 0.5.2 and weirdnet-backends 0.4.3 pages
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`9d7d3bb`](https://github.com/WeirdBrains/weirdnet-site/commit/9d7d3bbfecee54238c2838eb8edf71491c568f9a), merged into main with `git merge --no-ff`): the [weirdnet-model](https://net.weirdbrains.com/crates/model) page shows 0.5.2 ([crates.io](https://crates.io/crates/weirdnet-model/0.5.2), [docs.rs](https://docs.rs/weirdnet-model/0.5.2)) with LoRA adapter files (`gguf::read_header`, `GgufKind`, `Hub::adapters`, `download_adapter`, `StoredAdapter`) and a "LoRA adapters (0.5.2)" guide section. The [weirdnet-backends](https://net.weirdbrains.com/crates/backends) page shows 0.4.3 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.3), [docs.rs](https://docs.rs/weirdnet-backends/0.4.3)) with notes for 0.4.0 to 0.4.3, including the 0.4.0 breaking changes, and guide sections for LoRA adapters (`LoraAdapter`, `openai::Target`, `Supervisor::add_adapter`, `AdapterChange`, `ModelStatus::base`), live adapters and per-request scale (0.4.1), engine readiness (0.4.2) and node reservations (0.4.3). Its example depends on `"0.4"` and adds an adapter.

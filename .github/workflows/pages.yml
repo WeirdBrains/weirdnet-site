@@ -35,6 +35,8 @@ jobs:
           test -f build/jaspr/index.html
           test -f build/jaspr/network/index.html
           grep -qx 'net.weirdbrains.com' build/jaspr/CNAME
+      - name: Links resolve, URLs are clickable, every page links to weirdbrains.com
+        run: python3 tool/check_links.py
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
