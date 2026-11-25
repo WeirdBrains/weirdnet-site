@@ -256,12 +256,12 @@ const crates = <Crate>[
     ],
     parts: [
       '<code>Series</code>: time-ordered ring buffers of points or candles, with live-candle replacement and trades folded into fixed-interval candles.',
-      '<code>Pane</code>s stacked over one time axis, each with its own y axis; nice value ticks and calendar-aware time ticks.',
+      '<code>Pane</code>s stacked over one time axis, each with its own y axis, and marks: <code>Line</code>, <code>Area</code>, <code>Bars</code>, <code>Candles</code>, <code>Ohlc</code> and <code>Volume</code>.',
       'A viewport with pan, zoom, span limits and following the newest data.',
       'Per-pixel reduction of lines and merging of thin candles, so only the visible range is laid out.',
       '<code>FrameThrottle</code> for frame-rate redraws, and backend-neutral scenes from <code>Chart::layout</code>.',
     ],
-    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-chart/0.1.0">crates.io</a> (<a href="https://docs.rs/weirdnet-chart/0.1.0">docs.rs</a>, <a href="https://github.com/WeirdBrains/weirdnet-chart">repository</a>).',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-chart/0.1.0">crates.io</a> (<a href="https://docs.rs/weirdnet-chart/0.1.0">docs.rs</a>, <a href="https://github.com/WeirdBrains/weirdnet-chart">repository</a>, tag <a href="https://github.com/WeirdBrains/weirdnet-chart/releases/tag/v0.1.0">v0.1.0</a>).',
   ),
   Crate(
     slug: 'exchange',
