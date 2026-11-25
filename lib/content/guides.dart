@@ -476,16 +476,85 @@ from a signed install or add one silently; <code>platform_signed()</code> tells 
   ),
   'accounts': Guide(
     brings: r'''
-<p>The account rules a web service needs, with the cryptography done once: password hashing, bearer tokens that are never
-stored in the clear, name rules, rate limits that can't be dodged with a spoofed header, and org-scoped API keys. Storage
-stays with the app; the crate never opens a database. TAUR uses it from v1.10.0.</p>
+<p>Use weirdnet-accounts when one server serves many accounts and many people: each account (a tenant) has an owner, several
+identities hold roles in it, and one identity can belong to many accounts. The crate decides who may do what on which
+account, handles invitations and removals, and binds API keys to an account and a role. Roles and the decision itself come
+from <a href="/crates/access">weirdnet-access</a>; identities are Weirdnet user ids from <a href="/crates/net">weirdnet-net</a>.</p>
+<p>It also keeps the account rules a web service needs, with the cryptography done once: password hashing, bearer tokens that
+are never stored in the clear, name rules, rate limits that can't be dodged with a spoofed header, and org-scoped API keys.
+TAUR uses them from v1.10.0; they are unchanged in 0.2, so moving from 0.1 is changing the requirement to
+<code>"0.2"</code>.</p>
 ''',
     works: r'''
+<h3>Accounts</h3>
+<p>An <code>Account</code> has an id (1 to 64 of <code>a-z 0-9 . _ -</code>), a name, an owner (a Weirdnet user id), a status
+(active, suspended or closed) and its own weirdnet-access <code>RoleSet</code>. A <code>Member</code> holds one role in one
+account, with who added them, when, and an optional expiry. Only the owner acts as the builtin <code>owner</code> role; no
+membership can make someone the owner. Times are Unix milliseconds, as in weirdnet-net.</p>
+<h3>The role catalog</h3>
+<p><code>catalog::catalog()</code> is the weirdnet-access core (<code>read</code>, <code>members.*</code>,
+<code>roles.manage</code>) plus <code>account.view</code>, <code>account.edit</code>, <code>account.suspend</code>,
+<code>account.close</code>, <code>audit.view</code> and <code>keys.manage</code>. Apps add their own permissions to it.
+<code>catalog::tiered</code> builds a ranked role set under the owner (rank 100) from your own names, ranks and permissions;
+<code>catalog::standard</code> is a generic preset: owner, admin (80), member (50), viewer (20) and auditor (10), with
+invitees joining as viewer.</p>
+<h3>The Authorizer</h3>
+<p><code>authz::Authorizer</code> answers one question: may this caller use this permission on this account? It works in
+weirdnet-access's order:</p>
+<ol>
+<li><b>Identity</b>: the user id the caller's node cert resolves to. A missing or revoked identity sees nothing.</li>
+<li><b>Account</b>: a missing or closed account is "not found". A suspended one allows only <code>read</code>,
+<code>members.list</code> and <code>account.view</code> (configurable).</li>
+<li><b>Role</b>: the owner, or a current membership that no revocation voids. <code>MembershipPolicy</code> decides which
+memberships count: <code>Recorded</code> (the server's records), <code>Signed</code> (an owner-signed membership the caller
+presented) or <code>Either</code>.</li>
+<li><b>Decision</b>: weirdnet-access <code>enforce::decide</code> with the account's role set.</li>
+</ol>
+<p>Accounts are private: anyone who isn't the owner or a member gets "not found", so account ids don't leak. The
+<code>Authorize</code> trait is implemented for closures too, and <code>Authorizer::facts</code> returns the weirdnet-access
+<code>Facts</code> for hooks that take them, such as an access-based <a href="/crates/vault">weirdnet-vault</a> authorizer.</p>
+<h3>The Accounts directory</h3>
+<p><code>directory::Accounts</code> holds the checked operations: create, rename, suspend, resume and close accounts; replace
+the role set (owner only); add members, change roles and remove members; list members; and invitations and key bindings. Each
+operation goes through the <code>Authorizer</code> and the weirdnet-access rank rules: nobody grants a role at or above
+their own or acts on someone ranked at or above them. Only the owner acts on a suspended account, and a closed account
+can't reopen. Removing a member records a <code>Revocation</code> that voids every membership issued up to then; adding
+them again later works.</p>
+<h3>Invitations</h3>
+<p><code>Accounts::invite</code> (<code>members.invite</code>) creates an invitation to a role ranked below the inviter's,
+by default the account's invite role, open for up to 30 days and optionally only for one user. The code is 256 random bits,
+shown once and stored only as SHA-256. <code>accept</code> turns it into a membership; unknown, used, withdrawn and expired
+codes all give the same error. <code>withdraw_invitation</code> closes an open one.</p>
+<h3>API keys</h3>
+<p>The <code>apikeys</code> module issues the keys themselves. <code>Accounts::bind_key</code> (<code>keys.manage</code>)
+ties a key to its maker, one account and a role no higher than the maker's, and never the owner role.
+<code>Authorizer::authorize_key</code> lets the key act with the lower of that role and its maker's current role, so a key
+loses power when its maker does and stops working when they leave.</p>
+<h3>Storage</h3>
+<p>Everything goes through the <code>store::Store</code> interface: apps that keep accounts in their own database implement
+it over their own tables. <code>MemoryStore</code> serves tests and small tools. With the <code>sqlite</code> feature,
+<code>SqliteStore</code> keeps the records in a <a href="/crates/storage">weirdnet-storage</a> SQLCipher database of its own
+(for example <code>accounts.db</code>, keyed from the app's keyring), applies its own versioned migrations there, and writes
+encrypted snapshots.</p>
+<h3>Signed memberships and ServiceAuth</h3>
+<p>With the <code>net</code> feature the owner signs memberships and removals with their user key
+(<code>net::sign_member</code>, <code>net::sign_revocation</code>, on weirdnet-net's <code>Membership</code> and
+<code>MemberRevocation</code>), for the resource <code>&lt;app&gt;/account/&lt;id&gt;</code>. A member's node presents its
+membership, and <code>net::caller_from_presented</code> checks it with <code>check_presented</code> against the
+authenticated peer.</p>
+<p>With the <code>service</code> feature, <code>service::ServiceAuth</code> implements <a href="/crates/service">weirdnet-service</a>'s
+<code>Authorize</code>. It checks the caller's user card against the peer, maps the resource (a bare account id, or
+<code>&lt;app&gt;/account/&lt;id&gt;</code> with <code>for_app</code>) to an account, and lets the <code>Authorizer</code>
+resolve account plus identity to a role from the store, counting presented memberships under the <code>Signed</code> and
+<code>Either</code> policies. The admitted caller carries the user id, the resource and the role. weirdnet-service's own
+<code>MembershipAuth</code> fits resources held in memory; <code>ServiceAuth</code> fits accounts kept in a
+<code>Store</code>.</p>
+<h3>The 0.1 primitives</h3>
 <ul>
 <li><code>password</code>: Argon2id hashes as PHC strings (the <code>argon2</code> defaults: v1.3, m = 19 MiB, t = 2, p = 1),
 verification, and a minimum-length rule.</li>
-<li><code>token</code>: 256-bit random bearer tokens for sessions and email links. Only the SHA-256 is stored, and hashes are
-compared in constant time.</li>
+<li><code>token</code>: 256-bit random bearer tokens for sessions, email links and invitations. Only the SHA-256 is stored,
+and hashes are compared in constant time.</li>
 <li><code>names</code>: <code>NamePolicy::AUR</code> (3 to 16 of <code>[A-Za-z0-9._-]</code>, alphanumeric at both ends) and a
 light email check.</li>
 <li><code>ratelimit</code>: in-memory fixed-window limits per client and per app-defined class, with bounded key tables.
@@ -494,8 +563,77 @@ ignored.</li>
 <li><code>apikeys</code>: org-scoped keys <code>&lt;service&gt;_&lt;org&gt;_&lt;64 hex&gt;</code>, shown once and stored as SHA-256,
 with <code>resource:verb</code> scopes, optional app and channel bindings, expiry and revocation.</li>
 </ul>
-<p>Roles and permissions are not here: they are <a href="/crates/access">weirdnet-access</a>.</p>
 ''',
+    features: [
+      'No feature is on by default: the primitives and the accounts model build without a database or network stack.',
+      '<code>sqlite</code>: <code>SqliteStore</code>, the accounts store in its own SQLCipher database (<a href="/crates/storage">weirdnet-storage</a>), with versioned migrations and encrypted snapshots.',
+      '<code>vendored-openssl</code>: <code>sqlite</code>, building SQLCipher\'s OpenSSL from source.',
+      '<code>net</code>: owner-signed memberships and revocations and callers from node certs or presented memberships (<a href="/crates/net">weirdnet-net</a>).',
+      '<code>service</code>: <code>ServiceAuth</code>, a <a href="/crates/service">weirdnet-service</a> <code>Authorize</code> hook over the <code>Authorizer</code> (includes <code>net</code>).',
+    ],
+  ),
+  'chart': Guide(
+    brings: r'''
+<p>Use weirdnet-chart for live charts in a desktop or terminal app: prices with volume below, indicators, anything
+time-ordered that keeps arriving. One chart model drives both a <a href="https://crates.io/crates/gpui">GPUI</a> view and a
+<a href="https://crates.io/crates/ratatui">Ratatui</a> widget, so a GUI and a TUI show the same chart.</p>
+''',
+    works: r'''
+<p>A <code>Chart</code> holds panes stacked over one time axis; each pane has its own y axis (auto, auto from zero, or
+fixed) and series. A <code>Series</code> is a ring buffer: appending is O(1), the oldest samples drop off at capacity, a
+push with the newest timestamp replaces it in place (a live candle), and <code>apply_trade</code> folds trades into
+fixed-interval candles. Timestamps are milliseconds since the Unix epoch; time ticks follow a fixed UTC offset set with
+<code>set_time_zone</code>.</p>
+<p><code>Chart::layout</code> lays out only the visible range into backend-neutral rectangles, lines, polylines, areas and
+text in clip layers. Lines keep the first, lowest, highest and last point per pixel column, and candles merge when they
+would be thinner than three pixels. <code>FrameThrottle</code> turns a burst of updates into at most one frame per
+interval.</p>
+<p><code>ratatui::ChartWidget</code> draws with braille dots on ratatui-core (works with ratatui 0.30), with column-based pan
+and zoom helpers. <code>gpui::ChartView</code> owns the chart, draws it with paths, quads and shaped text, pans on drag and
+zooms on scroll; <code>update_chart</code> coalesces redraws to 60 frames per second.</p>
+''',
+    features: [
+      '<code>ratatui</code>: <code>ratatui::ChartWidget</code>, <code>render_scene</code>, column-based pan and zoom.',
+      '<code>gpui</code>: <code>gpui::ChartView</code>, <code>paint_scene</code> (builds against gpui 0.2.2).',
+      '<code>gpui-test-support</code>: GPUI\'s headless test platform, for the crate\'s own tests.',
+    ],
+  ),
+  'exchange': Guide(
+    brings: r'''
+<p>Use weirdnet-exchange to write trading code once and run it against any venue: real adapters implement its traits, and
+the in-memory <code>Paper</code> exchange stands in for tests and dry runs. Prices and sizes are exact decimals, never
+floats.</p>
+''',
+    works: r'''
+<ul>
+<li><b>Numbers</b>: <code>Price</code> and <code>Qty</code> wrap a decimal and serialize as strings; rounding to a
+product's increments is explicit (<code>Rounding::Down</code>, <code>Up</code>, <code>Nearest</code>).</li>
+<li><b>Instruments</b>: <code>Market</code> (venue and product) and <code>Product</code> with increments, size and notional
+limits, status and kind (spot, dated future, perpetual); <code>Product::check_order</code> makes the checks a venue
+would.</li>
+<li><b>Orders</b>: market, limit (with post-only), stop-limit and stop-market orders; GTC, GTD, IOC and FOK; validated
+<code>ClientOrderId</code>s; an <code>Order</code> state machine that refuses impossible transitions and overfills and
+ignores replayed fills.</li>
+<li><b>Accounts</b>: <code>Fill</code>, <code>Balance</code>, <code>FeeTier</code>, <code>Position</code> and
+<code>PositionBook</code> (weighted-average entry, realized and unrealized PnL, flips), <code>MarginSummary</code>.</li>
+<li><b>Market data</b>: trades, tickers, book snapshots and deltas, an <code>OrderBook</code> that reports sequence gaps,
+<code>Candle</code> and <code>CandleBuilder</code>.</li>
+<li><b>Adapters</b>: <code>MarketData</code> and <code>Trading</code> (balances, fees, preview, idempotent placement,
+cancel, queries, positions, user streams) with <code>Capabilities</code>; <code>Exchange</code> is both. Errors say whether
+a retry is safe.</li>
+<li><b>Helpers</b>: <code>CostModel</code> and <code>BookCostModel</code>, and a shared token-bucket
+<code>RateLimiter</code>.</li>
+<li><b>Credentials</b>: <code>Credential&lt;Live&gt;</code> and <code>Credential&lt;Test&gt;</code> are checked against
+their source's environment, so a live adapter can't be built from test credentials.</li>
+<li><b>Paper</b>: matches market, limit, post-only, IOC, FOK, GTC and GTD orders against the books and trades you give it,
+holds funds, charges fees and tracks positions. Resting orders fill optimistically (no queue position) and margin is not
+modelled.</li>
+</ul>
+''',
+    features: [
+      '<code>vault</code>: <code>vault::VaultSecret</code>, credentials from <a href="/crates/vault">weirdnet-vault</a>, scoped per account and venue, test and live kept apart.',
+      '<code>service</code>: <code>feeds::MarketHubs</code>, books, trades, tickers and candles as <a href="/crates/service">weirdnet-service</a> hub topics.',
+    ],
   ),
   'mcp': Guide(
     brings: r'''

@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-accounts 0.2.0 page; weirdnet-chart and weirdnet-exchange pages
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`ae06556`](https://github.com/WeirdBrains/weirdnet-site/commit/ae065563efc10e265e6aa9a245ea7252a0d04b48), merged into main with `git merge --no-ff`):
+
+- [weirdnet-accounts](https://net.weirdbrains.com/crates/accounts) shows 0.2.0 ([crates.io](https://crates.io/crates/weirdnet-accounts/0.2.0), [docs.rs](https://docs.rs/weirdnet-accounts/0.2.0), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-accounts/blob/main/CHANGELOG.md)), with a new guide: accounts, the role catalog, the `Authorizer`, the `Accounts` directory, invitations, API keys, storage, signed memberships and `ServiceAuth`, the 0.1 primitives, and the `sqlite`, `vendored-openssl`, `net` and `service` features.
+- New [weirdnet-chart](https://net.weirdbrains.com/crates/chart) and [weirdnet-exchange](https://net.weirdbrains.com/crates/exchange) pages with 0.1.0 and guides from their READMEs. Both were published while this update was in progress, and without entries `tool/check_crates.py` would have failed the Pages build.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (165 external URLs, 0 errors).
+
+Not tested: none of the three pages has an example yet; the guides are prose only.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-25: weirdnet-backends 0.4.6, weirdnet-service 0.1.0 page; Pages deploy fixed
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`9f7380b`](https://github.com/WeirdBrains/weirdnet-site/commit/9f7380b34df18c3c6c273dcb5e49ae31888717ee)):
