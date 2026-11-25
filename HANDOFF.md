@@ -2,6 +2,20 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-storage 0.1.2 page, guide and example
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/storage.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`, [`6823bdb`](https://github.com/WeirdBrains/weirdnet-site/commit/6823bdb), merged into main with `git merge --no-ff`):
+
+- The [weirdnet-storage](https://net.weirdbrains.com/crates/storage) page is at 0.1.2 ([crates.io](https://crates.io/crates/weirdnet-storage/0.1.2), [docs.rs](https://docs.rs/weirdnet-storage/0.1.2), tag [v0.1.2](https://github.com/WeirdBrains/weirdnet-storage/releases/tag/v0.1.2)) and lists the `replicate`, `replicate::service` and `retention` parts with a note on asynchronous replication and what retention can and can't stop.
+- The guide adds "Replication and failover" (log, hot standby, fencing, failover with `Manual` or a weirdnet-sync lease, fail-back, standbys over weirdnet-service and weirdnet-net) and "Retention" (policies, seals, purge and archive, guard), and the four new features.
+- The example now keeps a hot standby current and protects invoices for seven years, with `replication` and `retention` enabled.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (166 external URLs, 0 errors). The example was built and run from the generated harness against weirdnet-storage 0.1.2 from crates.io.
+
+Not tested: the other examples in the harness were not rebuilt (unchanged).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-25: weirdnet-chart 0.1.0 guide
 
 What changed (`lib/content/guides.dart`, `lib/content/crates.dart`, [`c95a327`](https://github.com/WeirdBrains/weirdnet-site/commit/c95a3279d7d2177a26923cebdd1b1d3670e0ade6), merged into main with `git merge --no-ff`):
