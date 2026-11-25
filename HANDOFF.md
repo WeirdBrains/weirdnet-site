@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-backends 0.4.6, weirdnet-service 0.1.0 page; Pages deploy fixed
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`9f7380b`](https://github.com/WeirdBrains/weirdnet-site/commit/9f7380b34df18c3c6c273dcb5e49ae31888717ee)):
+
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.6 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.6), [docs.rs](https://docs.rs/weirdnet-backends/0.4.6), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-backends/blob/main/CHANGELOG.md)): the `node` feature accepts weirdnet-sync 0.8 and needs weirdnet-agent 0.5.5; no API change. The backends and agent guides say weirdnet-sync 0.8 is supported.
+- New [weirdnet-service](https://net.weirdbrains.com/crates/service) page in "Network" with 0.1.0 ([crates.io](https://crates.io/crates/weirdnet-service/0.1.0), [docs.rs](https://docs.rs/weirdnet-service/0.1.0)) and a guide from its README. It was published while the vault page was going out, and without an entry `tool/check_crates.py` failed the Pages build for the previous push (`32bdf50`), so that push didn't deploy.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (32 of 32), `jaspr build` (ok), `python3 tool/check_links.py` (37 pages, 0 errors) and `--external` (151 external URLs, 0 errors).
+
+Not tested: weirdnet-service has no example on its page yet; the guide is prose only.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-25: weirdnet-vault 0.1.0 page, weirdnet-agent 0.5.5
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/vault.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`, [`e6b50c7`](https://github.com/WeirdBrains/weirdnet-site/commit/e6b50c7), merged into main with `git merge --no-ff`):
