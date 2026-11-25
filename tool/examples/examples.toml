@@ -14,7 +14,7 @@ run = false
 deps = { weirdnet-keys = "0.1.2" }
 
 [storage]
-deps = { weirdnet-storage = "0.1.1" }
+deps = { weirdnet-storage = { version = "0.1.2", features = ["replication", "retention"] } }
 
 [vault]
 deps = { weirdnet-vault = "0.1.0" }
