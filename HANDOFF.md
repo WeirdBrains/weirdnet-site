@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-chart 0.1.0 guide
+
+What changed (`lib/content/guides.dart`, `lib/content/crates.dart`, [`c95a327`](https://github.com/WeirdBrains/weirdnet-site/commit/c95a3279d7d2177a26923cebdd1b1d3670e0ade6), merged into main with `git merge --no-ff`):
+
+- The [weirdnet-chart](https://net.weirdbrains.com/crates/chart) guide for 0.1.0 ([crates.io](https://crates.io/crates/weirdnet-chart/0.1.0), [docs.rs](https://docs.rs/weirdnet-chart/0.1.0), tag [v0.1.0](https://github.com/WeirdBrains/weirdnet-chart/releases/tag/v0.1.0)) now covers the `Series` ring buffer and `apply_trade` candles, panes and marks (`Line`, `Area`, `Bars`, `Candles`, `Ohlc`, `Volume`), the `Viewport` and following the newest data, `Chart::layout` to a `Scene`, `FrameThrottle`, the `ratatui` feature (braille `ChartWidget`, ratatui 0.30) and the `gpui` feature (`ChartView`, gpui 0.2.2 from crates.io, the `libc` 0.2.189 pin). The page lists the marks and links the tag.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (166 external URLs, 0 errors).
+
+Not tested: the page has no example yet; the guide is prose only.
+
+What's left and next: nothing for this release.
+
 ## 2026-11-25: weirdnet-accounts 0.2.0 page; weirdnet-chart and weirdnet-exchange pages
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`ae06556`](https://github.com/WeirdBrains/weirdnet-site/commit/ae065563efc10e265e6aa9a245ea7252a0d04b48), merged into main with `git merge --no-ff`):

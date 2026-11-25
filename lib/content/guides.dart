@@ -576,25 +576,66 @@ with <code>resource:verb</code> scopes, optional app and channel bindings, expir
     brings: r'''
 <p>Use weirdnet-chart for live charts in a desktop or terminal app: prices with volume below, indicators, anything
 time-ordered that keeps arriving. One chart model drives both a <a href="https://crates.io/crates/gpui">GPUI</a> view and a
-<a href="https://crates.io/crates/ratatui">Ratatui</a> widget, so a GUI and a TUI show the same chart.</p>
+<a href="https://crates.io/crates/ratatui">Ratatui</a> widget, so a GUI and a TUI show the same chart. The core has no GUI
+dependencies.</p>
 ''',
     works: r'''
-<p>A <code>Chart</code> holds panes stacked over one time axis; each pane has its own y axis (auto, auto from zero, or
-fixed) and series. A <code>Series</code> is a ring buffer: appending is O(1), the oldest samples drop off at capacity, a
-push with the newest timestamp replaces it in place (a live candle), and <code>apply_trade</code> folds trades into
-fixed-interval candles. Timestamps are milliseconds since the Unix epoch; time ticks follow a fixed UTC offset set with
-<code>set_time_zone</code>.</p>
-<p><code>Chart::layout</code> lays out only the visible range into backend-neutral rectangles, lines, polylines, areas and
-text in clip layers. Lines keep the first, lowest, highest and last point per pixel column, and candles merge when they
-would be thinner than three pixels. <code>FrameThrottle</code> turns a burst of updates into at most one frame per
-interval.</p>
-<p><code>ratatui::ChartWidget</code> draws with braille dots on ratatui-core (works with ratatui 0.30), with column-based pan
-and zoom helpers. <code>gpui::ChartView</code> owns the chart, draws it with paths, quads and shaped text, pans on drag and
-zooms on scroll; <code>update_chart</code> coalesces redraws to 60 frames per second.</p>
+<h3>Series</h3>
+<p>A <code>Series</code> is a time-ordered ring buffer of points or candles. Appending is O(1), the oldest samples drop off
+at capacity, and a push with the newest timestamp replaces it in place, which is how a live candle updates.
+<code>Chart::apply_trade(series, time, price, size, interval)</code> folds trades into fixed-interval candles: it updates the
+open candle or starts the next one. Timestamps are milliseconds since the Unix epoch.</p>
+<h3>Panes and marks</h3>
+<p>A <code>Chart</code> stacks any number of panes over one time axis, each with a weight and its own y axis
+(<code>YRange</code>: auto, auto from zero, or fixed), for example price above volume. Each series has a <code>Mark</code>
+that says how it is drawn:</p>
+<ul>
+<li><code>Line</code>: a polyline through points.</li>
+<li><code>Area</code>: a polyline with the area under it filled.</li>
+<li><code>Bars</code>: a bar from zero per point.</li>
+<li><code>Candles</code>: candlesticks.</li>
+<li><code>Ohlc</code>: OHLC bars, a high-low line with open and close ticks.</li>
+<li><code>Volume</code>: volume bars taken from another candle series, coloured by direction
+(<code>add_volume(pane, candles)</code>).</li>
+</ul>
+<p>Value axes use "nice" ticks with compact labels. Time ticks are calendar-aware from milliseconds to decades and land on
+whole local minutes, hours, days, months and years for a fixed UTC offset
+(<code>set_time_zone(TimeZone::Fixed(seconds))</code>); charts carry no time-zone database.</p>
+<h3>Viewport</h3>
+<p>The <code>Viewport</code> is the visible time window. It pans (by time, a fraction or pixels), zooms around a point, and
+keeps the span within limits (<code>set_span_limits</code>). While it is following, new data scrolls the view so the newest
+sample stays at the right edge with a small margin; panning away stops following, and panning or zooming back to the live
+edge resumes it. <code>Chart::show_latest(span)</code> shows the last <code>span</code> milliseconds and follows.</p>
+<h3>Layout to a Scene</h3>
+<p><code>Chart::layout</code> turns the chart into a <code>Scene</code> for a given size: the plot area, the time scale, each
+pane's layout, and backend-neutral primitives (rectangles, lines, polylines, areas and text) in clip layers, back to front.
+Only the visible range is laid out. Lines are reduced to the first, lowest, highest and last point per pixel column, so
+spikes and gaps survive, and candles merge into wider bars when they would be thinner than three pixels. A new backend only
+has to draw those five primitives.</p>
+<h3>FrameThrottle</h3>
+<p><code>FrameThrottle</code> turns a burst of updates into one frame now and at most one more after the frame interval, so
+live data redraws at the frame rate instead of on every tick. In a terminal event loop, pair <code>FrameThrottle::poll</code>
+with <code>FrameThrottle::timeout</code>.</p>
+<h3>Ratatui</h3>
+<p>With the <code>ratatui</code> feature, <code>ratatui::ChartWidget</code> draws the scene with braille dots (two across and
+four down per cell) on ratatui-core, so it works with ratatui 0.30. <code>pan_columns</code> and <code>zoom_columns</code>
+pan and zoom by terminal columns, and <code>render_scene</code> draws a laid-out scene into a buffer.</p>
+<h3>GPUI</h3>
+<p>With the <code>gpui</code> feature, <code>gpui::ChartView</code> is a view that owns the chart, draws it with paths, quads
+and shaped text, pans on drag and horizontal scroll, and zooms on vertical scroll. Feed it from a task with
+<code>update_chart</code>, which coalesces redraws to 60 frames per second (<code>set_fps</code> changes that);
+<code>gpui::paint_scene</code> draws a scene in your own element or <code>canvas</code>.</p>
+<p>The backend builds against gpui 0.2.2 from crates.io. An app that pins GPUI to a git revision can point this crate at the
+same revision with <code>[patch.crates-io]</code>, as long as that revision's gpui is semver-compatible. On Linux, GPUI needs
+the X11, Wayland, xkbcommon, Vulkan, fontconfig and freetype development packages. gpui 0.2.2 also pulls in
+<code>xattr</code> 0.2.3, which needs <code>libc</code> 0.2.189 or older on Linux; the
+<a href="https://github.com/WeirdBrains/weirdnet-chart">weirdnet-chart repository</a>'s <code>Cargo.lock</code> pins it
+there.</p>
 ''',
     features: [
-      '<code>ratatui</code>: <code>ratatui::ChartWidget</code>, <code>render_scene</code>, column-based pan and zoom.',
-      '<code>gpui</code>: <code>gpui::ChartView</code>, <code>paint_scene</code> (builds against gpui 0.2.2).',
+      'No feature is on by default: the core has no GUI dependencies.',
+      '<code>ratatui</code>: <code>ratatui::ChartWidget</code> (braille, ratatui 0.30 through ratatui-core), <code>render_scene</code>, column-based pan and zoom.',
+      '<code>gpui</code>: <code>gpui::ChartView</code> and <code>paint_scene</code>, against gpui 0.2.2 from crates.io.',
       '<code>gpui-test-support</code>: GPUI\'s headless test platform, for the crate\'s own tests.',
     ],
   ),
