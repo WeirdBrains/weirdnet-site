@@ -338,6 +338,8 @@ raw SQLCipher key and proving it worked, never silently opening unencrypted, pri
 transaction, nested savepoints, online snapshots, and converting an old plaintext file in place.</p>
 <p>It knows no schema and no brand, and it never derives, wraps, stores or exports a key: key management is the caller's
 (for example <a href="/crates/keys">weirdnet-keys</a>' keyring).</p>
+<p>Optional features add a hot standby with failover, for a database that has to survive losing a machine, and
+long-term retention, for records that must be kept for years and shown to be unchanged.</p>
 ''',
     works: r'''
 <ul>
@@ -358,11 +360,56 @@ plaintext file and verifies the copy before it replaces the original.</li>
 and written by primary key with a codec and hash, and a three-way take/keep/conflict decision. This is a local log, not the
 <a href="/crates/sync">weirdnet-sync</a> protocol.</li>
 </ul>
+<h3>Replication and failover</h3>
+<ul>
+<li><b>Log</b>: <code>Primary::write</code> runs a transaction and records every row change it made (SQLite's session
+extension) as one log entry in the same transaction, so the data and the log never disagree. Entries are hash-chained and
+the log is append-only. Schema changes go through <code>Primary::schema</code> and <code>Primary::migrate</code>.</li>
+<li><b>Hot standby</b>: a <code>Standby</code> pulls entries from the primary or another standby, checks the chain and
+applies each page in one transaction; a conflict stops it rather than letting it drift. Every node has its own SQLCipher
+key, and the log lives inside the encrypted database.</li>
+<li><b>Fencing</b>: every entry carries the epoch of the primary that wrote it. A standby accepts only the epoch it has
+applied, or an epoch entry that raises it, and refuses a source older than the newest epoch it has seen. A primary checks
+its <code>Leadership</code> before and after each write, so once its term is gone it can't commit.</li>
+<li><b>Failover</b>: <code>Manual</code> for operator-driven failover, or a <a href="/crates/sync">weirdnet-sync</a>
+majority-vote lease (<code>lease</code> feature) whose term becomes the epoch. <code>Replica::tick</code> promotes a standby
+that gains leadership and steps a primary down when it loses it.</li>
+<li><b>Fail-back</b>: a returning ex-primary finds where it diverged, rewinds its unreplicated entries (kept for audit)
+and follows the new primary.</li>
+<li><b>Over the network</b> (<code>replication-service</code> feature): <code>ReplicationService</code> serves the log as a
+<a href="/crates/service">weirdnet-service</a> service, and <code>follow</code> and <code>rejoin</code> drive a standby over
+a session. On <a href="/crates/net">weirdnet-net</a>, <code>RosterAuth</code> admits linked devices or roster grants with
+the <code>storage.replicate</code> permission.</li>
+</ul>
+<p>Replication is asynchronous: a failover can lose the old primary's last unreplicated writes, which that node rewinds
+and keeps. Replicated tables need a primary key, app triggers should be guarded with <code>REPLAYING</code> so a standby
+doesn't run them twice, and a rewind past a schema change is refused (reseed that node from a snapshot).</p>
+<h3>Retention</h3>
+<ul>
+<li><b>Policies</b>: <code>retention::protect</code> stores a minimum age, for example <code>Period::years(7)</code>, and
+adds triggers: deleting a younger row aborts, and so does updating one in an immutable table. Policies can only be
+strengthened.</li>
+<li><b>Seals</b>: <code>seal</code> hashes new rows into an append-only, hash-chained ledger; <code>verify</code>
+recomputes the chain and every row and reports changed, missing and unsealed rows; <code>head</code> gives the chain head
+to publish or sign.</li>
+<li><b>Purge and archive</b>: <code>purge_expired</code> removes only rows past the minimum age and records them.
+<code>archive_to</code> copies sealed rows into a separate SQLCipher file with its own key for cold storage, refusing rows
+that no longer match their seal; the archive keeps the policy, and <code>verify_archive</code> checks it later.</li>
+<li><b>Guard</b>: <code>guard</code> makes a connection refuse <code>DROP</code> and <code>ALTER</code> of protected tables,
+their triggers and the internal tables.</li>
+</ul>
+<p>With replication, apply a policy through <code>Primary::schema</code> and seal inside <code>Primary::write</code>; the
+policy and the ledger reach every standby. Triggers and the guard stop the app's own code and SQL; someone holding the key
+can still rewrite the file, which <code>verify</code>, replicas and archives make evident.</p>
 <p>CI tests Linux, macOS and Windows, builds Android (aarch64, armv7, x86_64, API 26) and iOS, and reports binary size: on
 x86_64 Linux the vendored build adds about 5.4 MiB, the system-crypto build about 1.1 MiB.</p>
 ''',
     features: [
       '<code>sync</code> (default): the row change log; adds serde, serde_json, sha2 and base64.',
+      '<code>replication</code>: the <code>replicate</code> module; adds SQLite\'s session extension, serde and sha2.',
+      '<code>replication-service</code>: <code>replicate::service</code>; adds <a href="/crates/service">weirdnet-service</a> without default features.',
+      '<code>lease</code>: <code>Leadership</code> for weirdnet-sync\'s <code>Elector</code>; adds <a href="/crates/sync">weirdnet-sync</a>.',
+      '<code>retention</code>: the <code>retention</code> module; adds SQLite\'s authorizer hooks and sha2.',
       '<code>vendored-openssl</code> (default): SQLCipher with OpenSSL built from source and linked statically (Android has no system libcrypto for apps). Without it SQLCipher uses CommonCrypto on Apple targets and the system libcrypto elsewhere. For iOS: <code>default-features = false, features = ["sync"]</code> and set <code>IPHONEOS_DEPLOYMENT_TARGET</code>.',
     ],
   ),

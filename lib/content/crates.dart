@@ -169,9 +169,9 @@ const crates = <Crate>[
   ),
   Crate(
     slug: 'storage',
-    version: '0.1.1',
+    version: '0.1.2',
     group: 'Keys and storage',
-    tagline: 'SQLCipher databases opened with a caller-supplied raw key, migrations, savepoints, sync change log.',
+    tagline: 'SQLCipher databases opened with a caller-supplied raw key, migrations, savepoints, hot standby replication with failover, and long-term retention.',
     about: [
       'General storage for SQLite databases encrypted with SQLCipher. The crate knows no schema and no brand: callers bring their migrations, table registry and queries.',
       'It never derives, wraps, stores, recovers or exports a key, and never sees a password. Opening with a key fails if SQLite was built without SQLCipher, so a key is never silently ignored.',
@@ -182,9 +182,13 @@ const crates = <Crate>[
       '<code>migrate</code>: ordered migrations in one transaction, with a hook after each one.',
       '<code>savepoint</code>, <code>begin</code>/<code>release</code>/<code>rollback</code>: all-or-nothing units that nest.',
       '<code>files</code> (private files written through a side file), <code>snapshot_to</code> (online copies), and <code>sync</code>: a trigger-kept change log, row codec and hash, three-way merge decisions.',
+      '<code>replicate</code> (<code>replication</code> feature): a primary and hot standbys kept current from an append-only, hash-chained log written in the same transaction as the data, with epochs that fence an old primary, manual or automatic failover (a <a href="/crates/sync">weirdnet-sync</a> lease with <code>lease</code>), and fail-back.',
+      '<code>replicate::service</code> (<code>replication-service</code> feature): the log as a <a href="/crates/service">weirdnet-service</a> service, so standbys follow over <a href="/crates/net">weirdnet-net</a> as linked devices or roster grants.',
+      '<code>retention</code> (<code>retention</code> feature): minimum-age policies (for example seven years) that refuse earlier deletes and edits, a hash-chained seal ledger, purges of expired rows only, verification, and encrypted archives for cold storage.',
     ],
     usedBy: ['Morph', 'weirdnet-relay', 'weirdnet-tls'],
     origin: 'Muninn',
+    notes: '0.1.2 is additive: replication, failover and retention sit behind new features, and the defaults are unchanged. Replication is asynchronous: a failover can lose the old primary’s last unreplicated writes, which that node rewinds and keeps. Retention triggers stop the app’s own code; someone holding the key can still rewrite the file, which verification, replicas and archives make evident.',
   ),
   Crate(
     slug: 'vault',
