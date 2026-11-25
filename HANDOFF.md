@@ -2,6 +2,21 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-25: weirdnet-agent 0.5.4, weirdnet-backends 0.4.5, weirdnet-openai 0.2.3 pages
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`98ba0e1`](https://github.com/WeirdBrains/weirdnet-site/commit/98ba0e1c063e90fe99e3cd53f57f71ebcfb1cd8c), merged into main with `git merge --no-ff`):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.4 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.4), [docs.rs](https://docs.rs/weirdnet-agent/0.5.4), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-agent/blob/main/CHANGELOG.md)): 0.5.3's `remote::pool_model::PoolModel` (a pool as one `ModelBackend`, with resume, rerouting and a local fallback), `PoolWatch`, `PoolStatus`, `CatalogNodes`, `ModelError::PoolUnreachable` and `ModelNotice`, and 0.5.4's `CatalogModel::origin` and `license` with the `ORIGIN_*` names. New guide sections "A pool as one model (0.5.3)" and "Origin and license (0.5.4)".
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.5 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.5), [docs.rs](https://docs.rs/weirdnet-backends/0.4.5), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-backends/blob/main/CHANGELOG.md)): `ModelsService::on_placed`, `Placed`, `PlacedVia`, `with_node_info`, `ModelEntry::origin` and `license` and `NodeService::set_model_origin`, with a "Placement hooks, origin and license (0.4.5)" guide section.
+- [weirdnet-openai](https://net.weirdbrains.com/crates/openai) shows 0.2.3 ([crates.io](https://crates.io/crates/weirdnet-openai/0.2.3), [docs.rs](https://docs.rs/weirdnet-openai/0.2.3), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-openai/blob/main/CHANGELOG.md)): `weirdnet.origin` and `weirdnet.license` in `/v1/models`.
+- No other weirdnet crate on crates.io was ahead of the site.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (30 of 30), `jaspr build` (ok), `python3 tool/check_links.py` (35 pages, 0 errors) and `--external` (142 external URLs, 0 errors).
+
+Not tested: no example was rebuilt; the new guide text is prose only.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-24: weirdnet-model 0.5.3 and weirdnet-backends 0.4.4 pages
 
 What changed ([`6a679d2`](https://github.com/WeirdBrains/weirdnet-site/commit/6a679d24d84f8ae6f5d9e22dadc0b9bbbb43f476), merged into main with `git merge --no-ff`):
