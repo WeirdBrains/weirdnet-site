@@ -2,6 +2,16 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-24: weirdnet-model 0.5.2 and weirdnet-backends 0.4.3 pages
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, [`9d7d3bb`](https://github.com/WeirdBrains/weirdnet-site/commit/9d7d3bbfecee54238c2838eb8edf71491c568f9a), merged into main with `git merge --no-ff`): the [weirdnet-model](https://net.weirdbrains.com/crates/model) page shows 0.5.2 ([crates.io](https://crates.io/crates/weirdnet-model/0.5.2), [docs.rs](https://docs.rs/weirdnet-model/0.5.2)) with LoRA adapter files (`gguf::read_header`, `GgufKind`, `Hub::adapters`, `download_adapter`, `StoredAdapter`) and a "LoRA adapters (0.5.2)" guide section. The [weirdnet-backends](https://net.weirdbrains.com/crates/backends) page shows 0.4.3 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.3), [docs.rs](https://docs.rs/weirdnet-backends/0.4.3)) with notes for 0.4.0 to 0.4.3, including the 0.4.0 breaking changes, and guide sections for LoRA adapters (`LoraAdapter`, `openai::Target`, `Supervisor::add_adapter`, `AdapterChange`, `ModelStatus::base`), live adapters and per-request scale (0.4.1), engine readiness (0.4.2) and node reservations (0.4.3). Its example depends on `"0.4"` and adds an adapter.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py` (30 of 30; `--strict` fails only on weirdnet-agent, weirdnet-alerts, weirdnet-device-link and weirdnet-openai, whose newer releases aren't on the site yet), `jaspr build` (ok), and a link check of the built site: no broken internal links, every page links to [weirdbrains.com](https://weirdbrains.com), and the crates.io and docs.rs links for these versions answer.
+
+Not tested: no example was rebuilt; the guide's snippets are prose only.
+
+What's left and next: pages for weirdnet-agent 0.5.2, weirdnet-alerts 0.2.2, weirdnet-device-link 0.4.2 and weirdnet-openai 0.2.2.
+
 ## 2026-11-22: per-request answer cache pages merged
 
 What changed: merged `cache-mode` into main ([`d19eb0e`](https://github.com/WeirdBrains/weirdnet-site/commit/d19eb0ea87b0918a84df990cff3aa5db789cb798)) after [weirdnet-agent 0.5.1](https://crates.io/crates/weirdnet-agent/0.5.1), [weirdnet-semcache 0.2.1](https://crates.io/crates/weirdnet-semcache/0.2.1) and [weirdnet-openai 0.2.1](https://crates.io/crates/weirdnet-openai/0.2.1) were published and built on docs.rs ([agent](https://docs.rs/weirdnet-agent/0.5.1), [semcache](https://docs.rs/weirdnet-semcache/0.2.1), [openai](https://docs.rs/weirdnet-openai/0.2.1)).
