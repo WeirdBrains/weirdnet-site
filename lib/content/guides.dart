@@ -161,6 +161,43 @@ signed over JSON. weirdnet-sync 0.5.0, weirdnet-relay 0.6.0 and weirdnet-device-
 relay runs weirdnet-relay 0.6.0, so its names server answers 0.8 nodes only.</p>
 ''',
   ),
+  'service': Guide(
+    brings: r'''
+<p>Use weirdnet-service when one server should serve many apps: typed calls and live feeds that desktop, terminal, mobile
+and MCP clients reach over <a href="/crates/net">weirdnet-net</a> streams, with every call and subscription authorized
+first. The pattern comes from the model-node protocol in <a href="/crates/backends">weirdnet-backends</a>.</p>
+''',
+    works: r'''
+<h3>Services</h3>
+<p>Implement <code>Service</code> with request and response types shared by server and clients. <code>access</code> names
+the <code>Access</code> a request needs (a permission, optionally <code>on</code> a resource such as an account), and
+<code>call</code> gets the <code>Admitted</code> caller. A session is one stream: credentials once, then concurrent calls
+with ids, cancellation, per-call deadlines, and a bounded queue that answers <code>Busy</code> when full.</p>
+<h3>Authorization</h3>
+<p>The hook returns who was admitted: the user, device roles and the role on the resource. <code>RosterAuth</code>
+(<code>roster</code>) admits the user's own linked devices with the device roles the user granted them, from the
+<a href="/crates/sync">weirdnet-sync</a> 0.8 roster. <code>MembershipAuth</code> (<code>access</code>) checks
+owner-signed memberships from weirdnet-net and roles from <a href="/crates/access">weirdnet-access</a> in its
+enforcement order. <code>AllOf</code>, <code>AnyOf</code>, <code>AllowAll</code> or a closure combine or replace them.</p>
+<h3>Live feeds</h3>
+<p>A <code>Hub</code> keeps each topic's state and a sequence number. Subscribers get a snapshot, then deltas; after a
+reconnect they resume from their last position, or get a fresh snapshot when the gap is too old or the server restarted.
+Publishing never waits: slow subscribers have their deltas coalesced by key and are re-snapshotted (or told to resume)
+when their queue overflows. Throttling, heartbeats and periodic re-authorization are optional, so a revoked device loses
+its stream. <code>Live</code> is a local copy of a topic's state that reconnects and resumes on its own.</p>
+<h3>Protocols</h3>
+<p><code>ProtocolId</code> (<code>/myapp/api/2</code>) versions are served side by side, and
+<code>Client::session_any</code> picks the newest the server has. The core runs over any <code>Channel</code>; the
+<code>net</code> feature adds <code>Server</code>, <code>NetDialer</code> and stream channels. The
+<a href="https://github.com/WeirdBrains/weirdnet-service/blob/main/docs/protocol.md">protocol notes</a> describe the
+messages.</p>
+''',
+    features: [
+      '<code>net</code> (default): <code>Server</code>, <code>NetDialer</code>, stream channels and credential helpers over weirdnet-net 0.8.',
+      '<code>roster</code>: <code>RosterAuth</code> (weirdnet-sync 0.8).',
+      '<code>access</code>: <code>MembershipAuth</code> (weirdnet-access).',
+    ],
+  ),
   'relay': Guide(
     brings: r'''
 <p>weirdnet-relay is the program <a href="https://weirdbrains.com">WeirdBrains</a> runs at <code>relay.net.weirdbrains.com</code>, and the one you run if you want
@@ -830,7 +867,7 @@ before those still pin <code>=0.2.0</code> and can't be mixed with agent 0.3.</l
 </ul>
 ''',
     features: [
-      '<code>pool</code> (0.4.0): the pool over <a href="/crates/net">weirdnet-net</a> 0.8: <code>LinkedNodes</code> finds inference nodes among the user’s linked devices (<a href="/crates/sync">weirdnet-sync</a> 0.5 roster), <code>NetDialer</code> opens streams, <code>connect</code> builds the <code>Pool</code>.',
+      '<code>pool</code> (0.4.0): the pool over <a href="/crates/net">weirdnet-net</a> 0.8: <code>LinkedNodes</code> finds inference nodes among the user’s linked devices (<a href="/crates/sync">weirdnet-sync</a> 0.5 to 0.8 roster; 0.8 since 0.5.5), <code>NetDialer</code> opens streams, <code>connect</code> builds the <code>Pool</code>.',
       '<code>serve</code> (0.4.0): <code>Server</code> serves infer/1, infer/2 and catalog/1 on a weirdnet-net node and announces it; <code>RosterAuth</code> admits only linked devices.',
       '<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).',
     ],
@@ -1074,7 +1111,7 @@ the NIC's nominal speed and an operator-declared one), set with <code>NodeServic
 <code>link::local_links()</code> lists this machine's interfaces. Only loopback, link-local and private addresses are ever
 advertised, never public or CGNAT ones. Older verifiers ignore the field. <code>Verifier::with_roster(roster)</code> also checks
 the record's node against the roster, so a revoked model node is refused even when it presents its old certificate. Model nodes
-should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent 0.4.4). 0.1.2 accepts weirdnet-sync 0.5 to 0.7.</p>
+should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent 0.4.4). 0.1.2 accepts weirdnet-sync 0.5 to 0.7; 0.4.6 accepts 0.5 to 0.8.</p>
 <h3>Platforms</h3>
 <table>
 <tr><th></th><th>Linux</th><th>macOS</th><th>Windows</th></tr>
@@ -1086,7 +1123,7 @@ should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent
 </table>
 ''',
     features: [
-      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> hardware in the records (0.5.3 since 0.4.4; 0.5.2 in 0.4.0 to 0.4.3; 0.5.1 in 0.3.0; 0.4 before), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
+      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5 to 0.8 (0.8 since 0.4.6), with <a href="/crates/model">weirdnet-model</a> hardware in the records (0.5.3 since 0.4.4; 0.5.2 in 0.4.0 to 0.4.3; 0.5.1 in 0.3.0; 0.4 before), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
     ],
   ),
   'openai': Guide(
