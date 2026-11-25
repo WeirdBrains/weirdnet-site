@@ -777,6 +777,16 @@ asked for, and <code>fit::rank</code> measures every file against it; without a 
 <p>A Hugging Face token (<code>HfToken</code>) is read on the machine that downloads, from <code>HF_TOKEN</code>,
 <code>HUGGING_FACE_HUB_TOKEN</code> or a token file. <code>ModelStore::from_env</code> sends it to the public Hub only, never to another
 host; <code>ModelStore::with_token</code> sets one for any Hub.</p>
+<h3>LoRA adapters (0.5.2)</h3>
+<p>A GGUF can hold a model or a LoRA adapter. <code>gguf::read_header</code> returns a <code>GgufHeader</code> whose <code>GgufKind</code>
+is <code>Model</code> or <code>Adapter { adapter_type, alpha }</code>, and <code>Hub::gguf_header</code> reads it from the Hub with a
+<code>Range</code> request. <code>Hub::adapters</code> lists a repo's adapter files as <code>RepoAdapter</code>s, GGUF LoRA or PEFT
+(<code>AdapterFormat</code>), with the base model hinted from the repo (<code>hf::adapter_hint</code>); <code>Search::with_adapters</code>
+finds adapter repos and marks them in <code>SearchHit::adapter</code>. <code>download_adapter</code> needs
+<code>Consent::given_adapter</code> for that adapter and saves it under <code>adapters/&lt;id&gt;/</code> with an
+<code>adapter.json</code>; <code>ModelStore::adapters</code> lists the <code>StoredAdapter</code>s on disk and <code>remove_adapter</code>
+deletes one. Adapters never show up in <code>Hub::models</code>, <code>fit</code>, <code>ModelStore::list</code> or plain searches, so a
+model picker doesn't offer them as models. <a href="/crates/backends">weirdnet-backends</a> 0.4 serves them on a base model.</p>
 <h3>Run it</h3>
 <p><code>Worker</code>: one thread owns the <code>Engine</code>; <code>Worker::generate</code> returns a <code>Generation</code>
 that streams <code>Chunk</code>s and can be cancelled from any thread. <code>prompt</code> renders chat turns through the model's
@@ -895,6 +905,37 @@ progress, resuming a partial file, split GGUFs too; with no file named, the larg
 supervisor to serve or load, <code>List</code> and <code>Remove</code>. Closing a pull's stream cancels it. The Hugging Face token is
 the node's own (<a href="/crates/model">weirdnet-model</a> <code>HfToken</code>) and never crosses the wire.
 <code>ModelsServer::start</code> serves it on a <code>weirdnet-net</code> node; <code>ModelsClient</code> is the owner's side.</p>
+<h3>LoRA adapters (0.4.0)</h3>
+<p>A <code>LoraAdapter</code> (an id, a path and an optional scale) is served on a base model: <code>ModelLaunch::with_adapters</code>
+adds them, <code>served_ids</code> lists the base and adapter ids, and <code>check_adapters</code> checks them before a load: on llama.cpp it reads
+each file's GGUF header through <a href="/crates/model">weirdnet-model</a> and takes only LoRA adapters with the base's architecture;
+on vLLM an adapter is a PEFT LoRA directory or a Hub id. A request names either the base or an adapter;
+<code>openai::Target</code> is <code>Base</code> or <code>Adapter</code>, and <code>chat_body_for</code> and <code>completion_body_for</code>
+write the engine body for it. llama.cpp starts with one <code>--lora</code> per adapter and <code>--lora-init-without-apply</code>, and
+each request carries a <code>lora</code> list that turns on only its adapter; vLLM starts with <code>--enable-lora</code>, one
+<code>--lora-modules</code> list and <code>--max-loras</code>. <code>Supervisor::add_adapter</code> and <code>remove_adapter</code>
+return an <code>AdapterChange</code>: <code>Live</code> when it applies now, <code>NextLoad</code> when it waits for the next load.
+<code>ModelStatus::base</code> names the base model, and each adapter gets its own status row. On models/1, <code>Pull::adapter_for</code>
+downloads an adapter for a base and <code>RepoFits::adapters</code> lists a repo's adapters.</p>
+<p>0.4.0 is breaking: <code>ModelLaunch</code> is <code>#[non_exhaustive]</code>, so build it with <code>ModelLaunch::new</code> and the
+<code>with_</code> methods; <code>StoredEntry::model</code> is an <code>Option</code>, with new <code>adapter</code> and <code>base</code>
+fields; <code>StoredEntry</code> and <code>RepoFits</code> are no longer <code>Eq</code>; and weirdnet-model is always a dependency.</p>
+<h3>Live adapters and scale (0.4.1)</h3>
+<p>On vLLM, <code>add_adapter_live</code> and <code>remove_adapter_live</code> load and unload an adapter in the running engine
+(the supervisor sets <code>VLLM_ALLOW_RUNTIME_LORA_UPDATING</code>), within <code>ModelLaunch::lora_slots</code>. On llama.cpp,
+<code>set_adapter_scale</code> changes an adapter's strength without a restart, and a request can set its own with
+<code>Request::adapter_scale</code> (weirdnet-agent 0.5.2; <code>complete_scaled</code>), capped at <code>MAX_ADAPTER_SCALE</code>.
+vLLM applies adapters at full strength and refuses a scale. The owner's models/1 adds <code>ServeAdapter</code>,
+<code>UnserveAdapter</code> and <code>AdapterScale</code>.</p>
+<h3>Readiness (0.4.2)</h3>
+<p>An engine counts as ready only when its <code>/v1/models</code> answers with the launch's API key and lists the launch's model id,
+so another process that took the port first is never mistaken for it. A launch that lost its port starts again on a new one, up
+to 3 times, without counting as a crash.</p>
+<h3>Reservations (0.4.3)</h3>
+<p><code>Supervisor::reserve(holder)</code> stops the node's engines and holds its accelerators for one holder, returning a <code>Reservation</code>;
+while it lasts every load is refused, forced ones too, until <code>release(holder)</code>. <code>reservation_changes</code> watches it. On node/1,
+<code>Command::Reserve</code> and <code>Release</code> (<code>NodeClient::reserve</code> and <code>release</code>) do the same remotely, and
+<code>Capability::reserved</code> and <code>Health::reserved</code> tell routers to skip the node.</p>
 <h3>Link info and the roster (0.1.2)</h3>
 <p>Capability records carry the node's private links (<code>Capability::links</code>: address, <code>AddrClass</code>, interface,
 the NIC's nominal speed and an operator-declared one), set with <code>NodeService::set_links</code>;
@@ -913,7 +954,7 @@ should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent
 </table>
 ''',
     features: [
-      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> 0.5.1 hardware in the records (0.4 before 0.3.0), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
+      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> hardware in the records (0.5.2; 0.5.1 in 0.3.0; 0.4 before), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
     ],
   ),
   'openai': Guide(
