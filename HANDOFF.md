@@ -2,6 +2,20 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-24: weirdnet-model 0.5.3 and weirdnet-backends 0.4.4 pages
+
+What changed ([`6a679d2`](https://github.com/WeirdBrains/weirdnet-site/commit/6a679d24d84f8ae6f5d9e22dadc0b9bbbb43f476), merged into main with `git merge --no-ff`):
+
+- [weirdnet-model](https://net.weirdbrains.com/crates/model) shows 0.5.3 ([crates.io](https://crates.io/crates/weirdnet-model/0.5.3), [docs.rs](https://docs.rs/weirdnet-model/0.5.3), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-model/blob/main/CHANGELOG.md)): `artifact::inspect` and `Artifact`, `Provenance`, `ModelStore::import` and its variants with the safetensors, MLX and projector layouts, `GgufKind::Projector`, `free_bytes`, `disk_space` and `bytes_by_origin`, with an "Import local files (0.5.3)" guide section.
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.4 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.4), [docs.rs](https://docs.rs/weirdnet-backends/0.4.4), [CHANGELOG](https://github.com/WeirdBrains/weirdnet-backends/blob/main/CHANGELOG.md)): models/1 uploads in resumable 48 KiB chunks, `Fetch`, `Pull::from_peer` and `ModelsClient::replicate`, `WritePolicy` (write authorizer, `max_upload`, `quota`, `KeepFree`), the `Disk` report, provenance in `List`, stable refusal reasons, `ModelLaunch::with_mmproj` and `Supervisor::set_projector_live`, with "Uploads and copies (0.4.4)" and "Projectors (0.4.4)" guide sections.
+- The agent example depends on weirdnet-agent 0.5.2 instead of 0.5.0.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (30 of 30), `jaspr build` (ok), `python3 tool/check_links.py` (35 pages, 0 errors) and `--external` (141 external URLs, 0 errors). The agent example was built and run from the `tool/gen_examples.py` harness, outside the repository, against weirdnet-agent 0.5.2.
+
+Not tested: the other examples weren't rebuilt; the model and backends snippets are prose only.
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-24: agent 0.5.2, alerts 0.2.2, device-link 0.4.2, openai 0.2.2 pages; link check in CI
 
 What changed ([`0376b80`](https://github.com/WeirdBrains/weirdnet-site/commit/0376b807bf5fe203121587e3778b1e9d90d39f18), merged into main with `git merge --no-ff`):

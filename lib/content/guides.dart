@@ -786,7 +786,7 @@ asked for, and <code>fit::rank</code> measures every file against it; without a 
 host; <code>ModelStore::with_token</code> sets one for any Hub.</p>
 <h3>LoRA adapters (0.5.2)</h3>
 <p>A GGUF can hold a model or a LoRA adapter. <code>gguf::read_header</code> returns a <code>GgufHeader</code> whose <code>GgufKind</code>
-is <code>Model</code> or <code>Adapter { adapter_type, alpha }</code>, and <code>Hub::gguf_header</code> reads it from the Hub with a
+is <code>Model</code>, <code>Adapter { adapter_type, alpha }</code> or, since 0.5.3, <code>Projector</code>, and <code>Hub::gguf_header</code> reads it from the Hub with a
 <code>Range</code> request. <code>Hub::adapters</code> lists a repo's adapter files as <code>RepoAdapter</code>s, GGUF LoRA or PEFT
 (<code>AdapterFormat</code>), with the base model hinted from the repo (<code>hf::adapter_hint</code>); <code>Search::with_adapters</code>
 finds adapter repos and marks them in <code>SearchHit::adapter</code>. <code>download_adapter</code> needs
@@ -794,6 +794,19 @@ finds adapter repos and marks them in <code>SearchHit::adapter</code>. <code>dow
 <code>adapter.json</code>; <code>ModelStore::adapters</code> lists the <code>StoredAdapter</code>s on disk and <code>remove_adapter</code>
 deletes one. Adapters never show up in <code>Hub::models</code>, <code>fit</code>, <code>ModelStore::list</code> or plain searches, so a
 model picker doesn't offer them as models. <a href="/crates/backends">weirdnet-backends</a> 0.4 serves them on a base model.</p>
+<h3>Import local files (0.5.3)</h3>
+<p>Models trained or converted on the user's machine come in through <code>artifact::inspect</code>: it reads and hashes local
+files (GGUF models, split models, LoRA adapters and vision projectors; safetensors and MLX model directories; PEFT adapters),
+reads their headers, and refuses pickles, code and symlinks. The <code>Artifact</code> it returns has an <code>ArtifactKind</code>,
+an <code>ArtifactFormat</code>, the <code>ArtifactFile</code>s with their SHA-256s, and a content <code>revision</code> that is the
+same wherever the same files are. <code>ModelStore::import</code> (and <code>import_replacing</code>, <code>import_with</code>,
+<code>import_files</code>) checks the files again and places them atomically, GGUFs as before and directories under
+<code>safetensors/&lt;id&gt;/</code>, <code>mlx/&lt;id&gt;/</code> or <code>projectors/&lt;id&gt;/</code>, with a
+<code>provenance.json</code>: a <code>Provenance</code> (<code>weirdnet-provenance/1</code>) naming the origin (upload, training or
+the Hub), the base model, the dataset, the trainer and the app. <code>StoredModel::provenance</code> and
+<code>StoredAdapter::provenance</code> read it back; <code>dir_models</code>, <code>projectors</code> and
+<code>remove_projector</code> list and delete the new layouts. <code>free_bytes</code> and <code>disk_space</code> say how much room
+is left, and <code>bytes_by_origin</code> how much is stored from one origin, for quotas.</p>
 <h3>Run it</h3>
 <p><code>Worker</code>: one thread owns the <code>Engine</code>; <code>Worker::generate</code> returns a <code>Generation</code>
 that streams <code>Chunk</code>s and can be cancelled from any thread. <code>prompt</code> renders chat turns through the model's
@@ -943,6 +956,31 @@ to 3 times, without counting as a crash.</p>
 while it lasts every load is refused, forced ones too, until <code>release(holder)</code>. <code>reservation_changes</code> watches it. On node/1,
 <code>Command::Reserve</code> and <code>Release</code> (<code>NodeClient::reserve</code> and <code>release</code>) do the same remotely, and
 <code>Capability::reserved</code> and <code>Health::reserved</code> tell routers to skip the node.</p>
+<h3>Uploads and copies (0.4.4)</h3>
+<p>The owner can send local files to a model node over models/1. <code>ModelsClient::upload</code> takes what
+<a href="/crates/model">weirdnet-model</a>'s <code>artifact::inspect</code> read and sends <code>ModelsCommand::Upload</code> with the
+file list, sizes, SHA-256s and a <code>Provenance</code>. The node checks names, size, quota, free disk, the engine and, for
+adapters and projectors, the base, then answers <code>UploadReady</code> with the bytes it already holds of each file; the client
+sends <code>UploadFrame::Chunk</code>s of at most 48 KiB (<code>CHUNK</code>) from there. Each GGUF or safetensors header is checked
+as soon as it arrives, so a wrong file is refused early. At the end the node checks every size, SHA-256 and header, places the
+entry with <code>ModelStore::import_files</code>, serves it when asked (adapters go live on their base) and answers
+<code>Uploaded</code>. Closing the stream cancels, and the received parts stay in a staging directory outside the store for a resume
+until <code>WritePolicy::part_ttl</code> (a week by default); <code>AbandonUpload</code> drops them.</p>
+<p>Nodes copy from each other with <code>ModelsCommand::Fetch</code>: <code>Pull::from_peer</code> (<code>PullSource::Peer</code>)
+pulls an upload or a stored entry from another node, once <code>ModelsService::with_peer_dialer</code> lets the node dial out, and
+<code>ModelsClient::replicate</code> has several nodes pull an upload from the node it landed on at the same time.</p>
+<p>Every write (uploads, removes, peer copies) follows the <code>WritePolicy</code>: an optional separate write
+<code>Authorize</code>, <code>max_upload</code>, a <code>quota</code> on uploaded bytes, and <code>KeepFree</code>, the space never
+filled (10 percent or 20 GiB by default, the larger). Without a write <code>Authorize</code>, any caller the service admits may
+write. <code>ModelsCommand::Disk</code> returns a <code>DiskReport</code> (free and total bytes, the limits, uploaded and staged
+bytes). <code>List</code> includes safetensors and MLX models and projectors, with provenance (<code>StoredEntry::provenance()</code>).
+Refusals carry stable reasons in <code>refusal</code> (<code>exists</code>, <code>too-big</code>, <code>no-space</code>,
+<code>quota</code>, <code>wrong-engine</code>, <code>wrong-arch</code>, <code>no-base</code>, <code>checksum</code> and others), read
+with <code>refusal_reason</code>. Nodes before 0.4.4 refuse the new commands.</p>
+<h3>Projectors (0.4.4)</h3>
+<p><code>ModelLaunch::with_mmproj</code> gives a llama.cpp model a vision projector: the engine starts with <code>--mmproj</code> and
+<code>capabilities()</code> reports image input. <code>Supervisor::set_projector_live</code> sets or clears it; the capabilities change
+at once, and the running engine picks it up at the next load, so a served model is reloaded when its projector changes.</p>
 <h3>Link info and the roster (0.1.2)</h3>
 <p>Capability records carry the node's private links (<code>Capability::links</code>: address, <code>AddrClass</code>, interface,
 the NIC's nominal speed and an operator-declared one), set with <code>NodeService::set_links</code>;
@@ -961,7 +999,7 @@ should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent
 </table>
 ''',
     features: [
-      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> hardware in the records (0.5.2; 0.5.1 in 0.3.0; 0.4 before), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
+      '<code>node</code>: <code>/weirdnet-backends/node/1</code> over <code>weirdnet-net</code> 0.8 and <code>weirdnet-sync</code> 0.5, with <a href="/crates/model">weirdnet-model</a> hardware in the records (0.5.3 since 0.4.4; 0.5.2 in 0.4.0 to 0.4.3; 0.5.1 in 0.3.0; 0.4 before), <code>/weirdnet-backends/models/1</code> (0.3.0), and <code>weirdnet-agent</code>’s <code>pool</code> and <code>serve</code> features.',
     ],
   ),
   'openai': Guide(

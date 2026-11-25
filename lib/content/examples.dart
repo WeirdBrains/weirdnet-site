@@ -251,7 +251,7 @@ fn main() {
   ),
   'agent': Example(
     r'''[dependencies]
-weirdnet-agent = { version = "0.5.0", features = ["testing"] }
+weirdnet-agent = { version = "0.5.2", features = ["testing"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }''',
     r'''// One task through the agent loop with the `testing` feature's scripted model and approver.
 // A real app implements ModelBackend (for example over weirdnet-model) and Approver (its UI).
