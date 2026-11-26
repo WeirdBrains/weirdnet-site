@@ -901,6 +901,34 @@ waiting for the user to answer an approval card don't use it, and a model turn i
 (<code>max_steps</code> and cancellation bound turns). <code>BudgetTracker::wall_elapsed</code> gives the task's wall-clock time for display. Every search, fetch, tool call, approval and notice is a <code>TraceStep</code> with its
 agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps
 fetched, and <code>retain_valid</code> drops such citations before display. Everything stored or synced implements serde.</p>
+<h3>Synced jobs (0.5.6, feature <code>jobs</code>)</h3>
+<p>A long job, such as training a model, should survive the device running it: another of the user's devices picks it up from
+its last checkpoint. <code>JobBoard&lt;P&gt;</code> is a typed layer over the <a href="/crates/sync">weirdnet-sync</a> 0.8.2 job
+log and leases, not a second log: every job is signed events in the op log, sealed and synced like any other record, and every
+device folds them into the same <code>JobRecord&lt;P&gt;</code>. The app brings only its payload type <code>P</code>.</p>
+<ol>
+<li><b>Open and post</b>: <code>JobBoard::open(&amp;sync, "ymir.train")</code> with a <code>SyncHandle</code> (the sync node and
+state, or <code>Leases</code>). <code>post(NewJob::new(id, base_revision, dataset, payload).with_policy(policy))</code> needs a
+policy with a role (<code>JobPolicy::for_role</code>) or candidates. Payloads are up to 64 KiB.</li>
+<li><b>Voters</b>: every device with the role votes, with limits that allow the job's claim time:
+<code>policy.configure_voter(voter, kind)</code>, or <code>policy.voter(kind)</code> for a new one.</li>
+<li><b>Claim</b>: <code>claim(id, |job| ...).await</code> takes the job's majority-vote lease (<code>kind/id</code>), with the
+app's own check on top of the role and candidates. The <code>Claim</code> renews in the background and gives the
+<code>term</code>, the checkpoint to <code>resume_from</code>, and <code>lost().await</code>, which says why the claim ended
+(lease lost, superseded, paused or cancelled by the owner, released).</li>
+<li><b>Work</b>: <code>checkpoint(CheckpointRef)</code> records a pointer (a content hash, its size and the devices holding a
+copy; the app moves the bytes), <code>set_holders</code> updates who holds a copy, and <code>progress</code> keeps a small value,
+written at most every 30 s. <code>fence()</code> gives a token to check against a resource's <code>FenceGuard</code>, so a holder
+that lost its claim can't write.</li>
+<li><b>End</b>: <code>finish(result)</code>, <code>fail(reason, retry)</code> or <code>pause()</code>. Dropping a claim releases it.</li>
+</ol>
+<p><code>JobPolicy</code> defaults: 60 s claims renewed every 20 s, a 300 s takeover wait, 3 attempts and a 60 s retry backoff. If a
+holder disappears, voters wait out the takeover wait after its claim lapsed before another device may claim, so a short network
+drop doesn't move a long job; the holder can renew back inside the wait. A failure with <code>retry</code> reopens the job after
+the backoff until the attempts run out (lapsed claims count); pauses never count. The owner's <code>pause</code> and
+<code>cancel</code> reach the holder, which stops and lets go; <code>resume</code> reopens a paused job. <code>get</code>, <code>list</code> (with a
+<code>JobFilter</code>; jobs that ended more than 30 days ago are left out unless asked for), <code>checkpoints</code> (the last
+eight) and <code>watch</code> (a stream of changes) read the board.</p>
 <h3>More pages (0.3.0)</h3>
 <p>When a task's page budget runs out, the session asks <code>Approver::extend_pages(&amp;PagesPrompt)</code> (the "+5 pages" card).
 <code>PagesPrompt</code> has the agent, the task id, the pages used so far and the extension size (<code>Budget::page_extension</code>).
@@ -1095,6 +1123,7 @@ before those still pin <code>=0.2.0</code> and can't be mixed with agent 0.3.</l
     features: [
       '<code>pool</code> (0.4.0): the pool over <a href="/crates/net">weirdnet-net</a> 0.8: <code>LinkedNodes</code> finds inference nodes among the user’s linked devices (<a href="/crates/sync">weirdnet-sync</a> 0.5 to 0.8 roster; 0.8 since 0.5.5), <code>NetDialer</code> opens streams, <code>connect</code> builds the <code>Pool</code>.',
       '<code>serve</code> (0.4.0): <code>Server</code> serves infer/1, infer/2 and catalog/1 on a weirdnet-net node and announces it; <code>RosterAuth</code> admits only linked devices.',
+      '<code>jobs</code> (0.5.6): synced jobs over the weirdnet-sync 0.8.2 job log (<code>JobBoard</code>, <code>Claim</code>, <code>JobPolicy</code>); pulls in weirdnet-net and weirdnet-sync like <code>pool</code>.',
       '<code>testing</code>: <code>ScriptedModel</code>, <code>ScriptedApprover</code> and <code>FnTool</code> for tests in downstream crates (the example below uses them).',
     ],
   ),
@@ -1826,6 +1855,15 @@ live holder keeps the lease. Defaults: 15 s leases, renewed every 5 s, 1 % clock
 <li><b>Jobs</b> (<code>Jobs</code>, <code>JobSpec</code>, <code>Leases::claim_job</code>): claiming a job is acquiring its own
 lease, and that term fences the attempt. When a worker dies its claim lapses and another voter resumes from the last
 checkpoint.</li>
+<li><b>Job rules</b> (0.8.1, <code>JobSpec::with_rules</code>, <code>JobRules</code>): the devices that may claim a job (a role,
+narrowed by a candidate list), how long voters wait after a claim lapsed before another device may take it over, and a backoff
+after a retryable failure. Claims from other devices are ignored when folding and refused by voters. Voters grant a job its own
+claim time (up to an hour, <code>MAX_JOB_CLAIM</code>; other names keep their limits, see <code>Voter::with_limits</code>) and wait
+out their longest grant after a restart. Under rules, only the job's owner or a full device can pause, resume or cancel it.</li>
+<li><b>Pausing and notes</b> (0.8.1): <code>Jobs::pause</code> and <code>resume</code>; a pause never counts as an attempt (since 0.8.2 that holds for the owner's pause
+even when the holder's lease ran out before it recorded its own).
+<code>JobEvent::Note</code> lets the holder keep small values (progress, where copies of a checkpoint are) without a new
+checkpoint, newest per key.</li>
 <li>Lease messages travel on <code>/weirdnet/sync/2</code>, sealed under the head key, so only the user's admitted, unrevoked
 devices take part. Change the voter set one device at a time.</li>
 </ul>
@@ -1834,6 +1872,9 @@ devices take part. Change the voter set one device at a time.</li>
 <code>Message</code> has <code>LeaseAsk</code>, <code>LeaseGrant</code>, <code>LeaseDeny</code> and <code>LeaseFree</code>
 variants (exhaustive matches need arms for them). Pulls between 0.7 and 0.8 devices are unchanged; every voting device needs
 0.8.</p>
+<p>0.8.1 needs no source changes, unless you match <code>JobEvent</code> or <code>JobStatus</code> exhaustively (new
+<code>Paused</code>, <code>Resumed</code> and <code>Note</code>). Jobs posted without rules encode and fold as in 0.8.0. Give every
+voter for a job role the 0.8.1 limits before posting jobs with long claim times.</p>
 <h3>Checking callers on a serving node</h3>
 <p>A node that serves something to the user's other devices (inference, files, app calls) has to decide who is calling. The
 transport tells it the caller's peer id, authenticated by Noise; the roster tells it whether that peer is one of the user's

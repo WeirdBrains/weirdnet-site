@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-agent 0.5.6 jobs guide; weirdnet-sync 0.8.1 and 0.8.2
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `lib/content/examples.dart`, `tool/examples/examples.toml`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.6 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.6), [docs.rs](https://docs.rs/weirdnet-agent/0.5.6)) with a "Synced jobs" guide section (open and post, voters, claim, checkpoints and fencing, finish, fail and pause, policy defaults) and the `jobs` feature in the feature list.
+- [weirdnet-sync](https://net.weirdbrains.com/crates/sync) guide covers job rules, pausing and notes (0.8.1) and the 0.8.2 owner-pause fix, with notes on moving to 0.8.1; its example uses 0.8.2.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (168 external URLs), the sync example built and run against the published 0.8.2.
+
+Not tested: the jobs guide has no runnable example; it is prose from the crate's docs and tests.
+
+What's left and next: nothing for this release.
+
 ## 2026-11-25: weirdnet-storage 0.1.2 page, guide and example
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/storage.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`, [`6823bdb`](https://github.com/WeirdBrains/weirdnet-site/commit/6823bdb), merged into main with `git merge --no-ff`):

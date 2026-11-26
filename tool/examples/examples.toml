@@ -52,7 +52,7 @@ deps = { weirdnet-render = "0.1.1" }
 deps = { weirdnet-themes = "0.2.0" }
 
 [sync]
-deps = { weirdnet-sync = "0.8.0" }
+deps = { weirdnet-sync = "0.8.2" }
 
 [text]
 deps = { weirdnet-text = "0.1.1" }
