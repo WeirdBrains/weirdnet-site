@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-mcp 0.6.2 image and audio tool results for clients
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-mcp](https://net.weirdbrains.com/crates/mcp) shows 0.6.2 ([crates.io](https://crates.io/crates/weirdnet-mcp/0.6.2), [docs.rs](https://docs.rs/weirdnet-mcp/0.6.2)): an about line, the `CallToolResult` / `Content` API line gains `from_json`, `decoded_bytes`, `mime_type`, `is_image`, `is_audio`, `as_text` and `CallToolResult::text`, the client line gains `call_tool_content` / `call_tool_content_until`, and new notes. Guide: a "Images and audio (0.6.2)" client step with the wire JSON, a "Moving to 0.6.2" section, and an intro line.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 171 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (the mcp example's `"0.6.1"` requirement already takes 0.6.2).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: media and request limits (weirdnet-agent 0.5.7, weirdnet-backends 0.4.8, weirdnet-openai 0.2.4)
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

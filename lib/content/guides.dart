@@ -730,6 +730,8 @@ modelled.</li>
 <code>&lt;app&gt;ctl mcp</code>. It is stateless: the app decodes the request (or lets the crate's stdio or HTTP server do it),
 the crate speaks MCP. TAUR uses it from v1.10.0, Salty Gull for its server and <code>saltyctl mcp</code>, and Ymir and Bragi
 for their MCP servers.</p>
+<p>Since 0.6.2 the client keeps image and audio blocks in tool results, so an app can use tools that return pictures or
+sound, such as frames taken from a video.</p>
 <p>Since 0.6.1 apps can also offer prompts: templates the user picks, such as slash commands.</p>
 <p>Since 0.6.0 tools can be async and return images and audio, input schemas can nest objects, enums, arrays and
 <code>anyOf</code>, apps can serve resources, and the crate brings the stdio loop and a streamable HTTP endpoint with bearer
@@ -801,6 +803,21 @@ the remote <code>/mcp</code>, write the replies.</p>
 <ol>
 <li><code>Client::connect(transport, ClientOptions)</code> runs <code>initialize</code>; then <code>list_tools</code> follows
 cursors, and <code>call_tool</code> or <code>call_tool_until(name, args, cancel)</code> calls a tool.</li>
+<li><b>Images and audio (0.6.2).</b> <code>call_tool</code> returns text, with a <code>[image content omitted]</code> note for
+each non-text block. <code>call_tool_content</code> and <code>call_tool_content_until</code> return the whole
+<code>CallToolResult</code>: every text, image, audio, resource-link and embedded-resource block in the server's order, plus
+<code>structuredContent</code> and <code>isError</code>. <code>CallToolResult::from_json</code> and <code>Content::from_json</code>
+parse the same JSON without a client. Images and audio are base64 <code>data</code> plus <code>mimeType</code>, as MCP sends
+them:
+<pre><code>{"content": [
+  {"type": "text", "text": "frame at 1.5s"},
+  {"type": "image", "data": "iVBORw0KGgo=", "mimeType": "image/png"},
+  {"type": "audio", "data": "UklGRiQAAABXQVZF", "mimeType": "audio/wav"}
+], "isError": false}</code></pre>
+<code>Content::decoded_bytes</code> decodes the base64 (<code>None</code> if it is not valid), <code>mime_type</code>,
+<code>is_image</code>, <code>is_audio</code> and <code>as_text</code> describe a block, <code>format</code> gives the short audio
+format and <code>data_url</code> the <code>data:</code> URL that weirdnet-agent content parts take. Optional
+<code>annotations</code> and <code>_meta</code> on a block are ignored, and blocks of unknown types are skipped.</li>
 <li>Every request has a timeout. A timeout or a cancel sends <code>notifications/cancelled</code> to the server.</li>
 <li>Transports: <code>StdioTransport</code> (<code>spawn(&amp;StdioCommand)</code> or <code>from_io</code>) for a local command,
 and <code>HttpTransport</code> (<code>HttpConfig</code>) for streamable HTTP: JSON or SSE responses, the
@@ -837,6 +854,9 @@ with <code>spawn_limited</code> if a server legitimately sends more.</li>
 (0.4.0 used <code>=0.3.0</code>). Move to <a href="/crates/agent">weirdnet-agent</a> 0.4.0 together with it. No source changes were
 needed in this crate.</li>
 </ul>
+<h3>Moving to 0.6.2</h3>
+<p>Nothing to change: servers answer exactly as in 0.6.1, and <code>call_tool</code> and <code>McpSource</code> are unchanged. A
+client that wants images and audio calls <code>call_tool_content</code> instead of <code>call_tool</code>.</p>
 <h3>Moving to 0.6.1</h3>
 <p>Nothing to change: servers without prompts answer exactly as in 0.6.0, and the new <code>Tools</code> methods have defaults.
 To offer prompts, implement <code>prompts</code> and <code>get_prompt</code>. <code>Content</code> now converts from
