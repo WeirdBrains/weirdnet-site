@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-agent 0.5.8 transcription
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.8 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.8), [docs.rs](https://docs.rs/weirdnet-agent/0.5.8)): a new API line (transcription: `Purpose::Transcribe`, `Catalog::route_transcribe`, infer/2 `TranscribeRequest` / `Transcript` / `Working`, `InferHost::open_transcribe`, `TranscribeBackend`, `Pool::transcribe`) and new notes, including that catalogs leave transcription models out for older askers. Guide: a "Speech to text (0.5.8)" section.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 172 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (they take weirdnet-agent `"0.5"`, which 0.5.8 meets).
+
+What's left and next: weirdnet-backends with a transcription backend.
+
 ## 2026-11-26: weirdnet-model 0.5.4 speech to text and model limits
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

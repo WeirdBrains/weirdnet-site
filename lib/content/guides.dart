@@ -931,6 +931,23 @@ cost grows with size), <code>image_edge</code> (the longest edge the model uses)
 defaulted, so a client asks the user rather than guessing. <code>image_cost(w, h)</code> and <code>audio_cost(ms)</code> give token
 costs, <code>tightest</code> merges copies field by field and <code>or</code> puts an operator's numbers over measured ones. The
 context window stays in <code>CatalogModel::context</code>. Entries without limits look as before on the wire.</p>
+<h3>Speech to text (0.5.8)</h3>
+<p>A video's soundtrack can become text for a model that doesn't take audio. A speech-to-text model's catalog entry has purpose
+<code>transcribe</code> (<code>Purpose::Transcribe</code>, the same name as <a href="/crates/model">weirdnet-model</a> 0.5.4's role); it is
+never picked for chat. <code>Catalog::route_transcribe(model)</code> picks one: a named model must transcribe, and with none named the
+best one is taken (warm first, then more replicas); otherwise it is a <code>BadRequest</code>.</p>
+<p>The request goes over infer/2 as <code>ClientFrame::Transcribe(TranscribeRequest)</code>: the audio as raw bytes (a CBOR byte
+string, not base64) with its <code>format</code> (<code>wav</code>, <code>mp3</code>, ...), and optionally <code>model</code>,
+<code>language</code>, <code>prompt</code> (names and terms to guide spelling) and <code>timestamps</code>. It queues like any request;
+the node answers <code>Accepted</code>, a <code>Working</code> frame every few seconds while the model runs, one <code>Transcript</code>
+(<code>text</code>, <code>language</code>, <code>duration_ms</code> and, when asked and the backend can, <code>Segment</code>s with
+<code>start_ms</code> and <code>end_ms</code>) and <code>Done</code> with usage. Apps call <code>Pool::transcribe</code>, which fails over
+between nodes and returns a <code>Transcription</code>; hosts implement <code>InferHost::open_transcribe</code> with a
+<code>TranscribeBackend</code>. A node before 0.5.8 closes the stream, which the pool counts as unsupported. The whole request must fit
+in one 32 MiB message, so long soundtracks go in pieces.</p>
+<p>Peers before 0.5.8 can't read a <code>transcribe</code> entry, so a node leaves those entries out of their catalog;
+<code>catalog::query</code> and <code>catalog::subscribe</code> from 0.5.8 ask for everything, and an entry they can't read is skipped
+rather than failing the whole catalog.</p>
 <h3>Synced jobs (0.5.6, feature <code>jobs</code>)</h3>
 <p>A long job, such as training a model, should survive the device running it: another of the user's devices picks it up from
 its last checkpoint. <code>JobBoard&lt;P&gt;</code> is a typed layer over the <a href="/crates/sync">weirdnet-sync</a> 0.8.2 job
