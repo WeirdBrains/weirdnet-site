@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-sync 0.8.3 type-scoped keys for service devices
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-sync](https://net.weirdbrains.com/crates/sync) shows 0.8.3 ([crates.io](https://crates.io/crates/weirdnet-sync/0.8.3), [docs.rs](https://docs.rs/weirdnet-sync/0.8.3)): service devices hold type-scoped keys for their granted types only, leases come automatically with any sync type, and devices refuse a service peer's requests outside its grant. New guide section "Type-scoped keys for service devices (0.8.3)", a new parts line, and the service-link wording in the device-link guide.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (170 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (the sync example's `"0.8.2"` requirement already takes 0.8.3).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-backends 0.4.7 and weirdnet-net 0.8.3
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

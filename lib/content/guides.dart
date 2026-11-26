@@ -1824,7 +1824,7 @@ Grants live in the roster, sync like certificates and revocations, and are how a
 (<code>Roster::roles_of</code>, <code>has_role</code>); people's roles stay in <a href="/crates/access">weirdnet-access</a>.</p>
 <ul>
 <li>The existing device makes the bundle with <code>Identity::service_bundle(peer, roles, types)</code> (it grants and, for a
-device with types, rotates first, so the bundle carries the epoch keys), sends it over a
+device with types, rotates first, so the bundle carries keys; since 0.8.3 only type-scoped ones), sends it over a
 <a href="/crates/device-link">weirdnet-device-link</a> 0.4 credential, and the server calls
 <code>Identity::adopt_service</code>. Its <code>SyncState::seed</code> is <code>None</code>.</li>
 <li>A service device with types syncs them under the epoch key and is sealed into every later rotation, so revoking it cuts
@@ -1834,6 +1834,25 @@ over an unsealed roster exchange (only a roster or a refusal ever goes unsealed)
 ignored.</li>
 <li><code>SecretStore</code> lets an app keep the identity's secrets in its own store (<code>FileSecrets</code> is the
 default).</li>
+</ul>
+<h3>Type-scoped keys for service devices (0.8.3)</h3>
+<p>A service device with sync types holds only the keys of the types in its grant, never an epoch key. A node granted
+<code>ymir.train</code> syncs <code>ymir.train</code>, votes and claims jobs, and cannot open a <code>ymir.context</code> page or
+sealed record, whatever it is sent.</p>
+<ul>
+<li>The link bundle carries, for each rotation, the key of each granted type and its chunk type, derived exactly as a full
+device derives it, so envelopes look the same on the wire. A later rotation admits the device with the new rotation's
+scoped keys instead of sealing the epoch key to it (<code>Roster::scoped_types</code>, <code>EpochKeys::get_scoped</code>).</li>
+<li>Leases come automatically: a service device with any sync type also gets the <code>weirdnet.lease</code>
+(<code>LEASE_TYPE</code>) key. Granting only <code>weirdnet.lease</code> makes a voter that holds no data keys.</li>
+<li>Devices serve a service peer only its granted types: a <code>Hello</code>, <code>Pull</code> or <code>Ack</code> for another
+type, and a lease request from a roster-only device, get <code>type-not-granted</code> (<code>Roster::may_sync</code>). Full
+devices are not limited.</li>
+<li>Record keys come from the epoch key, so a service device can't read or write a sealed record type
+(<code>RecordOptions::sealed</code>). Leave a type it needs unsealed; its pages are still sealed on the wire.</li>
+<li>A service device given epoch keys by an older device replaces them with scoped keys when it loads them. Upgrade full
+devices to 0.8.3: an older one that rotates still seals the epoch key to service devices. A service device on 0.8.2 can't
+use the scoped keys and needs 0.8.3.</li>
 </ul>
 <h3>Moving to 0.7.0</h3>
 <p>Breaking: <code>SyncState::seed</code> is an <code>Option&lt;Vec&lt;u8&gt;&gt;</code>; <code>Roster</code> has a
@@ -2037,7 +2056,7 @@ with that key.</li>
 <li><b>Service link</b> (0.4.0): a server that must never hold the seed (a model or inference node) gets a
 <code>Credential</code> instead: the user's <em>public</em> key, a node certificate the existing device signs with the user key
 (which never leaves it), the sync types and an opaque sync bundle (weirdnet-sync's <code>Identity::service_bundle</code>: the
-device's grant, the roster and, if it syncs types, epoch keys), sealed the same way
+device's grant, the roster and, if it syncs types, keys for those types only since weirdnet-sync 0.8.3), sealed the same way
 (<code>Pairing::send_credential</code>). The new device takes it with <code>take_any()</code> and adopts it with
 <code>Identity::adopt_service</code>. <code>take()</code> still returns only a full transfer, and a 0.3 device refuses a
 credential.</li>
