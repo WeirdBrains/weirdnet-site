@@ -1807,6 +1807,22 @@ cursors move to the further of the two, and the clock moves past both;</li>
 earlier pages stay applied and their cursors moved. <code>pull_from</code> keeps its signature and returns only the error;
 <code>pull_from_outcome</code> and <code>pull_from_shared</code> return a <code>PullOutcome { applied, error }</code> (non-exhaustive)
 with the count either way, so an app can show progress and retry from where it stopped.</p>
+<h3>Several types in one session (0.8.5)</h3>
+<p><code>pull_types(&amp;mut state, &amp;node, peer, &amp;addrs, &amp;["ymir.pool", "ymir.context"])</code> pulls several record
+types from one peer in one session: one <code>Hello</code> (and at most one roster swap) for all of them, then each type's
+<code>Pull</code>, <code>Page</code> and <code>Ack</code>. <code>pull_types_shared</code> does the same on a snapshot, as
+<code>pull_from_shared</code> does for one type.</p>
+<ul>
+<li>Each type's requests are sealed under that type's own key, so a service device's scoped keys work as with
+<code>pull_from</code>. Since 0.8.5 a server refuses a <code>Pull</code> sealed under another type than the one it asks for
+(<code>type-mismatch</code>).</li>
+<li>It returns a <code>PullTypesOutcome</code> with one <code>PullOutcome</code> per type, in the order asked
+(<code>get</code>, <code>applied</code>, <code>is_ok</code>). A type the peer refuses fails alone and the others still pull:
+<code>type-not-granted</code> outside a service device's grant, <code>type-off</code> where the peer does not sync it. A service
+device does not ask for a type outside its own grant; that type comes back <code>type-not-granted</code> without a request.</li>
+<li>Nothing changes on the wire: a server answers each request on its own, so a 0.7.1 or 0.8.0 to 0.8.4 peer serves a
+<code>pull_types</code> session too, with one <code>Hello</code>.</li>
+</ul>
 <h3>A device linked elsewhere (0.5.2)</h3>
 <p>Before 0.5.2 a node answering a pull listed only revoked certificates, so a device linked on another device (no revocation and
 no rotation, so no epoch change) reached the rest only by luck, and a pass could finish without error while the new device stayed

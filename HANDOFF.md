@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-sync 0.8.5 several types in one session
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-sync](https://net.weirdbrains.com/crates/sync) shows 0.8.5 ([crates.io](https://crates.io/crates/weirdnet-sync/0.8.5), [docs.rs](https://docs.rs/weirdnet-sync/0.8.5)): an API line for `pull_types`, `pull_types_shared` and `PullTypesOutcome`, 0.8.5 notes, and a guide section "Several types in one session (0.8.5)": one hello for all types, each type under its own key, per-type outcomes and refusals, `type-mismatch`, and that older peers serve it unchanged.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 169 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (the sync example's `"0.8.2"` requirement already takes 0.8.5).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-semcache 0.2.2 similarity lookup by embedding
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
