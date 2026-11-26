@@ -10,7 +10,7 @@ What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit t
 
 Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 172 external URLs, 0 errors).
 
-Not tested: the examples were not rebuilt (they take weirdnet-agent `"0.5"`, which 0.5.8 meets).
+Not tested: the examples were not rebuilt (the agent example takes weirdnet-agent `"0.5.2"`, which 0.5.8 meets).
 
 What's left and next: weirdnet-backends with a transcription backend.
 
