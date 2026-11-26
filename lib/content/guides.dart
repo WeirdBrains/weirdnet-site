@@ -107,7 +107,8 @@ one, and a response head. Heads are capped at 16 KiB, bodies are uncapped unless
 idle for 60 s ends.</li>
 <li><b>Streams</b>: <code>Node::accept_streams(protocol, Limits)</code> and <code>open_stream</code>; a <code>Stream</code> is
 <code>AsyncRead</code>/<code>AsyncWrite</code> and blocking <code>Read</code>/<code>Write</code>, with a window of
-unacknowledged bytes and per-protocol limits. Sealed streams are bound to an exchange.</li>
+unacknowledged bytes and per-protocol limits; a stream both sides have ended stops counting against
+<code>Limits::max_streams</code> (0.8.3). Sealed streams are bound to an exchange.</li>
 <li><b>Content</b> (<code>/weirdnet/content/1</code>): content-defined chunks of 16 to 256 KiB addressed by BLAKE3; a file's
 root is the hash of its index, so an edit moves only the chunks around it. A user-signed <code>Manifest</code> maps paths to
 roots. <code>fetch</code> pulls from one or several sources and checks every chunk; <code>fetch_range</code> gets a byte range;
@@ -1340,8 +1341,12 @@ pulls an upload or a stored entry from another node, once <code>ModelsService::w
 <p>Every write (uploads, removes, peer copies) follows the <code>WritePolicy</code>: an optional separate write
 <code>Authorize</code>, <code>max_upload</code>, a <code>quota</code> on uploaded bytes, and <code>KeepFree</code>, the space never
 filled (10 percent or 20 GiB by default, the larger). Without a write <code>Authorize</code>, any caller the service admits may
-write. <code>ModelsCommand::Disk</code> returns a <code>DiskReport</code> (free and total bytes, the limits, uploaded and staged
+write. Since 0.4.7, <code>WritePolicy::with_uploads(false)</code> turns uploads off alone: they are refused with
+<code>not-allowed</code>, while pulls, peer copies and removals keep working. <code>ModelsCommand::Disk</code> returns a <code>DiskReport</code> (free and total bytes, the limits, uploaded and staged
 bytes). <code>List</code> includes safetensors and MLX models and projectors, with provenance (<code>StoredEntry::provenance()</code>).
+<code>StoredEntry::list(&amp;store)</code> (0.4.7) lists a <code>ModelStore</code> the same way without a running service, and
+<code>StoredEntry::from_model</code>, <code>from_adapter</code> and <code>from_projector</code>, with <code>with_served</code> and
+<code>with_base</code>, build entries without serde.
 Refusals carry stable reasons in <code>refusal</code> (<code>exists</code>, <code>too-big</code>, <code>no-space</code>,
 <code>quota</code>, <code>wrong-engine</code>, <code>wrong-arch</code>, <code>no-base</code>, <code>checksum</code> and others), read
 with <code>refusal_reason</code>. Nodes before 0.4.4 refuse the new commands.</p>

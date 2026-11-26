@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-backends 0.4.7 and weirdnet-net 0.8.3
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.7 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.7), [docs.rs](https://docs.rs/weirdnet-backends/0.4.7)): the uploads switch (`WritePolicy::with_uploads`, refused as `not-allowed` while pulls and removals keep working) and `StoredEntry` constructors and `StoredEntry::list`, in the notes, features and guide.
+- [weirdnet-net](https://net.weirdbrains.com/crates/net) shows 0.8.3 ([crates.io](https://crates.io/crates/weirdnet-net/0.8.3), [docs.rs](https://docs.rs/weirdnet-net/0.8.3)): ended streams stop counting against `Limits::max_streams` right away; noted in the notes and the streams guide. The examples keep `"0.8.2"`, which takes 0.8.3.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (169 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (unchanged).
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-26: weirdnet-agent 0.5.6 jobs guide; weirdnet-sync 0.8.1 and 0.8.2
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `lib/content/examples.dart`, `tool/examples/examples.toml`; the commit that adds this entry):
