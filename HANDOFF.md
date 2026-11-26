@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-model 0.5.4 speech to text and model limits
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-model](https://net.weirdbrains.com/crates/model) shows 0.5.4 ([crates.io](https://crates.io/crates/weirdnet-model/0.5.4), [docs.rs](https://docs.rs/weirdnet-model/0.5.4)): the tagline, two new API lines (speech to text: `Purpose::Transcribe` and the Voxtral Mini 3B entry with its projector; `limits`: `ModelLimits`, `measure`, `LimitsRecord` and the store calls) and new notes. Guide: "Speech to text (0.5.4)" and "Model limits (0.5.4)" sections, Voxtral in the catalog sentence, and the `agent` feature line (weirdnet-agent `"0.5.7"` since 0.5.4).
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 172 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (no example depends on weirdnet-model).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-mcp 0.6.2 image and audio tool results for clients
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

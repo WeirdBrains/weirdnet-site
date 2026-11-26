@@ -1217,10 +1217,35 @@ compute capability, driver), AMD through sysfs, and Apple silicon. Devices that 
 marked unified. It never fails; a missing tool means fewer devices.</p>
 <p><code>hw::budget(&amp;hw, memory_budget, reserve)</code> is the memory models may use: 85% of VRAM, or 85% of unified memory after an
 OS reserve (an eighth of RAM, at least 4 GiB). Both can be overridden. <code>hw::catalog()</code> is a tiered list from SmolLM2 135M
-through Gemma 4 E2B and E4B, Qwen3 8B, 14B, 30B-A3B and 32B and gpt-oss 20B, plus Qwen3 Embedding 0.6B. Each entry has a pinned
+through Gemma 4 E2B and E4B, Qwen3 8B, 14B, 30B-A3B and 32B and gpt-oss 20B, plus Qwen3 Embedding 0.6B and (since 0.5.4) Voxtral Mini 3B for speech to text. Each entry has a pinned
 <code>ModelSpec</code> (so it downloads through the consent gate) and a footprint: the file, the KV cache for its context and slots,
 and 10% headroom. <code>hw::plan(&amp;hw, budget)</code> picks the largest chat model that fits, a Gemma 4 stand-in and the embedding
 model. CPU-only machines only get models with at most 4B active parameters, so answers stay usable.</p>
+<h3>Speech to text (0.5.4)</h3>
+<p>Every catalog entry has a <code>Purpose</code>, its role on a node: <code>chat</code>, <code>embedding</code> or
+<code>transcribe</code> (<code>Purpose::as_str</code> and <code>Purpose::parse</code> give the names). The <code>transcribe</code>
+entry is <a href="https://huggingface.co/ggml-org/Voxtral-Mini-3B-2507-GGUF">Voxtral Mini 3B</a> (<code>hw::VOXTRAL_MINI_3B</code>,
+Q4_K_M), which llama.cpp runs with its audio encoder: <code>CatalogEntry::projector()</code> is that pinned <code>mmproj</code> file,
+downloaded through the same consent gate and counted in <code>footprint</code>. Audio goes in as an <code>input_audio</code> part
+and the transcript comes back as text, so a soundtrack can become text for models without audio. <code>hw::plan</code> never
+proposes it; <code>hw::transcriber(&amp;budget)</code> returns it when it fits, and <code>hw::by_purpose</code> lists entries by role.</p>
+<h3>Model limits (0.5.4)</h3>
+<p>A client fitting images, audio or a video's frames to a model needs that model's limits, and none are defaulted: what isn't
+known stays absent. <code>ModelLimits</code> holds the context the model runs with on the node (per slot, not the trained context),
+images per request, what an image costs (a fixed number, or one token per <code>image_patch</code> pixels square up to
+<code>image_tokens</code>), the longest image edge, audio length and cost (<code>audio_tokens_per_minute</code>, and
+<code>audio_chunk_seconds</code> with <code>audio_chunk_tokens</code> for encoders that take 30-second pieces, so a short clip costs a
+whole piece), <code>video_max_seconds</code>, <code>video_max_bytes</code> and <code>max_request_bytes</code>. <code>or</code> puts an
+operator's settings over measured ones, <code>tightest</code> merges copies, and <code>image_cost</code> and <code>audio_cost</code>
+price one input. With the <code>agent</code> feature, <code>to_media</code> and <code>from_media</code> convert to and from
+<a href="/crates/agent">weirdnet-agent</a>'s <code>MediaLimits</code> for catalog entries.</p>
+<p>When a node loads a model, <code>limits::measure(model, projector, context)</code> reads the GGUF and its projector into a
+<code>LimitsRecord</code> (<code>weirdnet-limits/1</code>): what the projector's header says images and audio cost
+(<code>from_projector</code>, from <code>gguf::ProjectorInfo</code>; Gemma 3 images cost 256 tokens, Qwen-VL one token per 28 pixels
+square, Voxtral and Ultravox 187 tokens per 30 seconds of audio, Qwen2 audio 750), the context passed in and the trained context for
+reference. Other projector types are left absent. <code>ModelStore::record_limits</code> keeps the record next to the model's files,
+<code>StoredModel::limits</code> reads it back until the files change size, and <code>remove_local</code> deletes it with the model.
+<code>LlamaEngine::limits</code> gives the context the engine runs with.</p>
 <h3>CPU support (0.2.0)</h3>
 <p>llama.cpp's build turns on AVX, AVX2, BMI2, FMA and F16C by default, so a plain <code>llama</code> build only runs on x86 CPUs that
 have them (roughly Haswell and Excavator, 2013 to 2015, and later). Two things keep older CPUs from crashing with an illegal
@@ -1254,7 +1279,7 @@ target directory can fail with "File exists" on the library symlinks; deleting t
       '<code>llama</code>: <code>LlamaEngine</code> on llama.cpp, CPU. Needs cmake and a C++ compiler to build.',
       '<code>cpu-dispatch</code> (implies <code>llama</code>): llama.cpp for every CPU level, chosen at run time; the app ships the shared libraries.',
       '<code>vulkan</code>, <code>metal</code> (imply <code>llama</code>): GPU offload.',
-      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code> (weirdnet-agent <code>"0.5"</code> since 0.5.0; <code>"0.4"</code> in 0.4.2 and 0.4.3; <code>=0.4.0</code> in 0.4.0 and 0.4.1; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
+      '<code>agent</code>: <code>agent::LocalModel</code>, a <code>weirdnet_agent::ModelBackend</code>, and <code>ModelLimits</code> conversions to <code>MediaLimits</code> (weirdnet-agent <code>"0.5.7"</code> since 0.5.4; <code>"0.5"</code> in 0.5.0 to 0.5.3; <code>"0.4"</code> in 0.4.2 and 0.4.3; <code>=0.4.0</code> in 0.4.0 and 0.4.1; <code>=0.3.0</code> in 0.3.0, <code>=0.2.0</code> in 0.2.1).',
     ],
   ),
   'backends': Guide(
