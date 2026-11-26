@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-backends 0.4.9 measured limits and transcription
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.9 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.9), [docs.rs](https://docs.rs/weirdnet-backends/0.4.9)): the tagline, two new API lines (measured limits: `Supervisor::measured_limits`, `set_limits_store`, `ModelStatus::context_tokens`; transcription: `ModelLaunch::with_transcribe`, `Capabilities::transcribe`, `purpose`, `ModelStatus::catalog_model`, `Supervisor::transcribe`, `InferHost::open_transcribe` on `ModelHost`), the `ModelHost` line and new notes. Guide: "Measured limits (0.4.9)" and "Transcription (0.4.9)" sections.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (172 external URLs; the only errors were GitHub 503s on a few `blob/main` pages in other repos that changed between runs, and those files exist per the GitHub API).
+
+Not tested: the examples were not rebuilt (the backends example takes `"0.4"`, which 0.4.9 meets).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-agent 0.5.8 transcription
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

@@ -1427,6 +1427,30 @@ with <code>refusal_reason</code>. Nodes before 0.4.4 refuse the new commands.</p
 <code>ModelStatus::limits()</code> reads them back. <code>Capabilities::intersect</code> keeps the stricter limits.
 <code>Capabilities::apply_to</code> and <code>ModelStatus::apply_to</code> fill a catalog/1 entry's inputs, limits and context
 window. Records without limits read as before.</p>
+<h3>Measured limits (0.4.9)</h3>
+<p>When a model loads (started or wrapped), the supervisor measures what it can and never fills in the rest. For a llama.cpp model
+whose source is a GGUF file it reads the model's and the projector's headers with <a href="/crates/model">weirdnet-model</a> 0.5.4
+<code>limits::measure</code>: what one image costs (fixed, or per patch up to a cap; <code>--image-max-tokens</code> in the engine's or
+the model's extra arguments caps a size-dependent projector) and what audio costs. For every engine that says, it asks for the context per
+sequence it actually runs (llama-server <code>/props</code>, per slot; vLLM <code>/v1/models</code> <code>max_model_len</code>).
+<code>Supervisor::capabilities</code> and every <code>ModelStatus</code> carry the operator's <code>ModelLaunch::limits</code> over the measured
+ones, field by field; a figure nobody knows, such as images per request or the longest audio, stays absent.
+<code>Supervisor::measured_limits</code> returns the <code>LimitsRecord</code>, and <code>ModelStatus::context_tokens</code> the
+context per sequence, which <code>ModelStatus::apply_to</code> puts in the catalog entry instead of the configured
+<code>--ctx-size</code>. <code>Supervisor::set_limits_store</code> keeps records next to the model files in a <code>ModelStore</code> and
+reads them back for models not loaded yet (without the context, which belongs to the run that measured it), so an unloaded model still
+reports its image and audio figures after a restart. Changing a model's projector clears its measurement.</p>
+<h3>Transcription (0.4.9)</h3>
+<p><code>ModelLaunch::with_transcribe(true)</code> gives a model the transcription role. <code>Capabilities::transcribe</code> says the
+node can serve it: llama.cpp with an audio projector (Voxtral, say) or vLLM (Whisper, say); never MLX-LM or an embedding model.
+<code>ModelLaunch::purpose</code>, <code>ModelStatus::purpose</code> and <code>ModelStatus::catalog_model(state)</code> give catalog/1
+<code>Purpose::Transcribe</code> (<a href="/crates/agent">weirdnet-agent</a> 0.5.8), so <code>Catalog::route_transcribe</code> finds it.
+<code>ModelHost</code> serves infer/2 <code>Transcribe</code> (<code>InferHost::open_transcribe</code>): a named model must transcribe
+on the node (otherwise <code>Unsupported</code>, so a pool tries elsewhere); with none named it takes the loaded transcriber, or with load
+on demand the first one. <code>Supervisor::transcribe</code> sends llama.cpp a greedy chat request with the clip as a base64
+<code>input_audio</code> part (llama-server takes WAV and MP3) and an instruction to answer with the transcript only, naming the language
+and the prompt when given; the duration comes from a WAV header, and there are no segments. vLLM gets
+<code>/v1/audio/transcriptions</code>, with timed segments when timestamps are asked for.</p>
 <h3>Placement hooks, origin and license (0.4.5)</h3>
 <p><code>ModelsService::on_placed</code> runs a callback (<code>OnPlaced</code>) after each upload, peer copy (including
 <code>ModelsClient::replicate</code> targets) or Hub pull is placed. It gets a <code>Placed</code>: the <code>StoredEntry</code> with
