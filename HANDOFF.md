@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-semcache 0.2.2 similarity lookup by embedding
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-semcache](https://net.weirdbrains.com/crates/semcache) shows 0.2.2 ([crates.io](https://crates.io/crates/weirdnet-semcache/0.2.2), [docs.rs](https://docs.rs/weirdnet-semcache/0.2.2)): new tagline, API lines for `SemanticCache` and `scope_key` / `cosine_similarity` / `normalize`, a similarity-lookup example and 0.2.2 notes. New guide section "Similarity lookup (0.2.2)": scopes, threshold, validation, eviction, TTL, stats and snapshots.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors).
+
+Not tested: the inline example on the crate page is not compiled (there is no `tool/examples` entry for semcache); external links were not fetched.
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-sync 0.8.4 sealed records on service devices
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

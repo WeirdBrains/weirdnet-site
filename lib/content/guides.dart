@@ -1426,7 +1426,8 @@ refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
   ),
   'semcache': Guide(
     brings: r'''
-<p>Use weirdnet-semcache on an inference node to answer repeated deterministic prompts without running a model again.</p>
+<p>Use weirdnet-semcache on an inference node to answer repeated deterministic prompts without running a model again, and,
+since 0.2.2, to answer prompts close enough in meaning to one it has already answered.</p>
 ''',
     works: r'''
 <h3>Exact matches</h3>
@@ -1447,6 +1448,21 @@ given, so a cache that doesn't know revisions never crosses weights.</p>
 <h3>Stores</h3>
 <p><code>AnswerStore</code> keeps opaque bytes under 32-byte keys; <code>MemoryStore::new(max)</code> evicts the least recently used.
 <code>ExactCache::with_store</code> takes any store.</p>
+<h3>Similarity lookup (0.2.2)</h3>
+<p><code>SemanticCache</code> doesn't embed anything itself: the caller embeds the prompt with its own embedding model and passes
+the vector (<code>&amp;[f32]</code>). <code>lookup(scope, embedding)</code> finds the most similar live entry in that scope by cosine
+similarity and returns <code>Lookup::Hit { value, score, id }</code> when the score reaches the threshold
+(<code>SemanticConfig::with_threshold</code>, 0.95 by default), or <code>Lookup::Miss { best }</code> with the best score below it.
+<code>insert(scope, embedding, value)</code> stores an entry and returns its id; an entry pointing the same way is replaced
+rather than duplicated.</p>
+<p>Scopes keep answers apart: build one with <code>scope_key(&amp;[model, revision, system_prompt_hash])</code> (SHA-256 over the
+length-prefixed parts) so different models, weights or system prompts never share an answer. Embeddings are refused when
+empty, not finite (NaN or infinity), all zero, or of the wrong dimension (a fixed <code>with_dimension</code>, or the scope's first
+entry), and are normalized on the way in. The cache holds at most <code>max_entries</code> across all scopes and evicts the least
+recently used; <code>with_ttl</code> expires entries by age. <code>remove</code>, <code>remove_scope</code>, <code>clear</code> and
+<code>stats</code> (entries, hits, misses, evictions, expired) round it out, and <code>snapshot</code> / <code>restore</code> write and
+read the entries as CBOR, keeping their age. Values default to <code>CachedAnswer</code> but can be any <code>Clone</code> type. As
+with <code>ExactCache</code>, check <code>may_read</code> and <code>may_store</code> on infer/2 requests first.</p>
 ''',
   ),
   'alerts': Guide(
