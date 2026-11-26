@@ -2,6 +2,20 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: media and request limits (weirdnet-agent 0.5.7, weirdnet-backends 0.4.8, weirdnet-openai 0.2.4)
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.7 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.7), [docs.rs](https://docs.rs/weirdnet-agent/0.5.7)): an API line for `MediaLimits` and `CatalogModel::limits`, new notes, and a "Media limits (0.5.7)" guide section.
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.8 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.8), [docs.rs](https://docs.rs/weirdnet-backends/0.4.8)): an API line for `Capabilities::limits`, `ModelLaunch::with_limits` and `apply_to`, new notes, and a guide paragraph.
+- [weirdnet-openai](https://net.weirdbrains.com/crates/openai) shows 0.2.4 ([crates.io](https://crates.io/crates/weirdnet-openai/0.2.4), [docs.rs](https://docs.rs/weirdnet-openai/0.2.4)): an API line for `Bridge::with_max_request_bytes` and the 413, new notes, and a guide paragraph replacing the fixed 32 MiB sentence.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` and `--external` (39 pages, 171 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (their `"0.5"`, `"0.4"` and `"0.2"` requirements already take the new versions).
+
+What's left and next: nothing for these releases.
+
 ## 2026-11-26: weirdnet-sync 0.8.5 several types in one session
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

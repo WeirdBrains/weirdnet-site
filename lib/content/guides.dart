@@ -902,6 +902,15 @@ waiting for the user to answer an approval card don't use it, and a model turn i
 (<code>max_steps</code> and cancellation bound turns). <code>BudgetTracker::wall_elapsed</code> gives the task's wall-clock time for display. Every search, fetch, tool call, approval and notice is a <code>TraceStep</code> with its
 agent, node and session (logged out or signed in). <code>validate_citations</code> rejects a cited URL that none of its steps
 fetched, and <code>retain_valid</code> drops such citations before display. Everything stored or synced implements serde.</p>
+<h3>Media limits (0.5.7)</h3>
+<p>A client that sizes images, audio or a video's frames for one model needs that model's limits. Catalog entries carry them
+as <code>CatalogModel::limits</code>, a <code>MediaLimits</code>: <code>max_images</code> per request, <code>image_tokens</code> (what
+one image costs, or with <code>image_patch</code> the most it costs), <code>image_patch</code> (pixels per token edge for models whose
+cost grows with size), <code>image_edge</code> (the longest edge the model uses), <code>audio_max_seconds</code>,
+<code>audio_tokens_per_minute</code> and <code>max_request_bytes</code>. Each is absent when the node doesn't know it, never
+defaulted, so a client asks the user rather than guessing. <code>image_cost(w, h)</code> and <code>audio_cost(ms)</code> give token
+costs, <code>tightest</code> merges copies field by field and <code>or</code> puts an operator's numbers over measured ones. The
+context window stays in <code>CatalogModel::context</code>. Entries without limits look as before on the wire.</p>
 <h3>Synced jobs (0.5.6, feature <code>jobs</code>)</h3>
 <p>A long job, such as training a model, should survive the device running it: another of the user's devices picks it up from
 its last checkpoint. <code>JobBoard&lt;P&gt;</code> is a typed layer over the <a href="/crates/sync">weirdnet-sync</a> 0.8.2 job
@@ -1350,6 +1359,12 @@ bytes). <code>List</code> includes safetensors and MLX models and projectors, wi
 Refusals carry stable reasons in <code>refusal</code> (<code>exists</code>, <code>too-big</code>, <code>no-space</code>,
 <code>quota</code>, <code>wrong-engine</code>, <code>wrong-arch</code>, <code>no-base</code>, <code>checksum</code> and others), read
 with <code>refusal_reason</code>. Nodes before 0.4.4 refuse the new commands.</p>
+<p>Media limits (0.4.8): <code>Capabilities::limits</code> carries a model's media and request limits (a
+<a href="/crates/agent">weirdnet-agent</a> 0.5.7 <code>MediaLimits</code>). The operator sets numbers the node can't measure with
+<code>ModelLaunch::with_limits</code>; they reach every <code>ModelStatus</code> and capability record, and
+<code>ModelStatus::limits()</code> reads them back. <code>Capabilities::intersect</code> keeps the stricter limits.
+<code>Capabilities::apply_to</code> and <code>ModelStatus::apply_to</code> fill a catalog/1 entry's inputs, limits and context
+window. Records without limits read as before.</p>
 <h3>Placement hooks, origin and license (0.4.5)</h3>
 <p><code>ModelsService::on_placed</code> runs a callback (<code>OnPlaced</code>) after each upload, peer copy (including
 <code>ModelsClient::replicate</code> targets) or Hub pull is placed. It gets a <code>Placed</code>: the <code>StoredEntry</code> with
@@ -1413,7 +1428,13 @@ arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-mode
 <code>x-weirdnet-standin</code>, and the same under <code>weirdnet</code> in the body (on the last chunk when streaming).</p>
 <p>Images and audio (0.2.0) go to the pool unchanged, which sends them only to a model whose catalog entry takes them
 (<code>vision</code>, <code>audio</code> under <code>weirdnet</code> in <code>/v1/models</code>): with no <code>model</code> it
-picks one; a named text-only model, or a pool with no such model, is a 400 that says so. Request bodies may be up to 32 MiB.</p>
+picks one; a named text-only model, or a pool with no such model, is a 400 that says so.</p>
+<p>Request size (0.2.4): bodies may be up to 32 MiB (<code>DEFAULT_MAX_REQUEST_BYTES</code>) unless the bridge is set otherwise with
+<code>Bridge::with_max_request_bytes</code>. A larger body gets a 413 with code <code>request_too_large</code> whose message names the
+limit, and the <code>x-weirdnet-max-request-bytes</code> header carries it. <code>/v1/models</code> reports
+<code>weirdnet.max_request_bytes</code> per model (the smaller of the bridge's and the node's) and <code>weirdnet.limits</code>, the
+model's media limits from <a href="/crates/agent">weirdnet-agent</a> 0.5.7, so a client sizes frames to fit the bytes as well as the
+tokens. infer/2 carries at most 32 MiB per message.</p>
 <p>LoRA adapters (0.2.2): <code>"adapter_scale"</code> in a chat or completion body sets how strongly a LoRA adapter model
 applies for that request (<a href="/crates/agent">weirdnet-agent</a> 0.5.2 <code>Request::adapter_scale</code>); a value that is not
 a finite number is a 400. <code>/v1/models</code> reports an adapter's base model as <code>weirdnet.base</code>
