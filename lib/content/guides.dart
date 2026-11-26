@@ -1848,11 +1848,28 @@ scoped keys instead of sealing the epoch key to it (<code>Roster::scoped_types</
 <li>Devices serve a service peer only its granted types: a <code>Hello</code>, <code>Pull</code> or <code>Ack</code> for another
 type, and a lease request from a roster-only device, get <code>type-not-granted</code> (<code>Roster::may_sync</code>). Full
 devices are not limited.</li>
-<li>Record keys come from the epoch key, so a service device can't read or write a sealed record type
-(<code>RecordOptions::sealed</code>). Leave a type it needs unsealed; its pages are still sealed on the wire.</li>
+<li>A service device granted a sealed record type (<code>RecordOptions::sealed</code>) reads and writes its records since
+0.8.4 (below). One not granted the type opens neither its pages nor its records.</li>
 <li>A service device given epoch keys by an older device replaces them with scoped keys when it loads them. Upgrade full
 devices to 0.8.3: an older one that rotates still seals the epoch key to service devices. A service device on 0.8.2 can't
 use the scoped keys and needs 0.8.3.</li>
+</ul>
+<h3>Sealed records on service devices (0.8.4)</h3>
+<p>A record of a sealed type can be sealed under a key from the type's own key under the rotation
+(<code>scoped_record_key</code>), which a service device granted the type holds, instead of the epoch key. A node granted
+<code>ymir.pool</code> and <code>ymir.context</code> reads and writes sealed <code>ymir.context</code> records; one granted
+<code>ymir.train</code> still opens none of them.</p>
+<ul>
+<li>Which key seals (<code>SyncState::seals_scoped</code>): a service device always uses the type-scoped key. A full device
+uses it while an active service device is granted the type (<code>Roster::service_granted</code>), and the epoch key
+otherwise, so 0.7.1 to 0.8.3 devices keep reading what it writes while no service device shares the type.</li>
+<li>Readers try both keys, so nothing changes on the wire. Every full device that reads a type shared with a service device
+needs 0.8.4.</li>
+<li>Records written before the grant stay under the epoch key. Run <code>SyncState::reseal_stale</code> on a full device
+after syncing: besides records under an older rotation, it re-seals those that use the other key than a write would now,
+so the service device can open them. After the last such service device is revoked, it moves them back.</li>
+<li>A service device revoked before a rotation gets no key for it, so it cannot open records sealed under that rotation by
+either scheme.</li>
 </ul>
 <h3>Moving to 0.7.0</h3>
 <p>Breaking: <code>SyncState::seed</code> is an <code>Option&lt;Vec&lt;u8&gt;&gt;</code>; <code>Roster</code> has a

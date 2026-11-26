@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-26: weirdnet-sync 0.8.4 sealed records on service devices
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-sync](https://net.weirdbrains.com/crates/sync) shows 0.8.4 ([crates.io](https://crates.io/crates/weirdnet-sync/0.8.4), [docs.rs](https://docs.rs/weirdnet-sync/0.8.4)); the version field had stayed at 0.8.2 through the 0.8.3 update and is fixed. New API line and notes for 0.8.4, and a guide section "Sealed records on service devices (0.8.4)": which key seals (`SyncState::seals_scoped`), `reseal_stale` after a grant, revocation. The 0.8.3 bullet that said service devices can't use sealed types now points to it.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (169 external URLs, 0 errors).
+
+Not tested: the examples were not rebuilt (the sync example's `"0.8.2"` requirement already takes 0.8.4).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-sync 0.8.3 type-scoped keys for service devices
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
