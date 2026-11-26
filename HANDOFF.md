@@ -11,6 +11,8 @@ What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit t
 
 Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (169 external URLs, 0 errors).
 
+The first Pages run for [`656e3df`](https://github.com/WeirdBrains/weirdnet-site/commit/656e3dfc30d252032c0cd37fe5d5079cd7600e3e) failed at the crates.io page check on the runner while the same check passes locally (34 of 34), so the commit that adds this note runs the deploy again.
+
 Not tested: the examples were not rebuilt (unchanged).
 
 What's left and next: nothing for these releases.
