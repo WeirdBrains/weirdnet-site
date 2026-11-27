@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-agent 0.5.9 pool sharing
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.9 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.9), [docs.rs](https://docs.rs/weirdnet-agent/0.5.9)): a new API line (pool sharing: `PoolShare` links, guest credentials, `GuestAuth`, `SharedPoolAuth`, `CatalogFeed::rechecking`, `pool::connect_shared`) and new notes (hosts that don't opt in refuse guests as before). Guide: a "Sharing a pool with another identity (0.5.9)" section.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (172 external URLs, 0 errors on the second run; the first had one GitHub 503 on a `blob/main` page in another repo, which exists per the GitHub API).
+
+Not tested: the examples were not rebuilt (the agent example takes weirdnet-agent `"0.5.2"`, which 0.5.9 meets).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-26: weirdnet-backends 0.4.9 measured limits and transcription
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

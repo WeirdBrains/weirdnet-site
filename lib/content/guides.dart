@@ -948,6 +948,30 @@ in one 32 MiB message, so long soundtracks go in pieces.</p>
 <p>Peers before 0.5.8 can't read a <code>transcribe</code> entry, so a node leaves those entries out of their catalog;
 <code>catalog::query</code> and <code>catalog::subscribe</code> from 0.5.8 ask for everything, and an entry they can't read is skipped
 rather than failing the whole catalog.</p>
+<h3>Sharing a pool with another identity (0.5.9)</h3>
+<p>Someone with a different Weirdnet identity, or your own identity in another app, can use your pool (for example
+<a href="https://github.com/WeirdBrains/ymir">Ymir</a>) without its root identity: the guest presents its own device certificate
+and gets catalog/1 and infer/2 (chat, embeddings, transcription) only, never synced data, task/1 or anything else.</p>
+<p>The owner hands out a <code>PoolShare</code> link: the owner's user id, an optional name and expiry, and the inference nodes'
+peer ids with addresses to dial them (direct or relay circuit). It reads <code>wnet-pool1:&lt;base64url JSON&gt;</code> or
+<code>weirdnet-pool://share/&lt;base64url JSON&gt;</code> and holds no secret: it only says where to dial. The guest's app calls
+<code>pool::connect_shared(node, &amp;share, &amp;user_key, &amp;cert)</code>, which gives a <code>Pool</code> over the share's nodes in
+order (failover as usual, no roster discovery) that presents a guest credential with every request:
+<code>encode_credential</code>, the device's <code>NodeCert</code> plus its user's public key, since a certificate names its user only
+by id.</p>
+<p>On the owner's inference nodes, <code>serve::GuestAuth::new(profile, &amp;owner_key, policy)</code> checks the credential as
+strictly as the roster checks the owner's own devices: the key must hash to the certificate's user id, the signature must verify,
+the certificate must be for the peer on the connection, not revoked and not issued in the future. Then the host's policy, a
+closure over its synced guest list, sees the <code>Guest</code> and a <code>GuestScope</code> (<code>Catalog</code> or
+<code>Infer</code>) and decides, on every request. <code>SharedPoolAuth::new(roster_auth).with_guests(guests)</code> puts it next
+to <code>RosterAuth</code>: <code>authorize_for(caller, GuestScope::Infer)</code> in <code>InferHost::authorize</code>,
+<code>identify</code> to tell a guest from an own device (for example to refuse it server-side context), and
+<code>scoped(GuestScope::Catalog)</code> for a <code>CatalogFeed</code>. Without <code>with_guests</code>, and on every node before
+0.5.9, guests are refused.</p>
+<p>Revoking is immediate: take the guest off the list and its next request is refused. <code>CatalogFeed::rechecking()</code>
+(<code>CatalogHost::recheck</code>) re-checks a catalog subscription before each update and every 5 seconds and closes it with the
+refusal; an answer already streaming finishes. Refusals reach the guest as <code>RemoteError::Refused</code> with the reason
+(<code>not-shared</code>, <code>wrong-peer</code>, <code>guest-bad-cert</code>, <code>revoked</code> and so on).</p>
 <h3>Synced jobs (0.5.6, feature <code>jobs</code>)</h3>
 <p>A long job, such as training a model, should survive the device running it: another of the user's devices picks it up from
 its last checkpoint. <code>JobBoard&lt;P&gt;</code> is a typed layer over the <a href="/crates/sync">weirdnet-sync</a> 0.8.2 job
