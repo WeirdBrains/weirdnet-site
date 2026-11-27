@@ -486,8 +486,8 @@ bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::
   ),
   Crate(
     slug: 'semcache',
-    version: '0.2.2',
-    tagline: 'The answer cache for inference nodes: the AnswerCache seam, a store trait, an exact-match cache for deterministic requests, and similarity lookup by embedding.',
+    version: '0.2.3',
+    tagline: 'The answer cache for inference nodes: the AnswerCache seam, a store trait, an exact-match cache for deterministic requests, similarity lookup by embedding, and pool mode: one cache shared across a pool’s inference nodes.',
     about: [
       'Before an inference node routes a prompt it asks the cache; afterwards it offers the finished answer. Requests and answers are <a href="/crates/agent">weirdnet-agent</a> 0.5.1 infer/2 types, and the store is a trait, so answers can live in memory, on disk or be shared between nodes.',
     ],
@@ -500,6 +500,9 @@ bridge.serve(Arc::new(pool), shutdown).await?; // pool: weirdnet_agent::remote::
       '<code>AnswerCache::get_rev</code> / <code>put_rev</code> and <code>exact_key_rev</code> (0.2.1): keys that include the model revision, so new weights under the same id don’t replay old answers. With no revision the key is unchanged.',
       '<code>SemanticCache</code> (0.2.2): similarity lookup by embedding. The nearest stored embedding in the same scope stands in when its cosine similarity reaches the threshold (default 0.95); <code>lookup</code> returns <code>Lookup::Hit { value, score, id }</code> or <code>Lookup::Miss { best }</code>. Bounded and least-recently-used, with an optional TTL, stats and a CBOR <code>snapshot</code> / <code>restore</code>.',
       '<code>scope_key</code>, <code>cosine_similarity</code> and <code>normalize</code> (0.2.2): a scope over the model, revision and system prompt so answers never cross them, and the vector helpers.',
+      '<code>ShardRing</code> / <code>ShardPlan</code> (0.2.3): rendezvous hashing of a scope or exact key to a home node and one replica, so a shared lookup is one call; a leaving node’s shards move to their replica, and a joining node takes only the shards it now ranks first for.',
+      '<code>SharedCacheReq</code> / <code>SharedCacheResp</code> and <code>SharedCacheHost</code> (0.2.3): the versioned CBOR lookup / insert / remove / exact protocol on <code>/weirdnet-semcache/shared/1</code>, answered from a node’s own cache within <code>HostLimits</code>.',
+      '<code>pool::PooledSemanticCache</code> (0.2.3, <code>pool</code> feature): L1, the home, the replica when the home fails, per-call timeouts, down-node skipping, background replica writes, optional read repair and shared exact entries. A cache outage is a miss, never a stalled prompt. <code>pool::DialerTransport</code> and <code>pool::serve</code> run it over weirdnet-agent channels behind your <code>Authorize</code>.',
     ],
     dependsOn: ['agent'],
     example: r'''# Cargo.toml
@@ -522,8 +525,20 @@ let scope = scope_key(&["qwen3-8b", revision, &system_prompt_hash]);
 if let Lookup::Hit { value, score, .. } = semantic.lookup(&scope, &embedding)? {
     // replay value.text; score is the cosine similarity
 }
-semantic.insert(&scope, &embedding, CachedAnswer::from(&answer))?;''',
-    notes: 'Version 0.2.2 is on <a href="https://crates.io/crates/weirdnet-semcache">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.2.2">docs.rs</a>). 0.2.2 is additive, with no new dependencies: <code>SemanticCache</code>, <code>SemanticConfig</code>, <code>Lookup</code>, <code>SemanticError</code>, <code>SemanticStats</code>, <code>scope_key</code>, <code>cosine_similarity</code> and <code>normalize</code>. 0.2.1 is additive and needs weirdnet-agent 0.5.1: <code>may_read</code>, <code>may_store</code>, <code>AnswerCache::get_rev</code> / <code>put_rev</code> (default methods) and <code>exact_key_rev</code>. 0.2.0 needs weirdnet-agent 0.5 (content parts), which is breaking because <code>AnswerCache</code> takes agent <code>Request</code>s: move to agent 0.5 with it. Requests with image or audio parts are keyed like text ones, so a different image is a different request. 0.1.1 depends on weirdnet-agent <code>"0.4"</code> instead of <code>=0.4.0</code>, so it builds with agent 0.4.1; raw prompts (agent 0.4.1 <code>Input::Prompt</code>) are not cached. Extracted from Ymir’s <code>ymir-semcache</code>.',
+semantic.insert(&scope, &embedding, CachedAnswer::from(&answer))?;
+
+// pool mode (features = ["pool"]): one cache across the pool's inference nodes
+use std::sync::Arc;
+use weirdnet_semcache::pool::{DialerTransport, PoolConfig, PoolLookup, PooledSemanticCache};
+
+let shard = Arc::new(SemanticCache::with_config(SemanticConfig::new(4096).with_threshold(0.92)));
+let pooled: PooledSemanticCache = PooledSemanticCache::new(my_peer_id, shard, Arc::new(DialerTransport::new(dialer)), PoolConfig::new());
+pooled.set_nodes(inference_node_peer_ids); // this node included; serve pooled.host() with pool::serve
+if let PoolLookup::Hit { value, .. } = pooled.lookup(&scope, &embedding).await? {
+    // replay value.text; peers that fail or time out are a miss, never an error
+}
+pooled.insert(&scope, &embedding, CachedAnswer::from(&answer)).await?;''',
+    notes: 'Version 0.2.3 is on <a href="https://crates.io/crates/weirdnet-semcache/0.2.3">crates.io</a> (<a href="https://docs.rs/weirdnet-semcache/0.2.3">docs.rs</a>). 0.2.3 is additive: <code>ShardRing</code>, <code>ShardPlan</code>, <code>SharedCacheReq</code>, <code>SharedCacheResp</code>, <code>SharedCacheHost</code>, <code>HostLimits</code>, <code>PROTOCOL</code> and <code>WIRE_VERSION</code> in the default build, with no new dependencies, and the opt-in <code>pool</code> feature (<code>PooledSemanticCache</code>, <code>CacheTransport</code>, <code>DialerTransport</code>, <code>serve</code>), whose <code>tokio</code> and <code>async-trait</code> already come with weirdnet-agent. Requested for Ymir’s shared semantic cache. 0.2.2 is additive, with no new dependencies: <code>SemanticCache</code>, <code>SemanticConfig</code>, <code>Lookup</code>, <code>SemanticError</code>, <code>SemanticStats</code>, <code>scope_key</code>, <code>cosine_similarity</code> and <code>normalize</code>. 0.2.1 is additive and needs weirdnet-agent 0.5.1: <code>may_read</code>, <code>may_store</code>, <code>AnswerCache::get_rev</code> / <code>put_rev</code> (default methods) and <code>exact_key_rev</code>. 0.2.0 needs weirdnet-agent 0.5 (content parts), which is breaking because <code>AnswerCache</code> takes agent <code>Request</code>s: move to agent 0.5 with it. Requests with image or audio parts are keyed like text ones, so a different image is a different request. 0.1.1 depends on weirdnet-agent <code>"0.4"</code> instead of <code>=0.4.0</code>, so it builds with agent 0.4.1; raw prompts (agent 0.4.1 <code>Input::Prompt</code>) are not cached. Extracted from Ymir’s <code>ymir-semcache</code>.',
     origin: 'Ymir',
   ),
   Crate(

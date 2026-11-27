@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-semcache 0.2.3 pool mode
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-semcache](https://net.weirdbrains.com/crates/semcache) shows 0.2.3 ([crates.io](https://crates.io/crates/weirdnet-semcache/0.2.3), [docs.rs](https://docs.rs/weirdnet-semcache/0.2.3)): new API lines (`ShardRing` / `ShardPlan`, the `SharedCacheReq` / `SharedCacheResp` protocol and `SharedCacheHost`, and the `pool` feature's `PooledSemanticCache`, `DialerTransport` and `serve`), a pool-mode example, and new notes (additive; no new dependencies in the default build). Guide: a "Pool mode (0.2.3)" section (rendezvous sharding to a home and one replica, the protocol, failover, timeouts and misses on outage, read repair, transport and authorization).
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors) and `--external` (0 errors, 0 warnings).
+
+Not tested: the examples were not rebuilt (no change to them).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-27: weirdnet-openai 0.2.5 speech, transcription and video
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

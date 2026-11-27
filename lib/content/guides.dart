@@ -1637,7 +1637,8 @@ refused 403, unsupported 501, timeouts 504, engine failures 502.</p>
   'semcache': Guide(
     brings: r'''
 <p>Use weirdnet-semcache on an inference node to answer repeated deterministic prompts without running a model again, and,
-since 0.2.2, to answer prompts close enough in meaning to one it has already answered.</p>
+since 0.2.2, to answer prompts close enough in meaning to one it has already answered. Since 0.2.3 several inference nodes
+can share one cache, so an answer one node computed is a hit on all of them.</p>
 ''',
     works: r'''
 <h3>Exact matches</h3>
@@ -1673,6 +1674,32 @@ recently used; <code>with_ttl</code> expires entries by age. <code>remove</code>
 <code>stats</code> (entries, hits, misses, evictions, expired) round it out, and <code>snapshot</code> / <code>restore</code> write and
 read the entries as CBOR, keeping their age. Values default to <code>CachedAnswer</code> but can be any <code>Clone</code> type. As
 with <code>ExactCache</code>, check <code>may_read</code> and <code>may_store</code> on infer/2 requests first.</p>
+<h3>Pool mode (0.2.3)</h3>
+<p>Each entry lives on two of the pool's inference nodes: <code>ShardRing::plan(scope)</code> ranks the members by a SHA-256
+score over the node id and the scope (rendezvous hashing) and gives the <b>home</b> and the <b>replica</b>. Every node that
+agrees on the member list agrees on every plan, so nothing is coordinated and a lookup is one call. Because a whole scope lives
+on one home, similarity search stays local to that node. When a node leaves, only its shards move, to their replica, which
+already has them; when one joins, it takes only the shards it now ranks first for, and their old home becomes the replica.
+All nodes must use the same embedding model and revision; a change should start a new scope.</p>
+<p>Nodes talk <code>SharedCacheReq</code> / <code>SharedCacheResp</code> on <code>/weirdnet-semcache/shared/1</code>: CBOR with a version,
+for <code>lookup</code>, <code>insert</code> (with the entry's age, so a copy keeps its TTL), <code>remove_scope</code>,
+<code>exact_get</code> / <code>exact_put</code> / <code>exact_remove</code> and <code>ping</code>. A hit carries the stored embedding,
+so the asker's local copy points the same way. <code>SharedCacheHost</code> answers from the node's own
+<code>SemanticCache</code> (and an optional <code>AnswerStore</code> for exact entries) within <code>HostLimits</code>; it doesn't
+decide who may ask.</p>
+<p>The <code>pool</code> feature adds the asking side. <code>PooledSemanticCache::lookup</code> tries a small local L1 copy, then the
+home (its own shard when it is the home), then the replica when the home failed. <code>insert</code> writes its own shard when it
+holds the scope, waits (bounded) for the home and sends the replica in the background (<code>settle()</code> waits for those).
+<code>remove_scope</code> reaches every member, so entries left behind by a membership change go too. Every remote call has a
+timeout (150 ms for lookups by default), a node that fails or times out is skipped for <code>down_for</code>, and when no owner
+answers the lookup is <code>PoolLookup::Miss { degraded: true }</code>: a cache outage costs a model run, never a stalled prompt.
+With <code>ask_replica_on_miss</code> a home's miss also asks the replica and copies a hit back (read repair), which finds
+entries right after a node joined. <code>exact_get</code> / <code>exact_put</code> share <code>ExactCache</code> keys the same way,
+and <code>stats()</code> counts hits by source, misses, timeouts, errors and skips.</p>
+<p><code>CacheTransport</code> is how a request reaches a node. <code>DialerTransport</code> opens a weirdnet-agent channel per call,
+and <code>pool::serve(channel, caller, auth, host)</code> answers on the other end once <code>auth</code> (for Weirdnet, the pool's
+<code>RosterAuth</code>) lets the caller in. Members come from the app (<code>set_nodes</code>, <code>join</code>,
+<code>leave</code>), for example the pool's inference nodes from the roster.</p>
 ''',
   ),
   'media': Guide(
