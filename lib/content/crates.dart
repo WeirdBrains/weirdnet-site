@@ -523,6 +523,40 @@ semantic.insert(&scope, &embedding, CachedAnswer::from(&answer))?;''',
     origin: 'Ymir',
   ),
   Crate(
+    slug: 'media',
+    version: '0.1.0',
+    status: Status.fresh,
+    tagline: 'Audio and video processing for clients and nodes: WAV and PCM in pure Rust, 16 kHz resampling, silence-aware chunking, long-audio transcription and long-text speech plans, SRT and WebVTT, video frame planning and extraction, and a hardened ffmpeg runner with a test fake.',
+    about: [
+      'The media work an app does before it sends audio or video to a model and after it gets speech back, in one place. WAV, PCM, resampling, chunking, plans and subtitles are pure Rust; everything else goes through <code>ffmpeg</code> and <code>ffprobe</code> in child processes behind a hardened runner, and a fake runner answers in tests so they never need ffmpeg.',
+      'There are no defaults that stand in for a model’s limits. Plans take what the model reports (<code>audio_max_seconds</code>, <code>max_request_bytes</code>, <code>max_input_chars</code>, frame counts and sizes, as <a href="/crates/agent">weirdnet-agent</a> catalogs carry them) and refuse, naming the missing setting, when it is absent. Nothing is fetched: inputs are files the caller chose or bytes it holds.',
+    ],
+    parts: [
+      '<code>probe</code>: WAV headers read in Rust (8 to 32-bit PCM, 32 and 64-bit float, extensible headers, streamed sizes); any other container through <code>ffprobe</code> into a <code>MediaInfo</code>.',
+      '<code>pcm</code>: decode and write WAV, mono mixing, windowed-sinc resampling to 16 kHz for transcribers, equal-power <code>crossfade</code>, and <code>concat</code> with crossfade, pause or cut joins (every piece must share rate and channels).',
+      '<code>vad::silence_cuts</code>: 30 ms RMS frames, each cut at the quietest frame in the last fifth of its window, no overlap.',
+      '<code>transcribe</code>: <code>plan</code> sends a clip whole when it fits and cuts it at silences when it is longer than <code>audio_max_seconds</code>; <code>prompt_from</code> carries the last 200 characters to the next piece; <code>realign</code> shifts segments onto the clip and marks pieces without segments as <code>coarse</code>.',
+      '<code>speak::TextPlan</code>: narration or a script split to fit <code>max_input_chars</code> at paragraph, sentence, clause, then word boundaries, never inside a word or mixing speakers, with the joins to stitch the audio (10 ms crossfade inside a paragraph, 300 ms pause between paragraphs and turns).',
+      '<code>subtitles</code>: SRT and WebVTT from segments.',
+      '<code>audio</code>: normalization to 16 kHz mono WAV, soundtrack extraction from audio or video, and encoding to WAV, MP3, Opus or FLAC.',
+      '<code>video</code>: <code>FrameSource</code> (<code>FfmpegSource</code> over the runner, <code>FakeSource</code> for tests), <code>plan_frames</code> (uniform, scene, hybrid, keyframes, fixed intervals), <code>extract_frames</code>, <code>thumbnail</code>, <code>soundtrack</code> and stream-copied <code>clip</code>s.',
+      '<code>ffmpeg::Runner</code>: protocol and demuxer allowlists, no URLs and no shell, input as a canonical file or on a pipe, bounded output, time, address-space and priority limits, a Linux network namespace when allowed. <code>FakeRunner</code> validates jobs the same way and answers from rules or a <code>FakeMedia</code>.',
+    ],
+    example: r'''# Cargo.toml
+weirdnet-media = "0.1"
+
+// main.rs
+use weirdnet_media::ffmpeg::{Input, Runner};
+use weirdnet_media::video::{FfmpegSource, FrameRequest, Mode, extract_frames};
+
+let runner = Runner::locate(Some("MYAPP_FFMPEG"))?;
+let source = FfmpegSource::new(&runner, Input::file("clip.mp4"));
+// count and edge come from the model's reported limits
+let (probe, frames) = extract_frames(&source, &FrameRequest::new(count).max_edge(edge).mode(Mode::Hybrid))?;''',
+    notes: 'Version 0.1.0 is on <a href="https://crates.io/crates/weirdnet-media/0.1.0">crates.io</a> (<a href="https://docs.rs/weirdnet-media/0.1.0">docs.rs</a>, <a href="https://github.com/WeirdBrains/weirdnet-media">repository</a>). Its only dependencies are serde, serde_json and, on Unix, libc. The ffmpeg-backed tests run where ffmpeg is installed; the rest run against the fake runner.',
+    origin: 'Bragi’s video sampler',
+  ),
+  Crate(
     slug: 'alerts',
     version: '0.2.2',
     tagline: 'Host alerts for nodes: weirdnet-rules over observations, a default rule pack, probes, and SMTP, webhook and push-wake sinks.',

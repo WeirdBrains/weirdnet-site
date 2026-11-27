@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-media 0.1.0 (new crate)
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/media.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`; the commit that adds this entry):
+
+- New page [weirdnet-media](https://net.weirdbrains.com/crates/media) for 0.1.0 ([crates.io](https://crates.io/crates/weirdnet-media/0.1.0), [docs.rs](https://docs.rs/weirdnet-media/0.1.0), [repository](https://github.com/WeirdBrains/weirdnet-media)), marked new: audio (probe, PCM, resampling, silence cuts, transcription plans and re-alignment, `TextPlan`, SRT/WebVTT, normalize/extract/encode), video (`FrameSource`, frame planning, frames, thumbnails, soundtrack, clips) and the hardened ffmpeg runner with its fake. Guide: limits from the model, long-audio transcription, long-text speech, video, the hardened runner. A runnable example (text plan, stitching, transcription plan, SRT).
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors), the example harness for `media` (built and ran against weirdnet-media 0.1.0 from crates.io). `--external` had only GitHub 5xx responses (GitHub was answering 504 at the time) and docs.rs 404s for weirdnet-media while docs.rs was still building 0.1.0.
+
+Not tested: the other examples were not rebuilt (no change to them).
+
+What's left and next: re-run `check_links.py --external` once docs.rs has built weirdnet-media 0.1.0.
+
 ## 2026-11-27: weirdnet-agent 0.5.10 native video
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

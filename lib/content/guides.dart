@@ -1614,6 +1614,59 @@ read the entries as CBOR, keeping their age. Values default to <code>CachedAnswe
 with <code>ExactCache</code>, check <code>may_read</code> and <code>may_store</code> on infer/2 requests first.</p>
 ''',
   ),
+  'media': Guide(
+    brings: r'''
+<p>Use weirdnet-media when an app sends audio or video to a model or gets speech back: normalizing audio for a transcriber,
+cutting long recordings to the transcriber's window and stitching the transcript back together, splitting long text for a
+speech model and joining the audio it returns, writing subtitles, and turning a video into frames and a soundtrack for a model
+that reads images and audio. It runs on clients and, opt in, on nodes; untrusted media only reaches ffmpeg through the
+hardened runner.</p>
+''',
+    works: r'''
+<h3>Limits come from the model</h3>
+<p>Nothing here guesses a model's limits. <code>TranscribeLimits</code> carries the transcriber's <code>audio_max_seconds</code> and
+<code>max_request_bytes</code>, <code>TextLimits</code> the speech profile's <code>max_input_chars</code>, and <code>FrameRequest</code> a frame
+count and edge the caller derived from the model's media limits. When a plan needs a limit that is absent, it refuses with a
+message naming the setting: a clip over the request limit with no <code>audio_max_seconds</code>, or text over 4 000 characters
+with no <code>max_input_chars</code> (a refusal threshold of the client, not a limit claimed for any model).</p>
+<h3>Long-audio transcription</h3>
+<p><code>audio::normalize_pcm</code> turns any input into 16 kHz mono 16-bit PCM: a WAV is decoded and resampled in Rust (a
+windowed-sinc filter that low-passes when going down), anything else is decoded by ffmpeg. <code>transcribe::plan</code> keeps the
+clip whole when it fits; otherwise the window is <code>audio_max_seconds</code>, narrowed by what fits the request, and
+<code>vad::silence_cuts</code> places each cut at the quietest 30 ms frame in the last fifth of the window, so pieces never overlap
+and rarely split a word. Each piece's prompt is <code>prompt_from</code> the previous transcript (its last 200 characters, from a
+word). <code>realign</code> shifts every segment by its piece's start and clamps it to the piece; a backend that returns no segments
+gets one segment per piece, flagged <code>coarse</code>, and WebVTT output says so in a <code>NOTE</code>.</p>
+<h3>Long-text speech</h3>
+<p><code>TextPlan</code> is pure and deterministic. It packs whole paragraphs into a piece while they fit, splits a paragraph that
+doesn't at sentence ends, a sentence at clause punctuation, and a clause between words; a single word longer than the limit is
+an error rather than a split. Scripts (<code>SpeechText::Script</code>) keep their turns: a piece never mixes speakers, and a long
+turn splits at sentences and keeps its speaker. Each piece records its paragraph and whether it starts one, and
+<code>joins</code> turns that into a 10 ms equal-power crossfade inside a paragraph and a 300 ms pause before a new paragraph or
+turn, for <code>pcm::concat</code>, which refuses pieces whose sample rate or channels differ. <code>audio::encode</code> writes WAV in
+Rust, or MP3, Opus or FLAC through ffmpeg.</p>
+<h3>Video</h3>
+<p><code>FrameSource</code> is the decoder seam: <code>probe</code>, <code>frame_at</code>, <code>scenes</code>, <code>keyframes</code> and
+<code>audio</code>. <code>FfmpegSource</code> implements it over the runner (JPEG frames through <code>image2pipe</code>, scene scores from
+ffmpeg's <code>select</code> filter, keyframes from <code>ffprobe</code> packet flags, the soundtrack as 16 kHz mono WAV); phone decoders
+can implement it too, and <code>FakeSource</code> generates frames for tests. <code>plan_frames</code> picks times inside a range:
+uniform (the middle of equal slices), scene (the start and the strongest changes), hybrid (half uniform, half scene changes
+away from them), keyframes (the nearest keyframe to each slot) or every N milliseconds, always sorted, unique and never more
+than asked. <code>extract_frames</code> bounds the total bytes; <code>clip</code> stream-copies a range to fragmented MP4, Matroska or
+WebM for models that read video natively.</p>
+<h3>The hardened runner</h3>
+<p>Every call is a <code>Job</code>: one input, the options before and after it, an output bound. <code>Runner</code> runs it without a
+shell, adding <code>-nostdin</code>, <code>-protocol_whitelist file,pipe</code> and a demuxer allowlist (<code>-format_whitelist</code>: WAV,
+MP3, FLAC, Ogg, AAC, MP4/MOV, Matroska/WebM, AVI), so a playlist, <code>concat</code> list or URL inside a file can't be followed;
+jobs that name a URL, another protocol, an extra input or a disallowed input format are refused before anything starts. The
+input is a canonical regular file under the size limit or bytes on <code>pipe:0</code>; output goes only to <code>pipe:1</code>, read with
+a bound, and the child is killed when it passes it or the time limit (120 s by default). On Unix the child gets a 1 GiB
+address-space limit and a lower priority, and on Linux a new network namespace where unprivileged user namespaces allow it.
+stderr is kept only on failure, truncated to 2 KiB, and nothing is logged. <code>PrivateDir</code> is a 0700 temporary directory
+removed on drop. <code>FakeRunner</code> validates jobs exactly like the runner, records them and answers from rules or a
+<code>FakeMedia</code> description, so apps can test their media paths without ffmpeg.</p>
+''',
+  ),
   'alerts': Guide(
     brings: r'''
 <p>Tell an operator when a node needs attention: an engine that keeps crashing, a default route that fell back to Wi-Fi, a

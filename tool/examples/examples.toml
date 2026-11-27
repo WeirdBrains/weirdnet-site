@@ -78,3 +78,6 @@ run = false
 
 [ext-proto]
 deps = { weirdnet-ext-proto = "0.1.1" }
+
+[media]
+deps = { weirdnet-media = "0.1.0" }
