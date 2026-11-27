@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-agent 0.5.11 speech out
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.11 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.11), [docs.rs](https://docs.rs/weirdnet-agent/0.5.11)): a new API line (speech out: `Purpose::Speak`, the `speech` module with `SpeechProfile`, `SpeechNeeds`, `AudioFormat` and `CloneMode`, `Catalog::route_speak`, infer/2 `Speak` with `SpeechStart` and `Audio` frames, `SpeakBackend`, `InferHost::open_speak`, `Pool::speak` and `speak_stream`) and new notes (additive; older peers never see `speak` entries; failover only before the audio starts). Guide: a "Speech out (0.5.11)" section, and the shared-pool guest scope now lists speech out.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors) and `--external` (177 external, 0 errors, 0 warnings).
+
+Not tested: the examples were not rebuilt (no change to them).
+
+What's left and next: the pages for weirdnet-backends 0.4.10, weirdnet-openai 0.2.5 and weirdnet-model 0.5.5 when they ship speech.
+
 ## 2026-11-27: weirdnet-media 0.1.0 (new crate)
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`, `tool/examples/media.rs`, `tool/examples/examples.toml`, `lib/content/examples.dart`; the commit that adds this entry):

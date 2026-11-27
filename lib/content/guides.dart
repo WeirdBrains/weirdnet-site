@@ -966,10 +966,41 @@ can't read the clip, as for images.</p>
 <code>video_frame_rate()</code> gives frames per second). Each is absent when unknown, never defaulted. <code>video_frames(ms)</code>
 says how many frames the model reads from a clip, <code>check_video(ms, bytes)</code> names the first known limit a clip exceeds, and
 <code>tightest</code> and <code>or</code> merge them like the other limits.</p>
+<h3>Speech out (0.5.11)</h3>
+<p>A model can speak: text in, audio out. Its catalog purpose is <code>speak</code> (<code>Purpose::Speak</code>, the same name as
+<a href="/crates/model">weirdnet-model</a>'s role) and its entry carries a <code>SpeechProfile</code> (<code>CatalogModel::speech</code>)
+that says what it does: named <code>presets</code>, <code>design</code> (a voice from a description), <code>instructions</code> (style or
+emotion), <code>clone</code> (a voice from a reference clip, with a <code>CloneMode</code> saying whether the clip's transcript is
+unused, optional or required), <code>script_speakers</code> (multi-speaker scripts), <code>raw</code> engine input, <code>speed</code> and
+<code>streaming</code>; what it takes: <code>languages</code>, <code>formats</code> (<code>AudioFormat</code>: <code>wav</code>,
+<code>pcm16</code>, <code>mp3</code>, <code>opus</code>, <code>flac</code>) and <code>sample_rate</code>; and its limits
+(<code>max_input_chars</code>, <code>max_reference_seconds</code>, <code>max_reference_bytes</code>, <code>max_output_seconds</code>).
+A feature is on only when the node knows the model has it, and a list or limit is absent when nobody reported it.
+<code>SpeechProfile::tightest</code> merges copies across nodes (a feature only when every copy has it), and
+<code>narrowed_by</code> applies an operator's overrides, refusing anything that would widen what the engine reports.</p>
+<p>The request is <code>ClientFrame::Speak(SpeakRequest)</code>: <code>SpeakInput::Text</code>, a <code>Script</code> of
+<code>ScriptTurn { speaker, text }</code> or <code>Raw</code> input; an optional <code>Voice</code> (<code>Preset { name }</code>,
+<code>Design { description }</code> or <code>Clone { audio, format, text, consent }</code>, the clip as raw bytes, never stored);
+per-speaker voices, <code>instructions</code>, <code>language</code>, <code>speed</code> in per mille, <code>seed</code>,
+<code>format</code>, <code>sample_rate</code> and <code>stream</code>. <code>SpeakRequest::check</code> refuses empty input, a clone
+without <code>consent</code> and a reference over 30 MiB before any backend opens. <code>SpeakRequest::needs()</code> gives the
+<code>SpeechNeeds</code> that <code>SpeechProfile::covers</code> and <code>Catalog::route_speak</code> check, and a refusal names what the
+model lacks, such as the list of presets when a voice like <code>alloy</code> isn't one of them (no voice is ever swapped for another).</p>
+<p>The node answers <code>Accepted</code>, a <code>Working</code> frame every few seconds until the audio starts, one
+<code>SpeechStart { format, sample_rate, channels }</code>, then <code>Audio { offset, data }</code> chunks of at most 256 KiB in order,
+then <code>Done</code> with <code>Usage::input_chars</code> and <code>audio_ms</code> (and <code>Meta::ignored</code> naming fields the
+model doesn't use, such as a reference transcript). <code>Pool::speak</code> returns the whole <code>Speech</code>;
+<code>Pool::speak_stream</code> returns a <code>SpeechStream</code> once the audio has started. Both fail over to another node only
+before <code>SpeechStart</code>: after that a failure is final, because another node would start again with another voice. Hosts
+implement <code>InferHost::open_speak</code>, which sees the whole request (so a host can refuse a guest's voice clone), with a
+<code>SpeakBackend</code> that returns an <code>AudioStream</code>: <code>AudioStream::from_file</code> for a finished file, or
+<code>AudioStream::channel</code> and its <code>AudioSink</code> to stream. Speech goes through the same authorization as chat, so a
+guest of a shared pool needs the <code>infer</code> scope for it too. Askers before 0.5.8 get catalogs without <code>speak</code>
+entries, askers from 0.5.8 to 0.5.10 skip them, and a node before 0.5.11 closes the stream, which the pool counts as unsupported.</p>
 <h3>Sharing a pool with another identity (0.5.9)</h3>
 <p>Someone with a different Weirdnet identity, or your own identity in another app, can use your pool (for example
 <a href="https://github.com/WeirdBrains/ymir">Ymir</a>) without its root identity: the guest presents its own device certificate
-and gets catalog/1 and infer/2 (chat, embeddings, transcription) only, never synced data, task/1 or anything else.</p>
+and gets catalog/1 and infer/2 (chat, embeddings, transcription, and since 0.5.11 speech out) only, never synced data, task/1 or anything else.</p>
 <p>The owner hands out a <code>PoolShare</code> link: the owner's user id, an optional name and expiry, and the inference nodes'
 peer ids with addresses to dial them (direct or relay circuit). It reads <code>wnet-pool1:&lt;base64url JSON&gt;</code> or
 <code>weirdnet-pool://share/&lt;base64url JSON&gt;</code> and holds no secret: it only says where to dial. The guest's app calls
