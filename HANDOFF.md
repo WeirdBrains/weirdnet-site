@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-openai 0.2.5 speech, transcription and video
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-openai](https://net.weirdbrains.com/crates/openai) shows 0.2.5 ([crates.io](https://crates.io/crates/weirdnet-openai/0.2.5), [docs.rs](https://docs.rs/weirdnet-openai/0.2.5)): new parts for `POST /v1/audio/speech` (OpenAI body plus `weirdnet` extensions, catalog check so `alloy` is a 400 with the presets, real `Content-Type` and `x-audio-sample-rate`, streaming with `stream_format: "audio"`), `POST /v1/audio/transcriptions` (multipart; `json`, `verbose_json`, `text`, `srt`, `vtt`) and `video_url` chat parts; `/v1/models` gains `video`, `inputs` and `speech`; tagline, about and the version notes updated.
+- The openai guide gains Speech and Transcription sections and mentions video parts and the shared request limit.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35 on the site; its only error is weirdnet-semcache, which crates.io has at 0.2.3 while the site says 0.2.2, from a sibling release not covered here), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors) and `--external` (177 external, 0 errors, 0 warnings).
+
+Not tested: the examples were not rebuilt (no weirdnet-openai example exists).
+
+What's left and next: the weirdnet-semcache 0.2.3 page; the pages for weirdnet-backends 0.4.10 and weirdnet-model 0.5.5 when they ship speech.
+
 ## 2026-11-27: weirdnet-agent 0.5.11 speech out
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

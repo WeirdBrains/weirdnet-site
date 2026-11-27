@@ -1562,7 +1562,8 @@ should admit callers with <code>RosterAuth::require_roles</code> (weirdnet-agent
   ),
   'openai': Guide(
     brings: r'''
-<p>Use weirdnet-openai to let the user's local tools that already speak the OpenAI API use their own devices' models. Point the
+<p>Use weirdnet-openai to let the user's local tools that already speak the OpenAI API use their own devices' models (chat, embeddings,
+speech and transcription). Point the
 tool at <code>http://127.0.0.1:&lt;port&gt;/v1</code> with the bridge token as the API key; requests go through a
 <code>weirdnet-agent</code> pool, so failover, resume and stand-ins work as they do for the app.</p>
 ''',
@@ -1573,7 +1574,8 @@ tool at <code>http://127.0.0.1:&lt;port&gt;/v1</code> with the bridge token as t
 compared in constant time). It sends no CORS headers, so browsers block pages from reading its answers.</p>
 <h3>Requests</h3>
 <p>Chat bodies become infer/2 requests: messages (string content or parts: <code>text</code>, <code>image_url</code> with a
-<code>data:image/...</code> URL and <code>input_audio</code>; remote image URLs and other part types get 400), sampling, <code>seed</code>,
+<code>data:image/...</code> URL, <code>input_audio</code> and, since 0.2.5, <code>video_url</code> with a <code>data:video/...</code> URL;
+remote image or video URLs and other part types get 400), sampling, <code>seed</code>,
 <code>response_format</code> and function tools; other parameters are ignored. <code>x-wait: 1</code> sets <code>wait_for_model</code>.
 <code>"cache": false</code> or <code>x-weirdnet-cache: off</code> (0.2.1) skips the nodes' answer cache, and <code>"cache": "refresh"</code>
 or <code>x-weirdnet-cache: refresh</code> skips the read and stores the fresh answer (weirdnet-agent 0.5.1 <code>Request::cache</code>);
@@ -1585,10 +1587,38 @@ and a node that can continue (else 501). Without the flag a trailing assistant m
 A streamed answer starts when a node accepts the request, so an error before that is a plain HTTP error; after that, an error
 arrives as a final <code>error</code> event. Answers carry <code>x-weirdnet-model</code>, <code>x-weirdnet-cache</code> and
 <code>x-weirdnet-standin</code>, and the same under <code>weirdnet</code> in the body (on the last chunk when streaming).</p>
-<p>Images and audio (0.2.0) go to the pool unchanged, which sends them only to a model whose catalog entry takes them
-(<code>vision</code>, <code>audio</code> under <code>weirdnet</code> in <code>/v1/models</code>): with no <code>model</code> it
-picks one; a named text-only model, or a pool with no such model, is a 400 that says so.</p>
-<p>Request size (0.2.4): bodies may be up to 32 MiB (<code>DEFAULT_MAX_REQUEST_BYTES</code>) unless the bridge is set otherwise with
+<p>Images and audio (0.2.0) and video (0.2.5) go to the pool unchanged, which sends them only to a model whose catalog entry takes
+them (<code>vision</code>, <code>audio</code>, <code>video</code>, and all three as <code>inputs</code>, under <code>weirdnet</code> in
+<code>/v1/models</code>): with no <code>model</code> it picks one; a named model that lacks the input, or a pool with no such model,
+is a 400 that says so. A client whose model doesn't read video sends frames as images instead.</p>
+<h3>Speech (0.2.5)</h3>
+<p><code>POST /v1/audio/speech</code> runs infer/2 <code>Speak</code> through <code>Pool::speak</code>, or <code>Pool::speak_stream</code>
+with <code>stream_format: "audio"</code> (the bytes as the node sends them; <code>"sse"</code> is refused). The body is OpenAI's:
+<code>input</code>, <code>model</code>, <code>voice</code> (a preset name or <code>{"id": name}</code>), <code>instructions</code>,
+<code>response_format</code> (<code>wav</code>, <code>pcm</code>, <code>mp3</code>, <code>opus</code> or <code>flac</code>; absent, the
+model's first format, which is <code>wav</code> for the usual speech models rather than OpenAI's <code>mp3</code>) and <code>speed</code>.
+Weirdnet extensions go under <code>weirdnet</code>: <code>language</code>, <code>seed</code>, <code>sample_rate</code>, <code>design</code>
+(a voice described in words), <code>ref_audio</code> (a base64 <code>data:</code> URL; remote and file URLs are never fetched) with
+<code>ref_text</code> and <code>consent: true</code> to clone a voice, <code>script</code>
+(<code>[{"speaker": 0, "text": "..."}]</code> instead of <code>input</code>) and <code>raw</code>.</p>
+<p>Before a node is asked, the bridge checks the request against the catalog's speech profile for the model
+(<a href="/crates/agent">weirdnet-agent</a> 0.5.11 <code>Catalog::route_speak</code>), or picks a speaker that covers it when no
+<code>model</code> is named. A voice, format or feature the model lacks is a 400 that names the model and what it has, for example
+<code>model `tts` has no preset voice `alloy` (presets: vivian, ryan)</code>: OpenAI voice names are never mapped to another voice.
+The answer's <code>Content-Type</code> is the real format (<code>audio/pcm;rate=24000</code> for raw PCM), with
+<code>x-audio-sample-rate</code> and <code>x-weirdnet-audio-channels</code> when the node knows them; a whole answer also names request
+fields the model ignored (such as a reference transcript) in <code>x-weirdnet-ignored</code>. A streamed answer that fails after audio
+has left ends early: the pool never fails over once audio has started, because another node would start again with another voice.</p>
+<h3>Transcription (0.2.5)</h3>
+<p><code>POST /v1/audio/transcriptions</code> takes multipart/form-data and runs infer/2 <code>Transcribe</code> through
+<code>Pool::transcribe</code>: <code>file</code>, <code>model</code> (absent, the catalog's transcriber), <code>language</code>,
+<code>prompt</code>, <code>response_format</code> and <code>timestamp_granularities[]=segment</code> (<code>word</code> and
+<code>stream</code> are refused). The audio's format comes from the file name, else its <code>audio/*</code> type, else its first bytes.
+<code>json</code> (the default) answers <code>{"text": ...}</code>; <code>verbose_json</code> adds <code>language</code>,
+<code>duration</code> (seconds) and <code>segments</code>; <code>text</code> is plain text; <code>srt</code> and <code>vtt</code> are
+subtitles from the transcriber's timed segments (one cue over the whole clip when it reports only the duration, and a 501 when it
+times nothing, rather than invented cues). Speech and transcription are never cached.</p>
+<p>Request size (0.2.4): bodies (chat, speech and transcription alike) may be up to 32 MiB (<code>DEFAULT_MAX_REQUEST_BYTES</code>) unless the bridge is set otherwise with
 <code>Bridge::with_max_request_bytes</code>. A larger body gets a 413 with code <code>request_too_large</code> whose message names the
 limit, and the <code>x-weirdnet-max-request-bytes</code> header carries it. <code>/v1/models</code> reports
 <code>weirdnet.max_request_bytes</code> per model (the smaller of the bridge's and the node's) and <code>weirdnet.limits</code>, the
