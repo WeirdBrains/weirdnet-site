@@ -2,6 +2,18 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-agent 0.5.10 native video
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-agent](https://net.weirdbrains.com/crates/agent) shows 0.5.10 ([crates.io](https://crates.io/crates/weirdnet-agent/0.5.10), [docs.rs](https://docs.rs/weirdnet-agent/0.5.10)): a new API line (native video: `ContentPart::video` / `video_bytes`, the `video_url` part, `Modalities::VIDEO`, catalog `inputs.video`, routing with `catalog::VIDEO_FALLBACK`, `MediaLimits` video fields and helpers) and new notes (peers before 0.5.10 can't read a video part; routing keeps clips away from them). Guide: a "Native video (0.5.10)" section.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (34 of 34), `jaspr build` (ok), `python3 tool/check_links.py` (39 pages, 0 errors) and `--external` (172 external URLs, 0 errors once docs.rs had built 0.5.10; the run before that build had its one 404).
+
+Not tested: the examples were not rebuilt (the agent example takes weirdnet-agent `"0.5.2"`, which 0.5.10 meets).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-27: weirdnet-agent 0.5.9 pool sharing
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

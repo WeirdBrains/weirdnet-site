@@ -948,6 +948,24 @@ in one 32 MiB message, so long soundtracks go in pieces.</p>
 <p>Peers before 0.5.8 can't read a <code>transcribe</code> entry, so a node leaves those entries out of their catalog;
 <code>catalog::query</code> and <code>catalog::subscribe</code> from 0.5.8 ask for everything, and an entry they can't read is skipped
 rather than failing the whole catalog.</p>
+<h3>Native video (0.5.10)</h3>
+<p>A model that reads video natively can take a whole clip instead of frames sampled by the client. <code>ContentPart::video(url)</code>
+builds a <code>video_url</code> part, <code>{"type": "video_url", "video_url": {"url": "data:video/mp4;base64,..."}}</code>, the same in
+infer/2 CBOR and in JSON (the part vLLM and mistral.rs take); <code>ContentPart::video_bytes(&amp;bytes, "video/mp4")</code> makes the
+<code>data:</code> URL for you. Only <code>data:video/...</code> URLs are accepted (<code>Content::check</code>); remote URLs are never
+fetched. <code>VideoUrl::data_len()</code> gives the decoded size without decoding. The clip travels inside the request, so it must fit
+in one 32 MiB stream message with everything else.</p>
+<p>A request with a video part needs <code>Modalities::VIDEO</code>. Catalog entries say <code>inputs.video</code> when the model reads
+video (<code>Modalities::with_video(true)</code>); entries from nodes before 0.5.10 lack it and count as not reading video, and older
+peers simply ignore it. <code>Catalog::route</code> and the pool send a clip only to a chat model that reads video: a named model that
+doesn't, or a pool with none, is a <code>BadRequest</code> whose message ends with <code>catalog::VIDEO_FALLBACK</code>, "send the video
+as frames (image_url parts) instead", so a client can fall back to sampling frames. <code>PoolModel</code> reroutes a chosen model that
+can't read the clip, as for images.</p>
+<p><code>MediaLimits</code> carries the model's video limits when the node knows them: <code>video_max_seconds</code>,
+<code>video_max_bytes</code> (decoded) and <code>video_frames_per_minute</code> (per minute so 0.5 frames a second stays exact;
+<code>video_frame_rate()</code> gives frames per second). Each is absent when unknown, never defaulted. <code>video_frames(ms)</code>
+says how many frames the model reads from a clip, <code>check_video(ms, bytes)</code> names the first known limit a clip exceeds, and
+<code>tightest</code> and <code>or</code> merge them like the other limits.</p>
 <h3>Sharing a pool with another identity (0.5.9)</h3>
 <p>Someone with a different Weirdnet identity, or your own identity in another app, can use your pool (for example
 <a href="https://github.com/WeirdBrains/ymir">Ymir</a>) without its root identity: the guest presents its own device certificate
