@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-backends 0.4.10 native video and speech out
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.10 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.10), [docs.rs](https://docs.rs/weirdnet-backends/0.4.10), release commit [`73499f5`](https://github.com/WeirdBrains/weirdnet-backends/commit/73499f5f16cdc4c2c2699ec5667b341a43ebc6cb)): tagline mentions vLLM-Omni, text-to-speech models and native video; new "Native video (0.4.10)" and "Speech out (0.4.10)" parts (`ModelLaunch::with_video`, `Capabilities::video`, `VIDEO_FALLBACK`; `EngineKind::VllmOmni`, `ModelLaunch::with_speak` and `with_speech`, `Capabilities::speak`, `ModelStatus::speech` merged with `SpeechProfile::or` into `LimitsRecord::speech`, `Supervisor::speak` over `/v1/audio/speech`, infer/2 `Speak` through `ModelHost`); the engine and `ModelHost` parts mention vLLM-Omni and speech; new version notes (additive; needs weirdnet-agent 0.5.11 and weirdnet-model 0.5.5; older nodes don't know the `vllm-omni` engine name).
+- The backends guide gains "Native video (0.4.10)" and "Speech out (0.4.10)" sections.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors) and `--external` (182 external; rechecked after deploy, because GitHub file pages answered 503 for four unchanged links on the first run while the files themselves were reachable).
+
+Not tested: the examples were not rebuilt (no change to them).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-27: weirdnet-model 0.5.5 text to speech
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

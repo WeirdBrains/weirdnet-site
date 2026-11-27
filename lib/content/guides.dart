@@ -1550,6 +1550,39 @@ on demand the first one. <code>Supervisor::transcribe</code> sends llama.cpp a g
 <code>input_audio</code> part (llama-server takes WAV and MP3) and an instruction to answer with the transcript only, naming the language
 and the prompt when given; the duration comes from a WAV header, and there are no segments. vLLM gets
 <code>/v1/audio/transcriptions</code>, with timed segments when timestamps are asked for.</p>
+<h3>Native video (0.4.10)</h3>
+<p>vLLM can read whole clips with models such as Qwen2.5-VL and Qwen3-VL, but the engine doesn't say so, so the operator does:
+<code>ModelLaunch::with_video(true)</code> on a vLLM model (a wrapped mistral.rs server is declared as vLLM). <code>Capabilities::video</code>
+and <code>Capabilities::inputs()</code> then put <code>video</code> in the catalog entry's inputs, and the video fields of
+<code>MediaLimits</code> (<code>video_max_seconds</code>, <code>video_max_bytes</code>, <code>video_frames_per_minute</code>, from the
+operator or a measured record) travel in capability records and catalog entries. <code>video_url</code> parts
+(<a href="/crates/agent">weirdnet-agent</a> 0.5.11 <code>ContentPart::VideoUrl</code>, a <code>data:video/</code> URL) reach vLLM
+unchanged. On llama.cpp, MLX-LM or a model not marked, the request is <code>Unsupported</code> with weirdnet-agent's
+<code>VIDEO_FALLBACK</code> (send frames instead), so a pool tries a node that reads video; a clip over <code>video_max_bytes</code> is a
+<code>BadRequest</code> naming the limit.</p>
+<h3>Speech out (0.4.10)</h3>
+<p><code>ModelLaunch::with_speak(true)</code> gives a model the speech role. It runs on llama.cpp (a speech GGUF with its projector, such
+as Kokoro, VoxCPM2 or Fish Audio Drama 3) or on vLLM-Omni (<code>EngineKind::VllmOmni</code>, <code>EngineConfig::vllm_omni</code>,
+started as <code>vllm serve MODEL --omni</code>, never with local media paths; Qwen3-TTS CustomVoice, VoiceDesign and Base).
+<code>EngineKind::install_hint</code>, <code>supported_here</code> and <code>EngineConfig::version</code> help an app offer the engine. A
+speaker speaks and does nothing else: <code>Capabilities::speak</code> and catalog/1 <code>Purpose::Speak</code>, so
+<code>Catalog::route_speak</code> finds it.</p>
+<p>Its speech profile (weirdnet-agent's <code>SpeechProfile</code>: preset voices, voice design, instructions, clone mode, script speakers,
+raw input, speed, streaming, languages, formats, sample rate, limits and license) is <code>ModelStatus::speech</code>, which
+<code>apply_to</code> copies into the catalog entry. At load the supervisor asks the engine (llama-server <code>/props</code> voices;
+vLLM-Omni <code>GET /v1/audio/voices</code> and the sample rate of a one-word probe) and merges that over the GGUF headers and the
+<a href="/crates/model">weirdnet-model</a> 0.5.5 catalog entry with <code>SpeechProfile::or</code>, keeping the result in
+<code>LimitsRecord::speech</code>. The operator can only narrow it (<code>ModelLaunch::with_speech</code>; <code>check_speech</code> refuses
+settings that widen it).</p>
+<p><code>ModelHost</code> serves infer/2 <code>Speak</code> (<code>InferHost::open_speak</code>) the way it serves transcription, through
+<code>Supervisor::speak</code>. A request the profile doesn't cover is a <code>BadRequest</code> naming what is missing; a format only
+another engine makes is <code>Unsupported</code>. Both engines get <code>/v1/audio/speech</code>: a preset <code>voice</code>; a designed
+voice (VoxCPM2's parenthesized prefix on llama-server, <code>instructions</code> on vLLM-Omni); a cloned voice from an inline clip only
+(llama-server <code>speaker_ref_b64</code>, vLLM-Omni <code>ref_audio</code> as a <code>data:</code> URL with <code>ref_text</code> and a
+per-request <code>cache_salt</code>); Drama 3 scripts as <code>&lt;|speaker:N|&gt;</code> tags; raw phonemes; speed, language, seed and
+format; and streaming with <code>stream_format: "audio"</code>. Audio comes back whole or as it streams, with format, sample rate and
+channels when known and usage in characters and milliseconds. A field the model ignores is named in <code>Meta::ignored</code>.
+Capability records naming the <code>vllm-omni</code> engine are new in 0.4.10; older nodes don't know that engine.</p>
 <h3>Placement hooks, origin and license (0.4.5)</h3>
 <p><code>ModelsService::on_placed</code> runs a callback (<code>OnPlaced</code>) after each upload, peer copy (including
 <code>ModelsClient::replicate</code> targets) or Hub pull is placed. It gets a <code>Placed</code>: the <code>StoredEntry</code> with
