@@ -1307,7 +1307,7 @@ compute capability, driver), AMD through sysfs, and Apple silicon. Devices that 
 marked unified. It never fails; a missing tool means fewer devices.</p>
 <p><code>hw::budget(&amp;hw, memory_budget, reserve)</code> is the memory models may use: 85% of VRAM, or 85% of unified memory after an
 OS reserve (an eighth of RAM, at least 4 GiB). Both can be overridden. <code>hw::catalog()</code> is a tiered list from SmolLM2 135M
-through Gemma 4 E2B and E4B, Qwen3 8B, 14B, 30B-A3B and 32B and gpt-oss 20B, plus Qwen3 Embedding 0.6B and (since 0.5.4) Voxtral Mini 3B for speech to text. Each entry has a pinned
+through Gemma 4 E2B and E4B, Qwen3 8B, 14B, 30B-A3B and 32B and gpt-oss 20B, plus Qwen3 Embedding 0.6B, (since 0.5.4) Voxtral Mini 3B for speech to text and (since 0.5.5) eight text-to-speech models. Each entry has a pinned
 <code>ModelSpec</code> (so it downloads through the consent gate) and a footprint: the file, the KV cache for its context and slots,
 and 10% headroom. <code>hw::plan(&amp;hw, budget)</code> picks the largest chat model that fits, a Gemma 4 stand-in and the embedding
 model. CPU-only machines only get models with at most 4B active parameters, so answers stay usable.</p>
@@ -1319,16 +1319,42 @@ Q4_K_M), which llama.cpp runs with its audio encoder: <code>CatalogEntry::projec
 downloaded through the same consent gate and counted in <code>footprint</code>. Audio goes in as an <code>input_audio</code> part
 and the transcript comes back as text, so a soundtrack can become text for models without audio. <code>hw::plan</code> never
 proposes it; <code>hw::transcriber(&amp;budget)</code> returns it when it fits, and <code>hw::by_purpose</code> lists entries by role.</p>
+<h3>Text to speech (0.5.5)</h3>
+<p>The <code>speak</code> role (<code>Purpose::Speak</code>) is text in, audio out. Each entry has a <code>speech::SpeechProfile</code>
+(<code>CatalogEntry::speech()</code>): its preset voices, whether it designs a voice from a description, takes style instructions,
+clones a voice from a reference clip (and whether the clip's transcript is used or required), speaks multi-speaker scripts, takes raw
+input or a speed, streams; its languages, output formats and sample rate; and its limits. Every field is cited to the model's card
+and its engine's documentation (llama.cpp's TTS notes and the llama-server README, or vLLM-Omni's speech API), or absent.</p>
+<ul>
+<li><b>Qwen3-TTS</b>, one id per checkpoint: <code>qwen3-tts-0.6b-customvoice</code> and <code>qwen3-tts-1.7b-customvoice</code> (nine preset
+voices; the 1.7B also takes style instructions), <code>qwen3-tts-1.7b-voicedesign</code> (a voice from a description) and
+<code>qwen3-tts-0.6b-base</code> (cloning, transcript optional) are the Qwen repos vLLM-Omni serves; <code>qwen3-tts-1.7b-base</code> is
+ggml-org's GGUF, whose projector has the speaker encoder only, so llama.cpp clones from the clip alone.</li>
+<li><b><code>kokoro-82m</code></b>: the 54 voices in its projector (<code>af_heart</code> first), English from text, other languages as raw
+phonemes, speed.</li>
+<li><b><code>voxcpm2</code></b>: voice design and cloning from a clip (its first 30 seconds), 30 languages, 48 kHz.</li>
+<li><b><code>fish-audio-drama-3</code></b>: scripts of up to 16 speakers in 83 languages. ggml-org's projector has no codec encoder, so
+this entry does not clone. It is under the Fish Audio Community License: <code>CatalogEntry::restricted()</code>, never picked by
+<code>hw::speaker</code>, and <code>download</code> refuses its files (by id, or from its repos under any id) unless the
+<code>Consent</code> also has <code>accepting_license("fish-audio-community")</code>, given only after the operator has read it.</li>
+</ul>
+<p>GGUF entries (<code>CatalogEntry::is_gguf</code>) pin the model and its projector, both counted in <code>footprint</code>; the others
+pin the main weights of the repo vLLM-Omni serves. <code>hw::speaker(&amp;budget)</code> returns the largest unrestricted GGUF speaker
+that fits. A GGUF speech model placed by hand gets its profile from its headers: <code>speech::from_gguf(model, projector)</code> reads
+the projector's generator type, its reference encoder, the voices stored in it and the model's languages and license, and
+<code>limits::measure</code> keeps the result in <code>LimitsRecord::speech</code>, so <a href="/crates/backends">weirdnet-backends</a> can merge
+it with what the engine reports at load (<code>SpeechProfile::or</code>) and publish it through <a href="/crates/agent">weirdnet-agent</a>'s
+<code>SpeechProfile</code> (<code>to_agent</code>, the same wire form).</p>
 <h3>Model limits (0.5.4)</h3>
 <p>A client fitting images, audio or a video's frames to a model needs that model's limits, and none are defaulted: what isn't
 known stays absent. <code>ModelLimits</code> holds the context the model runs with on the node (per slot, not the trained context),
 images per request, what an image costs (a fixed number, or one token per <code>image_patch</code> pixels square up to
 <code>image_tokens</code>), the longest image edge, audio length and cost (<code>audio_tokens_per_minute</code>, and
 <code>audio_chunk_seconds</code> with <code>audio_chunk_tokens</code> for encoders that take 30-second pieces, so a short clip costs a
-whole piece), <code>video_max_seconds</code>, <code>video_max_bytes</code> and <code>max_request_bytes</code>. <code>or</code> puts an
+whole piece), <code>video_max_seconds</code>, <code>video_max_bytes</code>, <code>video_frames_per_minute</code> (0.5.5) and <code>max_request_bytes</code>. <code>or</code> puts an
 operator's settings over measured ones, <code>tightest</code> merges copies, and <code>image_cost</code> and <code>audio_cost</code>
 price one input. With the <code>agent</code> feature, <code>to_media</code> and <code>from_media</code> convert to and from
-<a href="/crates/agent">weirdnet-agent</a>'s <code>MediaLimits</code> for catalog entries.</p>
+<a href="/crates/agent">weirdnet-agent</a>'s <code>MediaLimits</code> for catalog entries, video limits included since 0.5.5.</p>
 <p>When a node loads a model, <code>limits::measure(model, projector, context)</code> reads the GGUF and its projector into a
 <code>LimitsRecord</code> (<code>weirdnet-limits/1</code>): what the projector's header says images and audio cost
 (<code>from_projector</code>, from <code>gguf::ProjectorInfo</code>; Gemma 3 images cost 256 tokens, Qwen-VL one token per 28 pixels

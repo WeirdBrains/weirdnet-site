@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-27: weirdnet-model 0.5.5 text to speech
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
+
+- [weirdnet-model](https://net.weirdbrains.com/crates/model) shows 0.5.5 ([crates.io](https://crates.io/crates/weirdnet-model/0.5.5), [docs.rs](https://docs.rs/weirdnet-model/0.5.5)): tagline mentions text-to-speech models and speech profiles; a new "Text to speech (0.5.5)" part (`Purpose::Speak`, the eight cited entries, `hw::speaker`, the Fish Audio Community License gate on Drama 3, `speech::from_gguf` and `LimitsRecord::speech`, conversion to weirdnet-agent's `SpeechProfile`); the limits part mentions video frames per minute and the video fields in `MediaLimits`; new version notes (additive; the `agent` feature needs weirdnet-agent 0.5.11).
+- The model guide gains a "Text to speech (0.5.5)" section and mentions the speech entries in the catalog and the new video limit.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` (ok), `python3 tool/check_links.py` (40 pages, 0 errors) and `--external` (182 external; every page this change adds or links answers, while GitHub's file pages for seven links on other crates' pages answered 503 for every file at the time, and the GitHub contents API confirmed each of those files exists).
+
+Not tested: the examples were not rebuilt (no change to them).
+
+What's left and next: the weirdnet-backends 0.4.10 page when it ships speech.
+
 ## 2026-11-27: weirdnet-semcache 0.2.3 pool mode
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):
