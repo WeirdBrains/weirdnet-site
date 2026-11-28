@@ -2,6 +2,19 @@
 
 Running log for [weirdnet-site](https://github.com/WeirdBrains/weirdnet-site) ([net.weirdbrains.com](https://net.weirdbrains.com)), newest first. Shared rules: the collective `AGENTS.md` and this repo's [AGENTS.md](AGENTS.md).
 
+## 2026-11-28: weirdnet-backends 0.4.11 placement-lease fencing
+
+What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; branch `backends-0.4.11`, merged with `--no-ff` in the commit that adds this entry):
+
+- [weirdnet-backends](https://net.weirdbrains.com/crates/backends) shows 0.4.11 ([crates.io](https://crates.io/crates/weirdnet-backends/0.4.11), [docs.rs](https://docs.rs/weirdnet-backends/0.4.11), [release](https://github.com/WeirdBrains/weirdnet-backends/releases/tag/v0.4.11)): the tagline mentions placement-lease fencing on load and unload, and a new "Placement-lease fencing (0.4.11)" part (`LoadFenced`/`UnloadFenced`, `Fence`, `FenceGuard`, `with_fence_file`, `with_fence_required`, `FenceRefusal::from_error`, `Capability::fencing`).
+- The backends guide gains a "Placement-lease fencing (0.4.11)" section.
+
+Checks run: `dart analyze` (clean), `python3 tool/check_crates.py --strict` (35 of 35), `jaspr build` with jaspr_cli 0.24.0-beta.1 as in CI (ok), `python3 tool/check_links.py` (40 pages, 0 errors, 0 warnings).
+
+Not tested: `--external` link fetching; the examples were not rebuilt (no change to them).
+
+What's left and next: nothing for this release.
+
 ## 2026-11-27: weirdnet-backends 0.4.10 native video and speech out
 
 What changed (`lib/content/crates.dart`, `lib/content/guides.dart`; the commit that adds this entry):

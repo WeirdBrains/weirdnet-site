@@ -1583,6 +1583,20 @@ per-request <code>cache_salt</code>); Drama 3 scripts as <code>&lt;|speaker:N|&g
 format; and streaming with <code>stream_format: "audio"</code>. Audio comes back whole or as it streams, with format, sample rate and
 channels when known and usage in characters and milliseconds. A field the model ignores is named in <code>Meta::ignored</code>.
 Capability records naming the <code>vllm-omni</code> engine are new in 0.4.10; older nodes don't know that engine.</p>
+<h3>Placement-lease fencing (0.4.11)</h3>
+<p>When one caller places models across nodes under a lease (such as a <a href="/crates/sync">weirdnet-sync</a> lease, whose term
+strictly increases with each new holder), a holder that was paused or cut off can wake up and keep sending loads and unloads after
+another has taken over. Fenced commands let the node stop it: <code>NodeClient::load_fenced</code> and <code>unload_fenced</code> send
+node/1 <code>Command::LoadFenced</code> and <code>UnloadFenced</code> with a <code>fence::Fence</code>, the lease name and the holder's
+term. The node checks the fence before it loads or unloads anything against a <code>FenceGuard</code>, the highest term seen per lease
+name (equal terms pass), and refuses an older term with the model left as it is.</p>
+<p>The refusal travels as a <code>Refused</code> error with a fixed message, and <code>FenceRefusal::from_error</code> reads it back as
+<code>Stale { lease, term, seen }</code> or <code>Required</code>, so the caller can stop rather than retry. <code>NodeService::with_fence_file</code>
+keeps the guard on disk (saved before a newer term runs; a failed save refuses the command), so a restart keeps refusing old terms;
+its bytes are the same as <code>weirdnet_sync::FenceGuard::export</code>. <code>with_fence_required(true)</code> refuses unfenced
+<code>Load</code>/<code>Unload</code>; it is off by default, so an operator's unfenced commands still run. Capability records carry
+<code>fencing</code> (and <code>fence_required</code> when on), so a caller sends fenced commands only to nodes that check them: unfenced
+commands are the same bytes as in 0.4.10, and nodes before 0.4.11 fail fenced ones instead of running them unfenced.</p>
 <h3>Placement hooks, origin and license (0.4.5)</h3>
 <p><code>ModelsService::on_placed</code> runs a callback (<code>OnPlaced</code>) after each upload, peer copy (including
 <code>ModelsClient::replicate</code> targets) or Hub pull is placed. It gets a <code>Placed</code>: the <code>StoredEntry</code> with
